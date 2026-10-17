@@ -547,6 +547,23 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 
 ---
 
+### [2026-10-17 20:05 -03:00] QRY-001 — OK (diagnóstico do teste em BRL; somente leitura)
+
+| Campo | Valor |
+|---|---|
+| Operação | 8 consultas SOQL de diagnóstico (nenhuma escrita) |
+| Skill | `query-salesforce` |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Quote` `00000041` · `QuoteLineItem` · `PricebookEntry` · `Pricebook2` |
+| Ferramenta | `sf data query` |
+| Confirmação humana | não aplicável (leitura) |
+| Resultado | **causa confirmada:** a cotação `Teste cotacao deal` está em **BRL** no **Standard Price Book** e a linha `MediScan Ventilator` usou a entrada **BRL** `01uas000000RpJNAA0`, que **não tem custo**; a entrada **USD** do mesmo produto (`01uas000000RoumAAC`) tem `FixedCost__c=24200` + `VariableCostPerUnit__c=10300` = 34.500. Custo 0 → margem 100% → `Saudável`, e o simulador fica verde até com 90% |
+| Reversão | não aplicável |
+| Tokens (aprox.) | 4000 |
+| Observações | O custo existe em **24 entradas USD** e em **0 entradas BRL** (só 3 BRL existem, todas `Medical Equipment`, no Standard PB). **Não existe price book BRL** — apagar entradas não resolveria (S5 nem foi acionado). Decisão de correção adiada pelo humano: registradas **F5-07** (custo ausente ≠ margem 100%) e **F5-08** (custo das entradas BRL) |
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

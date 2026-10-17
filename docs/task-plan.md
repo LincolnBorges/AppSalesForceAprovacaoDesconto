@@ -63,10 +63,10 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
-| 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
+| 5 | Acesso, dados e demo | 8 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **67** | **48** | |
+| **Total** | | **69** | **48** | |
 
 *Atualizado em 2026-10-17 (Fase 4 fechada). Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -170,6 +170,8 @@ paradas no ponto indicado.
 | F5-04 | Roteiro de demo (30 min) | **F5-02** | Sequência de cliques e falas, terminando numa decisão de negócio clara | IA | PENDENTE |
 | F5-05 | Ensaiar a demo | **F5-04** | Rodar ponta a ponta, medir o tempo e corrigir os atritos encontrados | IA | PENDENTE |
 | F5-06 | Fechar a Fase 5 | **F5-03**, **F5-05** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-5` | IA | PENDENTE |
+| F5-07 | Custo ausente não pode parecer margem perfeita | **F4-07** | Hoje `DD_CostAmount__c` nulo vira margem 100% e a cotação passa **verde** — inclusive com desconto de 90% (achado do teste do humano em 2026-10-17). Tratar dado incompleto como estado próprio (ex.: `Pendente de Custo`) no Flow de cálculo e no campo `DD_GuardrailState__c`, em vez de margem máxima | IA+H | PENDENTE |
+| F5-08 | Custo das entradas BRL | **F5-07** | As 3 entradas **BRL** do Standard Price Book (`MediScan Ventilator`, `Imager`, `Hospital Bed`) não têm `FixedCost__c`/`VariableCostPerUnit__c`; o custo foi semeado só em USD (24 entradas). Decidir entre semear custo proporcional (31% / 34% / 22,08%) ou restringir os testes a cotações USD | HUMANO | PENDENTE |
 
 ### Fase 6 — Camada Agentforce
 
