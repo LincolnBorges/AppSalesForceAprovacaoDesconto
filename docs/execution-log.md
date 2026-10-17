@@ -59,6 +59,9 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | CHK-001 | 2026-10-17 | verificação de FLS e layout de `FixedCost__c`/`VariableCostPerUnit__c` + regra D20 (nenhuma escrita na org) | PricebookEntry | OK | — |
 | PRB-001 | 2026-10-17 | F1-02 probe: `--dry-run` de fórmula na `QuoteLineItem` com referência cruzada ao `PricebookEntry` (nenhuma escrita — dry-run) | QuoteLineItem | OK | — |
 | PRB-002 | 2026-10-17 | F1-01 probe: `--dry-run` de Roll-Up Summary na `Quote` sobre campo de fórmula + 2 isolamentos de causa (nenhuma escrita — dry-run) | Quote / QuoteLineItem | FALHA | — |
+| FLD-001 | 2026-10-17 | F1-04/F1-05 criação de 9 campos de margem + FLS + layout | Quote / QuoteLineItem | OK | deploy `0Afas00000606y2CAA` |
+| FLW-001 | 2026-10-17 | F1-06 Flow `DD_CalculateLineCost` ativo | QuoteLineItem | OK | deploy `0Afas00000604zTCAQ` |
+| VAL-001 | 2026-10-17 | F1-07 validação das 3 faixas + massa DEMO- | Quote `0Q0as0000021hOLCAY` | OK | 3 linhas |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -247,6 +250,57 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | não aplicável (dry-run não grava) |
 | Tokens (aprox.) | 6000 |
 | Observações | **Q1 respondida = DEPENDE**, e a causa está isolada: o bloqueio **não** é multi-moeda nem "fórmula sobre fórmula" — é a **referência cruzada** (valor derivado). Fórmula determinística do filho é agregável; qualquer fórmula que leia outro objeto não é. Registrado como **A53** em [`MEMORY.md`](../MEMORY.md) §3 |
+
+### [2026-10-17 12:52 -03:00] FLD-001 — OK (F1-04/F1-05: 9 campos de margem + FLS + layout)
+
+| Campo | Valor |
+|---|---|
+| Operação | `sf project deploy start --source-dir force-app` (dry-run + real) |
+| Skill | validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | 4 campos `QuoteLineItem.DD_*__c` · 5 campos `Quote.DD_*__c` · `Layout:Quote-Quote Layout` · `Layout:QuoteLineItem-Quote Line Item Layout` · `Profile:Admin` (FLS) |
+| Ferramenta | `sf project deploy start` |
+| Parâmetros-chave | dry-run `0Afas00000607FlCAI` · real `0Afas00000606y2CAA` · API 68.0 |
+| Payload / SOQL | `DD_CostPerUnit__c` e `DD_MarginAmount__c`/`DD_MarginPct__c` (fórmula) · `DD_CostAmount__c` (Currency gravado) · `DD_Revenue__c`/`DD_Cost__c`/`DD_WorstLineMarginPct__c` (roll-up) · `DD_MarginPct__c`/`DD_GuardrailState__c` (fórmula) |
+| Confirmação humana | sim — Opção A confirmada pelo humano; S3/S6 atendidos |
+| Resultado | **`Succeeded`** — 12 componentes, 0 erros. FLS 9/9 `read=true` (só `DD_CostAmount__c` `edit=true`); layouts 4+5 campos |
+| Reversão | remover os 9 campos `CustomField` via `sf_delete_metadata` (sem dados de produção em jogo); `git revert` do commit |
+| Tokens (aprox.) | 22000 |
+| Observações | 3 erros de dry-run corrigidos antes do deploy: `<length>` em fórmula Text (A52-like), `TotalPrice`/`Subtotal` não referenciáveis (A54). Layout de fórmula/roll-up usou `<behavior>Readonly</behavior>` — exceção estrutural a D20 |
+
+### [2026-10-17 12:56 -03:00] FLW-001 — OK (F1-06: Flow DD_CalculateLineCost)
+
+| Campo | Valor |
+|---|---|
+| Operação | `sf project deploy start --source-dir force-app` (dry-run ×3 + real) |
+| Skill | validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `Flow:DD_CalculateLineCost` (`AutoLaunchedFlow`, `RecordBeforeSave`, `Active`) |
+| Ferramenta | `sf project deploy start` |
+| Parâmetros-chave | dry-run final `0Afas00000606GUCAY` · real `0Afas00000604zTCAQ` |
+| Payload / SOQL | `Get Records` em `PricebookEntry` por `$Record.PricebookEntryId` → `varCostAmount = (FixedCost__c + VariableCostPerUnit__c) * Quantity` → `$Record.DD_CostAmount__c` |
+| Confirmação humana | **dupla (S6):** aprovação do desenho + "Confirmo o Flow e a massa" com payload e impacto à vista |
+| Resultado | **`Succeeded`**; `FlowDefinitionView`: `IsActive = true`, `TriggerType = RecordBeforeSave`, objeto `Quote Line Item` |
+| Reversão | desativar/remover o Flow; `DD_CostAmount__c` mantém o último valor gravado até nova edição |
+| Tokens (aprox.) | 9000 |
+| Observações | 2 tentativas recusadas no dry-run: leitura de fórmula com referência cruzada em before-save não é suportada (A55); `assignNullValuesIfNoRecordsFound=true` evita bloquear save sem `PricebookEntry` |
+
+### [2026-10-17 12:58 -03:00] VAL-001 — OK (F1-07: validação das 3 faixas + massa DEMO-)
+
+| Campo | Valor |
+|---|---|
+| Operação | `sf data create record` (4 registros, 1 por vez) + `sf data query` de verificação |
+| Skill | calculate-margin |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `Quote` `0Q0as0000021hOLCAY` (`DEMO-Quote-Margin-Bands`) + 3 `QuoteLineItem` |
+| Ferramenta | `sf data create record`, `sf data query` |
+| Parâmetros-chave | `Pricebook2Id=01sas000001nOBJAA2`; `CurrencyIsoCode=USD`; linhas `0QLas0000028wthGAA`, `0QLas0000028wiQGAQ`, `0QLas0000028wvJGAQ` |
+| Payload / SOQL | 3 linhas com `Quantity=1` e `UnitPrice` 120 / 200 / 96 sobre `Suspension Inspection Kit`, `Multi-Point Diagnostic Scanner`, `EV Brake Pad Kit` |
+| Confirmação humana | sim — "Confirmo o Flow e a massa" |
+| Resultado | margens **41,6667% / 28,0000% / 17,7083%**; `DD_Revenue__c` 416 = `TotalPrice` 416; `DD_Cost__c` 293 = 70+144+79; `DD_MarginPct__c` 29,5673%; `DD_WorstLineMarginPct__c` 17,7083%; `DD_GuardrailState__c` = `Requer Justificativa` |
+| Reversão | 4 registros criados nesta operação: apagar `0Q0as0000021hOLCAY` (o cascade pode não remover as linhas — conferir) ou as 3 linhas + a Quote; valores anteriores: inexistentes |
+| Tokens (aprox.) | 6000 |
+| Observações | **A28 atendido:** o custo foi gravado na criação das linhas, o que prova que o Flow executou (nada mais escreve `DD_CostAmount__c`). Acento de `Saudável`/`Aprovação` confirmado por retrieve. A Quote serve à F5-02 |
 
 ---
 

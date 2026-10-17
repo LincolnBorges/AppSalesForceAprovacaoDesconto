@@ -95,27 +95,32 @@ Documento de decisões de arquitetura do app. Complementa [`AGENTS.md`](../AGENT
 > decisão**, não a de hoje. Se a política mudar depois, o histórico não pode mudar junto — é o
 > registro de auditoria da exceção.
 
-### 3.3 Números — fórmula antes de Flow (P1)
+### 3.3 Números — fórmula antes de Flow (P1), com uma exceção inevitável
 
-O custo mora no `PricebookEntry`, e `QuoteLineItem` tem `PricebookEntryId`. Isso permite alcançar o
-custo por **fórmula de referência cruzada**, sem Flow:
+**Executado na Fase 1 (2026-10-17).** Os probes mostraram que o desenho 100% declarativo não fecha: um
+roll-up summary **não agrega** campo de fórmula que dependa de outro objeto (A53) e o `RecordBeforeSave`
+**não lê** esse tipo de fórmula (A55). O resultado é **híbrido** (D21): fórmula onde é determinística e
+um único Flow onde a plataforma obriga.
 
-| Onde | Campo | Tipo | Fórmula pretendida |
+| Onde | Campo | Tipo | Definição implementada |
 |---|---|---|---|
-| `QuoteLineItem` | `DD_CostPerUnit__c` | Formula (Currency) | `PricebookEntry.FixedCost__c + PricebookEntry.VariableCostPerUnit__c` |
-| `QuoteLineItem` | `DD_CostAmount__c` | Formula (Currency) | `DD_CostPerUnit__c * Quantity` |
-| `QuoteLineItem` | `DD_MarginPct__c` | Formula (Percent) | `(UnitPrice − DD_CostPerUnit__c) / UnitPrice` |
-| `Quote` | `DD_Revenue__c` | Roll-Up Summary (SUM `TotalPrice`) | — |
-| `Quote` | `DD_Cost__c` | Roll-Up Summary (SUM de `DD_CostAmount__c`) | — |
-| `Quote` | `DD_MarginPct__c` | Formula (Percent) | `(DD_Revenue__c − DD_Cost__c) / DD_Revenue__c` |
-| `Quote` | `DD_WorstLineMarginPct__c` | Roll-Up Summary (MIN de `DD_MarginPct__c`) | — |
-| `Quote` | `DD_GuardrailState__c` | Formula (Text) | comparando `DD_MarginPct__c` com o piso aplicável |
+| `QuoteLineItem` | `DD_CostPerUnit__c` | Formula Currency(18,2) | `PricebookEntry.FixedCost__c + PricebookEntry.VariableCostPerUnit__c` — **não agregável** |
+| `QuoteLineItem` | `DD_CostAmount__c` | **Currency(18,2) gravado** | Flow `DD_CalculateLineCost`, via `Get Records` no `PricebookEntry` |
+| `QuoteLineItem` | `DD_MarginAmount__c` | Formula Currency(18,2) | `UnitPrice * Quantity * (1 - Discount / 100) - DD_CostAmount__c` |
+| `QuoteLineItem` | `DD_MarginPct__c` | Formula Percent(18,4) | receita inlinada; `IF(receita = 0, 0, (receita - DD_CostAmount__c) / receita)` |
+| `Quote` | `DD_Revenue__c` | Roll-Up SUM | `QuoteLineItem.TotalPrice` |
+| `Quote` | `DD_Cost__c` | Roll-Up SUM | `QuoteLineItem.DD_CostAmount__c` |
+| `Quote` | `DD_MarginPct__c` | Formula Percent(18,4) | `IF(DD_Revenue__c = 0, 0, (DD_Revenue__c - DD_Cost__c) / DD_Revenue__c)` |
+| `Quote` | `DD_WorstLineMarginPct__c` | Roll-Up MIN | `QuoteLineItem.DD_MarginPct__c` |
+| `Quote` | `DD_GuardrailState__c` | Formula Text | `IF(DD_MarginPct__c >= 0.30, "Saudável", IF(DD_MarginPct__c >= 0.20, "Requer Justificativa", "Requer Aprovação"))` |
 
-**Verificação obrigatória na Fase 1 (antes de codificar):** confirmar que a org aceita
-**roll-up summary sobre campo de fórmula do filho**. A documentação da Salesforce permite agregar
-campo de fórmula numérico do filho, mas isso é exatamente o tipo de premissa que este projeto não
-aceita sem teste (A15). Se **não** for aceito, o plano B é gravar `DD_CostAmount__c` como campo
-Currency comum, populado por Flow `RecordBeforeSave` no `QuoteLineItem`.
+**Por que `DD_CostAmount__c` é gravado:** é o único número que o roll-up da `Quote` precisa somar e que
+vem de outro objeto. `DD_MarginPct__c` pode ser fórmula porque só usa campos locais — e é ela que o
+`MIN` consome. A receita líquida é inlinada porque `TotalPrice`/`Subtotal` do `QuoteLineItem` não são
+referenciáveis em fórmula (A54).
+
+**Limitação aceita:** mudança de custo no catálogo não recalcula linhas já existentes; o valor é
+recalculado quando a linha é criada ou editada (`Quantity`/`PricebookEntryId`).
 
 ### 3.4 Onde o Flow é insubstituível
 
@@ -247,8 +252,8 @@ em T7, em [`artifacts/`](artifacts). `sf_create_agent_action` do MCP **não** se
 
 | # | Questão | Como resolver |
 |---|---|---|
-| Q1 | A org aceita **roll-up summary sobre campo de fórmula** do filho? | Tentar criar o campo e fazer `--dry-run`. Se falhar, usar o plano B (§3.3) |
-| Q2 | `QuoteLineItem` permite fórmula com referência cruzada a `PricebookEntry`? | Idem — validar no deploy do campo |
+| Q1 | A org aceita **roll-up summary sobre campo de fórmula** do filho? | **Respondida em 2026-10-17 (F1-01):** depende. Fórmula **determinística** é agregada; fórmula com **referência cruzada** é recusada (`The summarized field in not deterministic.`) — A53 |
+| Q2 | `QuoteLineItem` permite fórmula com referência cruzada a `PricebookEntry`? | **Respondida em 2026-10-17 (F1-02):** sim, o campo é criado (`Succeeded`); mas o valor não pode ser agregado por roll-up nem lido por before-save (A55) |
 | Q3 | O piso deve variar por **conta** além de família × price book? | Decisão de negócio — perguntar ao humano antes de modelar |
 | Q4 | `DD_DiscountRequest__c` usa autonumber no `Name`? | Se sim, S11 é inaplicável (A14) — registrar a exceção |
 | Q5 | Quantas linhas por cotação na massa real? | Define se o LWC precisa de paginação |

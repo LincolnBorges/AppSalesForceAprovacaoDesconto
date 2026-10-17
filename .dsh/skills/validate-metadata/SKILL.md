@@ -137,6 +137,10 @@ tokens. Atualizar [`MEMORY.md`](../../../MEMORY.md) §1 e §4 quando aplicável.
 | `insufficient access rights on cross-reference id` | Resíduo/referência cruzada na remoção | Remover versão `Obsolete` via Tooling API |
 | `INVALID_TYPE` em objeto | Objeto não existe nesta org | Não é bug de ferramenta (A7) |
 | `not well-formed (invalid token)` | Comentário XML com dois hífens seguidos (`--dry-run`, `--metadata-dir`) | Remover os `--` de dentro do comentário (A52). **Validar o XML com um parser antes do deploy** |
+| `Can not specify a length for CustomFields that have a formula` | Campo `Formula` do tipo `Text` com `<length>` | Remover o `<length>` — fórmula Text não declara tamanho |
+| `Field <X> does not exist. Check spelling.` em `QuoteLineItem` | `TotalPrice`/`Subtotal` existem no `describe` e no layout, mas **não** são referenciáveis em fórmula | Inlinar a receita: `UnitPrice * Quantity * (1 - Discount / 100)` (A54) |
+| `The summarized field in not deterministic.` | Roll-up `SUM`/`MIN` sobre fórmula com **referência cruzada** | Trocar o resumo por campo **gravado** (Flow) — A53 |
+| `the $Record.<campo> field isn't supported` com `RecordBeforeSave` | Fórmula com referência cruzada lida em before-save | Usar `Get Records` no objeto relacionado dentro do Flow (A55) |
 
 > **Silêncio não é sucesso.** Um campo deployado com `Succeeded` e **sem** FLS e layout não gera erro
 > nenhum — ele simplesmente não aparece para o usuário. É o único tipo de falha deste projeto que o

@@ -59,14 +59,14 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | Fase | Nome | Ações | Concluídas | Status |
 |---|---|---|---|---|
 | 0 | Fundação e base de custo | 15 | 14 | CONCLUÍDO |
-| 1 | Cálculo de margem | 8 | 2 | EM ANDAMENTO |
+| 1 | Cálculo de margem | 8 | 8 | CONCLUÍDO |
 | 2 | Política de desconto | 7 | 0 | PENDENTE |
 | 3 | Guardrail e roteamento | 10 | 1 | EM ANDAMENTO |
 | 4 | Console LWC | 7 | 1 | PENDENTE |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **67** | **21** | |
+| **Total** | | **67** | **27** | |
 
 *Atualizado em 2026-10-17. Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -79,7 +79,7 @@ paradas no ponto indicado.
 
 | ID | Decisão | Bloqueia | Efeito se não houver resposta |
 |---|---|---|---|
-| — | Nenhuma pendente — Fase 0 fechada em 2026-10-17 | — | — |
+| — | Nenhuma pendente — Fases 0 e 1 fechadas em 2026-10-17 | — | — |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
 > F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15.
@@ -114,12 +114,12 @@ paradas no ponto indicado.
 |---|---|---|---|---|---|
 | F1-01 | Probe: roll-up sobre fórmula | **F0-10** | `--dry-run` de 1 campo de roll-up na `Quote` somando campo de fórmula do `QuoteLineItem` — responde **Q1** da [`architecture.md`](architecture.md) §9 | IA | CONCLUÍDO (2026-10-17): **depende** — fórmula **determinística** é agregável (OK); fórmula com **referência cruzada** é recusada (`The summarized field in not deterministic.`). Ver A53 e PRB-002 |
 | F1-02 | Probe: fórmula com referência ao preço/custo | **F0-10** | `--dry-run` de 1 fórmula em `QuoteLineItem` lendo `FixedCost__c`/`VariableCostPerUnit__c` do `PricebookEntry` — responde **Q2** | IA | CONCLUÍDO (2026-10-17): **Succeeded** — referência cruzada aceita em Formula Currency. Ver PRB-001 |
-| F1-03 | Escolher a abordagem de cálculo | **F1-01**, **F1-02** | Definir: fórmula nativa + roll-up (preferida, sem Flow) ou plano B com Flow; registrar a decisão e o porquê em `MEMORY.md` §2 | IA | EM ANDAMENTO (2026-10-17): proposta híbrida — fórmula onde é determinística, **1 Flow** só para `DD_CostAmount__c`; aguarda confirmação do humano por causa do Flow (S6) |
-| F1-04 | Campos de margem na `QuoteLineItem` | **F1-03** | Criar `DD_CostPerUnit__c`, `DD_CostAmount__c`, `DD_MarginAmount__c`, `DD_MarginPct__c` (nomes a validar), com `--dry-run` antes (S7) | IA | PENDENTE |
-| F1-05 | Campos consolidados na `Quote` | **F1-04** | Criar `DD_Revenue__c`, `DD_Cost__c`, `DD_MarginPct__c`, `DD_WorstLineMarginPct__c`, `DD_GuardrailState__c` (este último alimenta o semáforo do console — D14) | IA | PENDENTE |
-| F1-06 | Plano B: Flow de cálculo | **F1-03** | Só se os probes falharem: Flow `RecordBeforeSave` recalculando custo/margem por linha; confirmação dupla (S6) e `--dry-run` | IA | PENDENTE |
-| F1-07 | Validar as 3 faixas de margem | **F1-04** a **F1-06** | Bater 41,67% / 28,00% / 17,71% contra cálculo manual e conferir que o total da `Quote` fecha com a soma das linhas | IA | PENDENTE |
-| F1-08 | Fechar a Fase 1 | **F1-07** | Atualizar `MEMORY.md` §4 (cache dos campos criados), `execution-log`, este plano e o `roadmap`; commit e tag `fase-1` | IA | PENDENTE |
+| F1-03 | Escolher a abordagem de cálculo | **F1-01**, **F1-02** | Definir: fórmula nativa + roll-up (preferida, sem Flow) ou plano B com Flow; registrar a decisão e o porquê em `MEMORY.md` §2 | IA | CONCLUÍDO (2026-10-17): **híbrido** — fórmula onde é determinística + 1 Flow só para `DD_CostAmount__c`. Decisão **D21** |
+| F1-04 | Campos de margem na `QuoteLineItem` | **F1-03** | Criar `DD_CostPerUnit__c`, `DD_CostAmount__c`, `DD_MarginAmount__c`, `DD_MarginPct__c` (nomes a validar), com `--dry-run` antes (S7) | IA | CONCLUÍDO (2026-10-17): 4 campos + FLS + layout, deploy `0Afas00000606y2CAA`. Ver FLD-001 |
+| F1-05 | Campos consolidados na `Quote` | **F1-04** | Criar `DD_Revenue__c`, `DD_Cost__c`, `DD_MarginPct__c`, `DD_WorstLineMarginPct__c`, `DD_GuardrailState__c` (este último alimenta o semáforo do console — D14) | IA | CONCLUÍDO (2026-10-17): 5 campos + FLS + layout, mesmo deploy de F1-04 |
+| F1-06 | Plano B: Flow de cálculo | **F1-03** | Só se os probes falharem: Flow `RecordBeforeSave` recalculando custo/margem por linha; confirmação dupla (S6) e `--dry-run` | IA | CONCLUÍDO (2026-10-17): `DD_CalculateLineCost` **Active**, `Get Records` no `PricebookEntry` (A55), deploy `0Afas00000604zTCAQ`. Ver FLW-001 |
+| F1-07 | Validar as 3 faixas de margem | **F1-04** a **F1-06** | Bater 41,67% / 28,00% / 17,71% contra cálculo manual e conferir que o total da `Quote` fecha com a soma das linhas | IA | CONCLUÍDO (2026-10-17): 41,6667% / 28,0000% / 17,7083%; receita 416 = 416 nativo, custo 293 = soma das linhas. Ver VAL-001 |
+| F1-08 | Fechar a Fase 1 | **F1-07** | Atualizar `MEMORY.md` §4 (cache dos campos criados), `execution-log`, este plano e o `roadmap`; commit e tag `fase-1` | IA | CONCLUÍDO (2026-10-17) |
 
 ### Fase 2 — Política de desconto
 
@@ -208,4 +208,5 @@ paradas no ponto indicado.
 | 2026-10-17 | F0-12 (viabilidade de moeda) concluída: veredito "manter USD". Criadas **F0-13** (decisão humana) e **F0-14** (price book BRL, condicional). F0-08 passou a depender de F0-13. Total: 63 → 66 ações |
 | 2026-10-17 | **Fase 0 fechada:** F0-07 (tabela aprovada), F0-11 (opção A), F0-13 (USD), F0-08 (19 registros), F0-09 (validação), F0-10 (fechamento) e F0-01 (baseline) concluídos. F0-14 cancelada. Criada a **S12** (moeda comprovada). 18 de 66 ações concluídas |
 | 2026-10-17 | Criada **X-05** (D20/S13: FLS + layout na mesma operação de criação de campo) e atualizada a skill `validate-metadata`. Verificação de `FixedCost__c`/`VariableCostPerUnit__c`: já estavam com FLS e layout corretos. Total: 66 → 67 ações |
-| 2026-10-17 | **F1-01 e F1-02 concluídas** por dry-run: referência cruzada ao `PricebookEntry` é aceita; roll-up sobre fórmula determinística é aceito, mas sobre fórmula com referência cruzada é recusado (A53). F1-03 com proposta híbrida aguardando confirmação do humano |
+| 2026-10-17 | **F1-01 e F1-02 concluídas** por dry-run: referência cruzada ao `PricebookEntry` é aceita; roll-up sobre fórmula determinística é aceito, mas sobre fórmula com referência cruzada é recusado (A53) |
+| 2026-10-17 | **Fase 1 fechada:** 9 campos de margem + FLS + layout (FLD-001), Flow `DD_CalculateLineCost` ativo (FLW-001), 3 faixas validadas (VAL-001). Novos aprendizados A54/A55 e decisão D21. Fase 1: 8 de 8 ações |

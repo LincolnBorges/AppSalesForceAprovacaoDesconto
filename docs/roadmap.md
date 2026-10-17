@@ -3,8 +3,8 @@
 Plano de construção em 7 fases (0 a 6). Cada fase tem objetivo, entregáveis, critério de verificação e
 definição de pronto. **Uma fase por sessão** (`new_session_after_task: true`, C3).
 
-> **Estado geral:** nenhuma fase iniciada. As 4 incógnitas de plataforma foram eliminadas por teste
-> antes de começar — ver [`risks.md`](risks.md).
+> **Estado geral:** Fases 0 e 1 concluídas (2026-10-17). A Fase 2 (política de desconto) é a próxima.
+> As incógnitas de plataforma foram eliminadas por teste — ver [`risks.md`](risks.md).
 >
 > **Acompanhamento fino:** este roadmap guarda os critérios macro de cada fase. O passo a passo
 > executável — IDs, predecessores, responsável (IA ou humano) e status — está em
@@ -12,8 +12,8 @@ definição de pronto. **Uma fase por sessão** (`new_session_after_task: true`,
 
 | Fase | Nome | Depende de | Status |
 |---|---|---|---|
-| 0 | Fundação e base de custo | — | PENDENTE |
-| 1 | Cálculo de margem | 0 | PENDENTE |
+| 0 | Fundação e base de custo | — | CONCLUÍDO |
+| 1 | Cálculo de margem | 0 | CONCLUÍDO |
 | 2 | Política de desconto | 1 | PENDENTE |
 | 3 | Guardrail e roteamento | 2 | PENDENTE |
 | 4 | Console LWC | 3 | PENDENTE |
@@ -75,6 +75,13 @@ das linhas.
 
 **Risco principal:** A15 — campo computado que o describe diz gravável. Aqui o risco é o inverso
 (fórmula que a org recusa criar), e o `--dry-run` resolve.
+
+> **Resultado (2026-10-17) — CONCLUÍDA.** Q1 e Q2 respondidas por dry-run: referência cruzada ao
+> `PricebookEntry` é aceita, mas o valor **não** é agregável por roll-up (A53) nem legível em
+> before-save (A55); `TotalPrice`/`Subtotal` do `QuoteLineItem` não são referenciáveis em fórmula
+> (A54). Desenho final **híbrido** (D21): 9 campos + 1 Flow `DD_CalculateLineCost`.
+> Verificação: 41,6667% / 28,0000% / 17,7083%; `DD_Revenue__c` = 416 = `TotalPrice` nativo e
+> `DD_Cost__c` = 293 = soma das linhas. Evidência em FLD-001, FLW-001 e VAL-001.
 
 ---
 

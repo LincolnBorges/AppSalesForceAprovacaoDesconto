@@ -37,16 +37,18 @@ Regras de uso:
 
 ### 1.2 Estado da construção do app Deal Desk
 
-**NENHUM metadado `DD_` foi criado ainda.** O projeto está na fundação (Fase 0). A tabela abaixo é o
-plano de nomes reservados — serve para evitar retrabalho e colisão.
+**Fase 1 concluída (2026-10-17):** 9 campos `DD_` criados na `Quote` e na `QuoteLineItem` e 1 Flow
+(`DD_CalculateLineCost`). Ainda **não** existe nenhum objeto custom. A tabela abaixo é o plano de
+nomes reservados — serve para evitar retrabalho e colisão.
 
 | Prefixo / nome | Situação | Observação |
 |---|---|---|
 | `DD_` | **reservado, não usado** | Prefixo de todo metadado custom do projeto (§4.1 do `AGENTS.md`) |
 | `DD_DiscountPolicy__c` | planejado (Fase 2) | Política de desconto por família de produto × price book |
 | `DD_DiscountRequest__c` | planejado (Fase 3) | Pedido de desconto: cotação, desconto pedido, margem calculada, justificativa, status |
-| `DD_*__c` em `Quote` | planejado (Fase 1) | Campos de roll-up de margem e estado do guardrail |
-| Flow `DD_CalculateQuoteMargin` | planejado (Fase 1) | `AutoLaunchedFlow` com `isInput`/`isOutput` explícitos |
+| `DD_*__c` em `Quote` / `QuoteLineItem` | **criado (Fase 1, 2026-10-17)** | 9 campos — ver §4.8 |
+| Flow `DD_CalculateLineCost` | **criado (Fase 1, 2026-10-17)** | `RecordBeforeSave` na `QuoteLineItem`, `Active` |
+| Flow `DD_CalculateQuoteMargin` | planejado (Fase 3) | `AutoLaunchedFlow` com `isInput`/`isOutput` explícitos |
 | Flow `DD_RouteDiscountApproval` | planejado (Fase 3) | `AutoLaunchedFlow` de decisão/roteamento |
 | LWC `ddMarginConsole` | planejado (Fase 4) | Console de margem na página da `Quote` |
 | Ações Agentforce `DD_*` | planejado (Fase 6) | bundle mdapi de 3 arquivos, API **66.0** |
@@ -134,6 +136,10 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 > 2026-10-16 — nenhum resíduo. Única mudança: `PricebookEntry` com custo passou de 5 para 24 (F0-08,
 > intencional).
 >
+> **Reconferido em 2026-10-17 (fechamento da Fase 1):** `FlowDefinitionView` 253 → **254**, ativos
+> 216 → **217**, locais 29 → **30** — exatamente +1 em cada, correspondente ao `DD_CalculateLineCost`
+> (FLD-001/FLW-001). Nenhum outro metadado mudou; sem resíduo.
+>
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
 > houve mais de um deploy do mesmo Flow. Flow ativo precisa ser **desativado antes**.
@@ -164,6 +170,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | D18 | **Moeda dos dados do app = `USD`.** A moeda corporativa **não** é alterada e **não** se cria price book BRL (ação F0-14 cancelada). | F0-12 provou que a troca corporativa não entrega BRL nos registros e que a margem é invariante à moeda; o usuário já vê BRL pela moeda pessoal dele | 2026-10-17 |
 | D19 | **Regra de Ouro de moeda na escrita:** todo registro criado/atualizado precisa ter moeda `USD` **comprovada**. Como `PricebookEntry.CurrencyIsoCode` é imutável (a org recusa o campo no update), a comprovação é feita por verificação **antes e depois** de cada escrita, abortando o lote se a moeda divergir de `USD`. | Pedido explícito do humano em 2026-10-17. Aplicado na F0-08: 19 registros, 0 não-USD, lote abortaria em moeda ≠ USD | 2026-10-17 |
 | D20 | **Todo campo custom novo entrega, na MESMA operação: (a) FLS `Visible`+`Editable` no perfil System Administrator e (b) o campo no Page Layout padrão do objeto** com `<behavior>Edit</behavior>`. | Gap de processo identificado pelo humano em 2026-10-17: o campo pode ser deployado com sucesso e ficar invisível na tela, **sem erro nenhum**. Verificação: `FieldPermissions` por `ParentId` do PS do perfil + `sf project retrieve start --metadata "Layout:<Objeto>-<Label do Layout>"` e `grep` do campo. Guardrail **S13**, convenção 12 e skill `validate-metadata` §2/§4 | 2026-10-17 |
+| D21 | **Abordagem híbrida de cálculo (F1-03):** fórmula onde é determinística, **1 Flow** só onde a plataforma obriga. `DD_CostPerUnit__c` = fórmula com referência cruzada; `DD_CostAmount__c` = Currency **gravado** pelo Flow `DD_CalculateLineCost`; `DD_MarginPct__c` = fórmula local (para poder ser agregada). | Os probes provaram que roll-up não agrega fórmula com referência cruzada (A53) e que o before-save não lê esse tipo de fórmula (A55). Desenho 100% declarativo é impossível sem perder o consolidado da `Quote` | 2026-10-17 |
 
 ---
 
@@ -196,6 +203,8 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | A50 | A46 refinado: o resíduo `Obsolete` só aparece quando houve **mais de um deploy** do mesmo Flow. | Corolário: cada redeploy de Flow para corrigir algo cria lixo que exige limpeza extra — validar bem antes de subir |
 | A51 | `diff` byte a byte após retrieve **não** é teste de integridade (a org preenche defaults e normaliza newlines). | O teste válido é "os arquivos esperados voltam e fazem parse" |
 | A53 | **Roll-Up Summary não agrega campo de fórmula com referência cruzada.** A fórmula do filho é criada (`Succeeded`), mas o roll-up falha: `The summarized field in not deterministic.` Fórmula **determinística** (só campos locais) é agregável — confirmado em dry-run, inclusive com multi-moeda ligado. | Consequência de projeto: o campo somado **não pode** depender de outro objeto. `QuoteLineItem.DD_CostAmount__c` (custo do `PricebookEntry`) tem de ser **Currency gravado por Flow**, não fórmula; `DD_MarginPct__c` pode ser fórmula. Provado em PRB-002 |
+| A54 | **`QuoteLineItem.Subtotal` e `TotalPrice` existem, aparecem no layout e no `describe`, mas NÃO são referenciáveis em fórmula.** O erro é `Field Subtotal does not exist. Check spelling.`. `DiscountAmount` **é** referenciável (mas está nulo na org e não é mantido). | Receita líquida da linha tem de ser inlinada: `UnitPrice * Quantity * (1 - Discount / 100)`. Pegou no dry-run de FLD-001 |
+| A55 | **`RecordBeforeSave` não aceita campo de fórmula com referência cruzada.** `field integrity exception: unknown (When the TriggerType field is set to "RecordBeforeSave", the $Record.<campo> field isn't supported.)`. Fórmula local em before-save é aceita; o problema é a dependência de outro objeto. | O Flow antes de salvar obtém o custo por **`Get Records`** no `PricebookEntry`, não por `$Record.DD_CostPerUnit__c`. Pegou no dry-run de FLW-001 |
 
 ---
 
@@ -279,6 +288,28 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 | Roll-Up Summary sobre fórmula com **referência cruzada** é **recusado** (`The summarized field in not deterministic.`) | dry-run PRB-002 `Failed` (`0Afas00000606mpCAA`, `0Afas00000606OYCAY`) — ver **A53** |
 | `Quote.TotalPrice` e `Quote.Subtotal` já são Roll-Up Summary (SUM `QuoteLineItem`) → master-detail `Quote → QuoteLineItem` confirmado | Tooling `FieldDefinition` |
 
+### 4.8 Campos de margem da Fase 1 (criados 2026-10-17)
+
+| Objeto | Campo | Tipo | Definição |
+|---|---|---|---|
+| `QuoteLineItem` | `DD_CostPerUnit__c` | Formula Currency(18,2) | `PricebookEntry.FixedCost__c + PricebookEntry.VariableCostPerUnit__c` — **não** agregável (A53) |
+| `QuoteLineItem` | `DD_CostAmount__c` | **Currency(18,2) gravado** | Flow `DD_CalculateLineCost`: `(FixedCost__c + VariableCostPerUnit__c) * Quantity` |
+| `QuoteLineItem` | `DD_MarginAmount__c` | Formula Currency(18,2) | `UnitPrice * Quantity * (1 - Discount / 100) - DD_CostAmount__c` |
+| `QuoteLineItem` | `DD_MarginPct__c` | Formula Percent(18,4) | receita inlinada; `IF(receita = 0, 0, (receita - DD_CostAmount__c) / receita)` |
+| `Quote` | `DD_Revenue__c` | Roll-Up SUM | `QuoteLineItem.TotalPrice` |
+| `Quote` | `DD_Cost__c` | Roll-Up SUM | `QuoteLineItem.DD_CostAmount__c` |
+| `Quote` | `DD_MarginPct__c` | Formula Percent(18,4) | `IF(DD_Revenue__c = 0, 0, (DD_Revenue__c - DD_Cost__c) / DD_Revenue__c)` |
+| `Quote` | `DD_WorstLineMarginPct__c` | Roll-Up MIN | `QuoteLineItem.DD_MarginPct__c` |
+| `Quote` | `DD_GuardrailState__c` | Formula Text | `IF(DD_MarginPct__c >= 0.30, "Saudável", IF(DD_MarginPct__c >= 0.20, "Requer Justificativa", "Requer Aprovação"))` |
+
+- **FLS:** 9/9 `read=true` no perfil System Administrator; só `DD_CostAmount__c` com `edit=true`.
+- **Layouts:** 4 no `Quote Line Item Layout`, 5 no `Quote Layout`, todos `<behavior>Readonly</behavior>`
+  — fórmula/roll-up não aceitam `Edit` (exceção estrutural a D20, registrada).
+- **Massa de validação:** `Quote` `0Q0as0000021hOLCAY` (`DEMO-Quote-Margin-Bands`) + 3 linhas.
+- **Percent(18,4) devolve 4 casas no número percentual** (17,7083), não na fração — o arredondamento
+  para 2 casas fica na exibição.
+
+
 ---
 
 ## 5. Pendências — Roadmap de Construção (Fases 0 a 6)
@@ -289,7 +320,7 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 | Fase | Entrega | Pré-requisito | Status |
 |---|---|---|---|
 | **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida (hoje só 5 das 241 `PricebookEntry` têm custo), confirmação de moeda `USD` | — | **CONCLUÍDO** (2026-10-17: 24 entradas com custo · 2 price books · 2 famílias · todas `USD`) |
-| **1** | Cálculo de margem: campos `DD_*__c` na `Quote`/`QuoteLineItem` + Flow `DD_CalculateQuoteMargin` (**com `isInput`/`isOutput`** — D8) | Fase 0 | PENDENTE |
+| **1** | Cálculo de margem: 9 campos `DD_*__c` na `Quote`/`QuoteLineItem` (fórmula + roll-up) + Flow `DD_CalculateLineCost` (`RecordBeforeSave`) | Fase 0 | **CONCLUÍDO** (2026-10-17: 3 faixas validadas — 41,67% / 28,00% / 17,71% — e o total da `Quote` fecha com a soma das linhas) |
 | **2** | Política de desconto: objeto `DD_DiscountPolicy__c` + dados de política + skill `create-discount-policy` | Fase 1 | PENDENTE |
 | **3** | Guardrail e roteamento: `DD_DiscountRequest__c` + Flow `DD_RouteDiscountApproval` + notificação ao aprovador | Fase 2 | PENDENTE |
 | **4** | UI: LWC `ddMarginConsole` + `FlexiPage` na `Quote` + `CustomTab` + `CustomApplication` | Fase 3 | PENDENTE |
