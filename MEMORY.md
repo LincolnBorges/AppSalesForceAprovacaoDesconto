@@ -137,6 +137,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | D8 | **Todo Flow que virar ação de agente declara `isInput`/`isOutput` explicitamente desde a Fase 1.** | O `GenAiFunction` é empacotado com `input/schema.json` e `output/schema.json`; as variáveis do Flow são o que dá sentido ao schema (A43). Declarar depois custa redeploy (e cada redeploy de Flow cria resíduo `Obsolete` — A50). | 2026-10-16 |
 | D9 | **Não usar scratch org.** A org alvo é a `personal`. | A feature e a massa já estão provisionadas nela; scratch orgs não expõem o necessário (A7/A8/A9). | 2026-10-16 |
 | D10 | **A limpeza de metadado de teste exige conferência de resíduo dupla** (listagem de metadados **+** `FlowDefinitionView`/Tooling). | A46/A50: o delete de Flow deixa versão `Obsolete` quando houve redeploy. | 2026-10-16 |
+| D11 | **Toda alteração de arquivo termina obrigatoriamente em `git commit`**, com mensagem que descreva a mudança (Conventional Commits em pt-BR). O histórico do git é o rastro de evolução do projeto. | Requisito explícito do humano (2026-10-17): "quero que todas as mudanças sejam registradas para termos um rastreio". Detalhe operacional na convenção 11 do [`AGENTS.md`](AGENTS.md) §4 | 2026-10-17 |
 
 ---
 

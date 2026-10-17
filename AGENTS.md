@@ -106,6 +106,13 @@ instância `BRA44`, **Enterprise Edition trial** (`IsSandbox = false`,
    [`docs/execution-log.md`](docs/execution-log.md).
 10. **Segredos:** tokens, refresh tokens e senhas **nunca** entram em arquivos versionados, no log
     ou na conversa.
+11. **Rastreio por git (D11):** ao **final de toda mudança de arquivo**, rodar `git commit` com
+    mensagem que descreva a mudança — Conventional Commits em pt-BR, por assunto
+    (ex.: `feat(flow): adiciona DD_CalculateQuoteMargin`, `docs(memoria): registra a regra de commit`).
+    Um commit por assunto coeso; não empilhar mudanças não relacionadas. **Mudança de arquivo não
+    commitada = trabalho não registrado.** Antes do commit, conferir `git status` e nunca incluir
+    segredo, `.env`, `node_modules/`, `.sf/` ou `.sfdx/` (já cobertos pelo `.gitignore`).
+    Operações na org continuam exigindo entrada própria no [`docs/execution-log.md`](docs/execution-log.md).
 
 ---
 
@@ -231,4 +238,5 @@ Uma tarefa só é considerada concluída quando:
 - [ ] Todo registro criado tem `Name` iniciado por `DEMO-`, ou a exceção (A14) está registrada;
 - [ ] O resultado (Ids criados / erros) está em [`docs/execution-log.md`](docs/execution-log.md);
 - [ ] [`MEMORY.md`](MEMORY.md) foi atualizado com IDs novos e cache de metadados;
+- [ ] Toda mudança de arquivo foi commitada (`git status` limpo) com mensagem que descreva a mudança (D11);
 - [ ] A resposta final é um resumo compacto em tabela, sem emojis.

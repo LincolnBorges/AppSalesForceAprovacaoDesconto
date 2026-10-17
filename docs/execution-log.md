@@ -51,6 +51,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | # | Data | Operação | Objeto | Resultado | Id |
 |---|---|---|---|---|---|
 | INIT-001 | 2026-10-16 | estruturação do projeto (nenhuma escrita na org) | — | OK | — |
+| DOCS-001 | 2026-10-17 | convenção de rastreio por git — D11 (nenhuma escrita na org) | — | OK | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -75,6 +76,22 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | Observações | Conhecimento migrado do projeto `ProgramaRebateQ42026`: aprendizados A1–A51, decisões de arquitetura, cache de metadados dos objetos de venda e os resultados dos testes T1/T2/T3/T4/T6/T7. **Esta entrada não representa escrita na Salesforce** — o log nasce com o projeto |
 
 > O formato acima é o mesmo do projeto de origem, para permitir auditoria cruzada dos dois projetos.
+
+### [2026-10-17 10:12 -03:00] DOCS-001 — OK (convenção de rastreio por git)
+
+| Campo | Valor |
+|---|---|
+| Operação | edição de arquivos locais — **nenhuma escrita na org** |
+| Skill | — (não aplicável) |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | — (`MEMORY.md`, `AGENTS.md`, `docs/execution-log.md`) |
+| Ferramenta | `git` + edição de arquivo |
+| Parâmetros-chave | decisão **D11** (`MEMORY.md` §2); convenção **11** e item de DoD (`AGENTS.md` §4, §11) |
+| Resultado | regra registrada: toda mudança de arquivo termina em `git commit` com mensagem descritiva, por assunto |
+| Confirmação humana | sim — pedido direto do humano ("quero que todas as mudanças sejam registradas") |
+| Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
+| Tokens (aprox.) | 6000 |
+| Observações | repositório já existia (branch `master`, commit base `44c6d61`); convenção vale a partir desta sessão |
 
 ---
 
