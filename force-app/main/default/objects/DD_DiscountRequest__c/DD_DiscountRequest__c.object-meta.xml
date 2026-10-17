@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Pedido de desconto do Deal Desk: snapshot da politica aplicada e do estado do guardrail no momento da decisao. Nao guarda margem, custo nem receita: o numero fica na Quote, restrito por FLS (D14/D23). O Name e AutoNumber, logo o prefixo DEMO- e estruturalmente inaplicavel (A14).</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableStreamingApi>true</enableStreamingApi>
+    <externalSharingModel>ReadWrite</externalSharingModel>
+    <label>Pedido de Desconto</label>
+    <nameField>
+        <displayFormat>DR-{00000}</displayFormat>
+        <label>Numero do Pedido</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Pedidos de Desconto</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

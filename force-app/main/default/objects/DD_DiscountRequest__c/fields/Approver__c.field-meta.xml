@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Approver__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Quem decide. Resolvido pela escada D13/F3-10: gerente do dono da cotacao, dono da politica, admin ativo. Restrict e Cascade sao proibidos para User (A56).</description>
+    <label>Aprovador</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Pedidos de Desconto (Aprovador)</relationshipLabel>
+    <relationshipName>DD_DiscountRequestsAsApprover</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

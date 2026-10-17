@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RequestedDiscountPct__c</fullName>
+    <description>Desconto adicional pedido pelo vendedor sobre a cotacao, em numero percentual. Dado do solicitante, nao sensivel.</description>
+    <label>Desconto Pedido (%)</label>
+    <precision>5</precision>
+    <scale>2</scale>
+    <type>Percent</type>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PolicyName__c</fullName>
+    <description>Snapshot do nome da politica aplicada no momento da decisao. Gravado, nunca formula: formula recalcularia e reescreveria o passado.</description>
+    <label>Nome da Politica (snapshot)</label>
+    <length>80</length>
+    <type>Text</type>
+</CustomField>

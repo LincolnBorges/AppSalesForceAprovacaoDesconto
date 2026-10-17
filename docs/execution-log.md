@@ -65,6 +65,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | DPM-001 | 2026-10-17 | F2-02 criação do objeto `DD_DiscountPolicy__c` + 12 campos + 2 regras + FLS + layout | DD_DiscountPolicy__c | OK | deploy `0Afas00000606GVCAY` |
 | POL-001 | 2026-10-17 | F2-04 criação de 4 políticas `DEMO-` (Parts e Medical Equipment, genérica + específica) | DD_DiscountPolicy__c | OK | 4 Ids |
 | PRE-001 | 2026-10-17 | F2-06 teste da precedência genérica × específica por price book (nenhuma escrita) | DD_DiscountPolicy__c | OK | 4 cenários |
+| DRE-001 | 2026-10-17 | F3-03 criação do objeto `DD_DiscountRequest__c` + 18 campos + 3 regras + FLS + layout | DD_DiscountRequest__c | OK | deploy `0Afas00000606d4CAA` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -357,6 +358,25 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | não aplicável (leitura) |
 | Tokens (aprox.) | 3000 |
 | Observações | A específica vence a genérica em ambas as famílias, e a genérica só aparece sozinha quando não há específica — que é exatamente a regra de §3 da skill. **O que este teste NÃO prova (A19):** que um Flow real consiga aplicar a ordenação — o `Get Records` com `ORDER BY` em campo de fórmula é justamente o que a Fase 3 tem de validar |
+
+---
+
+### [2026-10-17 16:05 -03:00] DRE-001 — OK (F3-03: objeto DD_DiscountRequest__c)
+
+| Campo | Valor |
+|---|---|
+| Operação | `deploy_metadata` (objeto custom + campos + regras + layout + perfil) |
+| Skill | `validate-metadata` §2/§3/§4 |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`, trial até 2026-11-15) |
+| Objeto / Metadado | `DD_DiscountRequest__c` + 18 `CustomField` + 3 `ValidationRule` + 1 `Layout` + `Profile:Admin` |
+| Ferramenta | `sf project deploy start` (API 68.0, source format, `--source-dir` por componente) |
+| Parâmetros-chave | `--dry-run` antes; `--source-dir` restrito ao objeto novo, ao layout novo e a `Admin.profile-meta.xml`; `--test-level NoTestRun` |
+| Payload / SOQL | 24 componentes. Objeto: label `Pedido de Desconto`, `sharingModel=ReadWrite`, `nameField` **AutoNumber** `DR-{00000}`, `enableHistory=true` (histórico em `Status__c`, `Decision__c`, `Approver__c`). 18 campos, dos quais 4 obrigatórios: `Quote__c` (Lookup `Quote`, `Restrict`), `GuardrailState__c`/`Decision__c`/`Status__c` (Picklist restrita). Snapshot da política: `Policy__c` (`SetNull`), `PolicyName__c`, `PolicySpecificity__c`, `PolicyFloorMarginPct__c`, `PolicyTargetMarginPct__c`, `PolicyMaxDiscountPct__c`, `PolicyEffectiveFrom__c`, `PolicyRequiresJustification__c`. Pedido: `RequestedDiscountPct__c`, `Justification__c`, `Approver__c` (`User`, `SetNull` — A56), `ApproverSource__c`, `DecidedAt__c`, `DecisionNote__c`. **Sem margem, custo ou receita** (D14/D23) |
+| Confirmação humana | sim — modelagem apresentada e aprovada ("Aprovo — escada gerente → dono da política → admin ativo") |
+| Resultado | 1º dry-run `0Afas00000606I6CAI` **Failed** (1 erro, ver abaixo) · 2º dry-run **Succeeded** 24/24 · deploy `0Afas00000606d4CAA` **Succeeded** 24/24, 0 erros |
+| Reversão | `sf_delete_metadata` de `CustomObject:DD_DiscountRequest__c` remove objeto e filhos; o layout e as 14 `fieldPermissions` saem junto com o objeto (o arquivo `Admin.profile-meta.xml` precisa perder os blocos `DD_DiscountRequest__c.*`, o `layoutAssignments` e o `objectPermissions`) |
+| Tokens (aprox.) | 15000 |
+| Observações | **O dry-run pagou o custo:** o Profile foi rejeitado com `Element fieldPermissions is duplicated at this location in type Profile (166:24)` — a causa **não** era duplicidade de campo, era **ordem de elementos** no MDAPI (`fieldPermissions` tem de vir antes de `layoutAssignments`, que vem antes de `objectPermissions`). Corrigido reinserindo nos três pontos de ordem. Pós-deploy: FLS **14/14** `read+edit` (os 4 obrigatórios não recebem linha — A57); layout com **19/19** campos esperados, obrigatórios como `Required`, `Name` como `Readonly`; **1** layout só (sem duplicata); 3 regras `Active=true`; 4 campos `nillable=false` exatamente como planejado; `CurrencyIsoCode` presente (consulta sem erro) |
 
 ---
 

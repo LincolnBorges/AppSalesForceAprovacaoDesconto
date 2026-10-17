@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PolicySpecificity__c</fullName>
+    <description>Snapshot do nivel de precedencia resolvido (3 familia+price book, 2 All+price book, 1 familia, 0 global). Prova qual regra venceu.</description>
+    <label>Especificidade da Politica (snapshot)</label>
+    <precision>2</precision>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>

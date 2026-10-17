@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Decision__c</fullName>
+    <description>Saida do guardrail. ManagerApproval cobre piso e abaixo do piso (D12: vermelho sobe, nao bloqueia). Blocked e falha operacional de roteamento, nao veto de margem. NoPolicy e lacuna de governanca.</description>
+    <label>Decisao</label>
+    <required>true</required>
+    <trackHistory>true</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>AutoApproved</fullName><default>false</default><label>AutoApproved</label></value>
+            <value><fullName>ManagerApproval</fullName><default>false</default><label>ManagerApproval</label></value>
+            <value><fullName>Blocked</fullName><default>false</default><label>Blocked</label></value>
+            <value><fullName>NoPolicy</fullName><default>false</default><label>NoPolicy</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ApproverSource__c</fullName>
+    <description>Degrau da escada de aprovacao que resolveu o aprovador. Torna o fallback auditavel (F3-10).</description>
+    <label>Origem do Aprovador</label>
+    <trackHistory>true</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Manager</fullName><default>false</default><label>Manager</label></value>
+            <value><fullName>PolicyOwner</fullName><default>false</default><label>PolicyOwner</label></value>
+            <value><fullName>FallbackAdmin</fullName><default>false</default><label>FallbackAdmin</label></value>
+            <value><fullName>None</fullName><default>false</default><label>None</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

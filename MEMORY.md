@@ -45,7 +45,7 @@ nomes reservados — serve para evitar retrabalho e colisão.
 |---|---|---|
 | `DD_` | **reservado, não usado** | Prefixo de todo metadado custom do projeto (§4.1 do `AGENTS.md`) |
 | `DD_DiscountPolicy__c` | **criado (Fase 2, 2026-10-17)** | Política de desconto por família de produto × price book — deploy `0Afas00000606GVCAY`. Ver §4.9 |
-| `DD_DiscountRequest__c` | planejado (Fase 3) | Pedido de desconto: cotação, desconto pedido, margem calculada, justificativa, status |
+| `DD_DiscountRequest__c` | **criado (Fase 3, 2026-10-17)** | Pedido de desconto: **snapshot da política aplicada e do estado do guardrail**, sem margem/custo/receita (D14/D23). 18 campos + 3 regras; `Name` **AutoNumber** `DR-{00000}` (exceção A14). Deploy `0Afas00000606d4CAA`. Ver §4.10 |
 | `DD_*__c` em `Quote` / `QuoteLineItem` | **criado (Fase 1, 2026-10-17)** | 9 campos — ver §4.8 |
 | Flow `DD_CalculateLineCost` | **criado (Fase 1, 2026-10-17)** | `RecordBeforeSave` na `QuoteLineItem`, `Active` |
 | Flow `DD_CalculateQuoteMargin` | planejado (Fase 3) | `AutoLaunchedFlow` com `isInput`/`isOutput` explícitos |
@@ -145,7 +145,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 > Fase 1 e os baselines de Flow/LWC/Tab/FlexiPage **não** foram tocados: o pacote de deploy foi restrito
 > a `CustomObject:DD_DiscountPolicy__c`, `Layout:…` e `Profile:Admin`, de propósito, para **não**
 > redeployar o `DD_CalculateLineCost` e gerar versão `Obsolete` (A50). Baseline novo a conferir daqui
-> para frente: **objetos `DD_` = 1**.
+> para frente: **objetos `DD_` = 2** (política + pedido, Fase 3).
 >
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
@@ -203,6 +203,10 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | D20 | **Todo campo custom novo entrega, na MESMA operação: (a) FLS `Visible`+`Editable` no perfil System Administrator e (b) o campo no Page Layout padrão do objeto** com `<behavior>Edit</behavior>`. | Gap de processo identificado pelo humano em 2026-10-17: o campo pode ser deployado com sucesso e ficar invisível na tela, **sem erro nenhum**. Verificação: `FieldPermissions` por `ParentId` do PS do perfil + `sf project retrieve start --metadata "Layout:<Objeto>-<Label do Layout>"` e `grep` do campo. Guardrail **S13**, convenção 12 e skill `validate-metadata` §2/§4 | 2026-10-17 |
 | D21 | **Abordagem híbrida de cálculo (F1-03):** fórmula onde é determinística, **1 Flow** só onde a plataforma obriga. `DD_CostPerUnit__c` = fórmula com referência cruzada; `DD_CostAmount__c` = Currency **gravado** pelo Flow `DD_CalculateLineCost`; `DD_MarginPct__c` = fórmula local (para poder ser agregada). | Os probes provaram que roll-up não agrega fórmula com referência cruzada (A53) e que o before-save não lê esse tipo de fórmula (A55). Desenho 100% declarativo é impossível sem perder o consolidado da `Quote` | 2026-10-17 |
 | D22 | **Modelagem de `DD_DiscountPolicy__c` (F2-01):** (a) a precedência é um **campo de fórmula derivado** `Specificity__c` (3/2/1/0), nunca digitado, e a resolução é `ORDER BY Specificity__c DESC, EffectiveFrom__c DESC LIMIT 1`; (b) `ProductFamily__c` é picklist **não restrita** com as 14 famílias reais + `All`; (c) **sem campo-chave único/externalId** em (família, price book); (d) `Pricebook__c` aceita `SetNull` porque `Restrict` é proibido (A56); (e) `MaxDiscountPct__c` é **referência, não veto** (D12 revogou o bloqueio). | (a) derivar em vez de digitar elimina a possibilidade de política com precedência inconsistente e dispensa o Flow só para ordenar; (b) mantém paridade literal com `Product2.Family`, condição para o Flow comparar as strings, e o `All` cobre o fallback global que a skill já oferece na elicitação; (c) uma chave única impediria criar **nova vigência** para a mesma família+price book depois que a anterior expira — a idempotência fica na checagem por SOQL e o empate é desempatado por vigência; (d) controle compensatório: apagar um `Pricebook2` exige antes apagar todas as suas `PricebookEntry`, e a resolução sempre lê `Specificity__c` junto do piso, então a degradação de "específica" para "genérica" fica visível | 2026-10-17 |
+| D23 | **O `DD_DiscountRequest__c` guarda o estado e o snapshot da política — não a margem, o custo nem a receita.** Os 8 campos `Policy*__c` são cópias **gravadas** (nunca fórmula) do que a política dizia no momento da decisão. | Pedido explícito do humano na F3-02 somado a D14: custo e margem são sensíveis e número na tela convida o vendedor a negociar contra o custo. O número continua recuperável na `Quote` (`DD_MarginPct__c`/`DD_Cost__c`) por quem tem FLS. **Divergência deliberada da `architecture.md` §3.2**, que previa `QuotedAmount__c`/`CostAmount__c`/`ResultingMarginPct__c` | 2026-10-17 |
+| D24 | **Semântica final de `Decision__c`:** `AutoApproved` (margem ≥ alvo) · `ManagerApproval` (piso ≤ margem < alvo **e** margem < piso — D12: vermelho sobe) · `NoPolicy` (nenhuma política ativa: lacuna de governança, não se inventa piso) · `Blocked` (**falha operacional de roteamento**: nenhum aprovador resolvido). | Margem abaixo do piso **nunca** bloqueia (D12, F3-06 cancelada). `Blocked` deixa de significar veto de margem. Substitui a semântica da skill `route-approval` §1/§3, que dizia `desconto > teto ⇒ Blocked` — correção pendente na skill | 2026-10-17 |
+| D25 | **A política é resolvida pela família de produto da PIOR linha** da cotação (menor `DD_MarginPct__c`), coerente com `Quote.DD_WorstLineMarginPct__c`. | Um pedido de desconto é do negócio inteiro: a linha mais frágil é a que não pode passar. **Limitação assumida:** cotação com famílias de pisos diferentes é decidida só pela família da pior linha; quando os pisos divergirem de fato, o upgrade é um loop sobre as famílias distintas | 2026-10-17 |
+| D26 | **Escada de aprovador (F3-10):** `User.ManagerId` do dono da cotação → dono da política aplicada (se ativo e ≠ solicitante) → admin ativo (`Profile.Name = System Administrator`, ≠ solicitante) → `Blocked` com mensagem nomeando o que falta cadastrar. O degrau usado é gravado em `ApproverSource__c`. | 20 de 23 usuários ativos não têm gerente — inclusive o dono da cotação de teste. Sem fallback, o caminho principal da demo não geraria pedido. Nunca autoaprova: o solicitante é excluído de todos os degraus | 2026-10-17 |
 
 ---
 
@@ -387,6 +391,32 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
   LIMIT 1
   ```
   `EffectiveFrom__c DESC` é o desempate quando duas políticas têm a mesma especificidade.
+
+### 4.10 `DD_DiscountRequest__c` — contrato de escrita (criado 2026-10-17)
+
+- **Objeto:** label `Pedido de Desconto`, plural `Pedidos de Desconto`, `sharingModel = ReadWrite`,
+  `nameField` **AutoNumber** `DR-{00000}` → **S11 estruturalmente inaplicável (A14)**. `enableHistory = true`
+  com histórico em `Status__c`, `Decision__c`, `Approver__c`.
+- **`CurrencyIsoCode` existe** (org multi-moeda) → toda escrita manda `USD` explícito (D5/S12).
+- **Obrigatórios (`nillable=false`), 4:** `Quote__c`, `GuardrailState__c`, `Decision__c`, `Status__c`.
+  (`PolicyRequiresJustification__c` também volta `nillable=false` porque **todo Checkbox** é não-nulo na
+  plataforma — não é campo required e recebe FLS normalmente.)
+- **`Quote__c`:** Lookup `Quote`, `deleteConstraint = Restrict` — apagar a cotação exige apagar o pedido antes
+  (proteção do rastro). `Restrict` é permitido para `Quote`; A56 só proíbe `Lead`/`User`/`Product2`/`Pricebook2`.
+- **`Approver__c`:** Lookup `User`, `SetNull` (A56). **`Policy__c`:** Lookup `DD_DiscountPolicy__c`, `SetNull`
+  — o snapshot mora nos 8 campos `Policy*__c`, todos gravados.
+- **Picklists:** `GuardrailState__c` = `Saudável` · `Requer Justificativa` · `Requer Aprovação` ·
+  `Pendente de Política` · `Decision__c` = `AutoApproved` · `ManagerApproval` · `Blocked` · `NoPolicy` ·
+  `Status__c` = `Draft`(default) · `Submitted` · `InReview` · `Approved` · `Rejected` · `Expired` ·
+  `ApproverSource__c` = `Manager` · `PolicyOwner` · `FallbackAdmin` · `None`.
+- **Validation rules (3, `Active`):** `DD_Request_Justification_Required` · `DD_Request_Approver_Required` ·
+  `DD_Request_Decision_Date`. Detalhe em DRE-001 do log.
+- **FLS/visibilidade (S13/D20):** 14 campos não obrigatórios com `read+edit` no PS `0PSas000004GBdfGAG`;
+  os 4 obrigatórios **sem** linha de `FieldPermissions` (A57). Layout `DD Discount Request Layout` com
+  **19/19** campos esperados e **1** layout só.
+- **Contrato para o Flow de roteamento:** criar com `Decision__c`, `Status__c = Submitted`, `GuardrailState__c`,
+  `Approver__c`, `ApproverSource__c`, os 8 `Policy*__c` e `CurrencyIsoCode = USD`; **nunca** gravar
+  `Status__c = Approved` (só o humano aprova).
 
 
 ---

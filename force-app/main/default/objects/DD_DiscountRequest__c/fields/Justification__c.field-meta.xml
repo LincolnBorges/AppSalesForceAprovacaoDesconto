@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Justification__c</fullName>
+    <description>Motivo declarado pelo vendedor. Exigido quando a politica aplicada pede justificativa (Regra de Validacao DD_Request_Justification_Required).</description>
+    <label>Justificativa</label>
+    <length>32000</length>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

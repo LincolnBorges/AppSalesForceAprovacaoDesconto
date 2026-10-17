@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Request_Approver_Required</fullName>
+    <active>true</active>
+    <description>Pedido em aprovacao tem de sair do Flow com aprovador resolvido, nunca em aberto.</description>
+    <errorConditionFormula>AND(ISPICKVAL(Decision__c, "ManagerApproval"), ISBLANK(Approver__c))</errorConditionFormula>
+    <errorDisplayField>Approver__c</errorDisplayField>
+    <errorMessage>Pedido em aprovacao exige aprovador resolvido (gerente, dono da politica ou admin ativo).</errorMessage>
+</ValidationRule>
