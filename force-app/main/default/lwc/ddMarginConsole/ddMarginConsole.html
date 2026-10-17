@@ -1,0 +1,143 @@
+<template>
+    <lightning-card title="Guardrail de desconto" icon-name="standard:quotes">
+        <div class="console-body slds-p-around_medium">
+            <template lwc:if={hasRecordId}>
+                <template lwc:if={isLoading}>
+                    <lightning-spinner alternative-text="Carregando estado" size="small"></lightning-spinner>
+                </template>
+
+                <template lwc:if={loadError}>
+                    <p class="slds-text-color_error">{loadError}</p>
+                </template>
+
+                <template lwc:if={hasState}>
+                    <div class="state-line">
+                        <lightning-icon icon-name={stateIcon} size="x-small"></lightning-icon>
+                        <span class={stateBadgeClass} data-testid="guardrail-state">{stateLabel}</span>
+                        <lightning-button-icon
+                            icon-name="utility:refresh"
+                            alternative-text="Atualizar estado"
+                            title="Atualizar estado"
+                            onclick={handleRefresh}
+                        ></lightning-button-icon>
+                    </div>
+                    <p class="slds-text-body_regular slds-m-top_x-small">{stateGuidance}</p>
+                </template>
+
+                <div class="section slds-m-top_medium slds-border_top slds-p-top_medium">
+                    <h2 class="slds-text-heading_small">Simulador de desconto</h2>
+                    <p class="slds-text-body_small slds-text-color_weak">
+                        A simulação não grava nada: mostra como a cotação ficaria. Nenhum pedido é criado.
+                    </p>
+                    <div class="slds-grid slds-gutters slds-m-top_small">
+                        <div class="slds-col slds-size_7-of-12">
+                            <lightning-input
+                                type="number"
+                                label="Desconto a simular (%)"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={simDiscountPct}
+                                onchange={handleSimDiscountChange}
+                                disabled={simRunning}
+                                data-testid="sim-discount"
+                            ></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_5-of-12 slds-align-bottom slds-p-bottom_small">
+                            <lightning-button
+                                label={simulateButtonLabel}
+                                onclick={handleSimulate}
+                                disabled={simRunning}
+                            ></lightning-button>
+                        </div>
+                    </div>
+
+                    <template lwc:if={simRunning}>
+                        <lightning-flow
+                            flow-api-name="DD_CalculateQuoteMargin"
+                            flow-input-variables={simInputs}
+                            onstatuschange={handleSimulateStatus}
+                        ></lightning-flow>
+                    </template>
+
+                    <template lwc:if={simError}>
+                        <p class="slds-text-color_error slds-m-top_small">{simError}</p>
+                    </template>
+
+                    <template lwc:if={hasSimResult}>
+                        <div class="result-panel slds-m-top_small" data-testid="sim-result">
+                            <p class="slds-text-body_small slds-text-color_weak">Estado projetado</p>
+                            <div class="state-line">
+                                <lightning-icon icon-name={simResultIcon} size="x-small"></lightning-icon>
+                                <span class={simResultBadgeClass}>{simResultState}</span>
+                            </div>
+                            <p class="slds-text-body_small slds-m-top_x-small">
+                                Política aplicada: {simResultPolicy}
+                            </p>
+                            <p class="slds-text-body_small">{simResultDecision}</p>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="section slds-m-top_medium slds-border_top slds-p-top_medium">
+                    <h2 class="slds-text-heading_small">Pedir desconto</h2>
+                    <lightning-input
+                        type="number"
+                        label="Desconto solicitado (%)"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={reqDiscountPct}
+                        onchange={handleRequestDiscountPctChange}
+                        disabled={routeRunning}
+                    ></lightning-input>
+                    <lightning-textarea
+                        label={justificationLabel}
+                        value={reqJustification}
+                        onchange={handleJustificationChange}
+                        disabled={routeRunning}
+                        class="slds-m-top_x-small"
+                    ></lightning-textarea>
+                    <lightning-button
+                        variant="brand"
+                        label={requestButtonLabel}
+                        onclick={handleRequestDiscount}
+                        disabled={isRequestDisabled}
+                        class="slds-m-top_small"
+                    ></lightning-button>
+
+                    <template lwc:if={routeRunning}>
+                        <lightning-flow
+                            flow-api-name="DD_RouteDiscountApproval"
+                            flow-input-variables={routeInputs}
+                            onstatuschange={handleRouteStatus}
+                        ></lightning-flow>
+                    </template>
+
+                    <template lwc:if={routeError}>
+                        <p class="slds-text-color_error slds-m-top_small">{routeError}</p>
+                    </template>
+
+                    <template lwc:if={hasRouteResult}>
+                        <div class="result-panel slds-m-top_small" data-testid="route-result">
+                            <p class="slds-text-heading_small">{routeResultDecision}</p>
+                            <p class="slds-text-body_small">{routeResult.message}</p>
+                            <p class="slds-text-body_small" lwc:if={routeResult.requestId}>
+                                Pedido: {routeResult.requestId}
+                            </p>
+                            <p class="slds-text-body_small" lwc:if={routeResult.approverName}>
+                                Aprovador: {routeResult.approverName}
+                            </p>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template lwc:else>
+                <p class="slds-text-body_regular">
+                    Abra o console a partir de uma cotação para ver o estado do guardrail.
+                </p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
