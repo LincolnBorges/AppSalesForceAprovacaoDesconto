@@ -2,8 +2,11 @@
 
 App Salesforce que impede a erosão de margem por desconto em cotações de venda.
 
-> **Status:** fundação (Fase 0). Nenhum metadado `DD_` foi criado ainda na org.
-> Plano completo em [`docs/roadmap.md`](docs/roadmap.md).
+> **Status:** Fases 0 a 6 **concluídas** (2026-10-17). O app está na org `personal`: política, flows de
+> margem e roteamento, console LWC, permission set, massa de demonstração e o agente Agentforce
+> `DDDealDeskAgent` **ativo**, com a ação `DD_CalculateMargin` e 4 perguntas reais validadas.
+> Plano completo em [`docs/roadmap.md`](docs/roadmap.md) e o histórico de operações em
+> [`docs/execution-log.md`](docs/execution-log.md).
 
 ---
 
@@ -29,7 +32,7 @@ Quatro camadas, cada uma resolvendo uma parte:
 | Camada | O que entrega | Tecnologia |
 |---|---|---|
 | **Dados** | Política de desconto (piso de margem por família × price book) e o registro do pedido de desconto | Objetos custom `DD_*__c` + os campos de custo já existentes no `PricebookEntry` |
-| **Lógica** | Calcula a margem por linha, compara com o piso e decide: aprovado, escalar ou bloquear | Flow (`AutoLaunchedFlow` com `isInput`/`isOutput`) |
+| **Lógica** | Calcula a margem por linha, compara com o piso e decide em **4 desfechos**: `Saudável`, `Requer Justificativa`, `Requer Aprovação` e `Pendente de Custo` | Flow (`AutoLaunchedFlow` com `isInput`/`isOutput`) |
 | **UI** | Console na cotação: margem por linha, semáforo de desconto e simulador | LWC + `FlexiPage` na `Quote` |
 | **IA** | O vendedor pergunta em linguagem natural; o agente calcula, aponta a política e recomenda — o humano decide | Agentforce (`GenAiFunction` + `GenAiPlugin` + planner) |
 
@@ -71,6 +74,8 @@ DealDeskGuardrail/
 │   ├── execution-log.md   # auditoria de toda operação
 │   └── artifacts/         # receitas e templates validados
 ├── force-app/             # metadados versionados (DX)
+├── mdapi/                 # bundle mdapi da ação de agente (GenAiFunction, API 66.0)
+├── mdapi-f6bot/           # bundle mdapi do agente (Bot + BotVersion + GenAiPlannerBundle)
 ├── config/                # definição de scratch org (não usada — ver AGENTS.md §3)
 ├── scripts/               # SOQL e Apex de apoio
 └── sfdx-project.json      # manifesto DX (sourceApiVersion 68.0)

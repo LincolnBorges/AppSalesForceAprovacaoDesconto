@@ -64,11 +64,11 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
 | 5 | Acesso, dados e demo | 8 | 6 | CONCLUÍDO |
-| 6 | Camada Agentforce | 10 | 4 | BLOQUEADO (F6-07: sem template `EinsteinServiceAgent`) |
+| 6 | Camada Agentforce | 11 | 10 | CONCLUÍDO (2026-10-17) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **70** | **57** | |
+| **Total** | | **71** | **63** | |
 
-*Atualizado em 2026-10-17 (Fase 6 em andamento: ação de agente íntegra; agente bloqueado pela plataforma).*
+*Atualizado em 2026-10-17 (Fase 6 fechada: agente `DDDealDeskAgent` ativo e 4 perguntas reais validadas; tag `fase-6`).*
 
 ---
 
@@ -80,10 +80,9 @@ paradas no ponto indicado.
 | ID | Decisão | Bloqueia | Efeito se não houver resposta |
 |---|---|---|---|
 | — | Nenhuma pendente — Fases 0 e 1 fechadas em 2026-10-17 | — | — |
-| F6-10 | **Como destravar o agente Agentforce** — a criação do `Bot` falha por falta de acesso aos *agent templates* do tipo `EinsteinServiceAgent` (AF-002/A78). Caminhos: (a) habilitar/provisionar o template de Service Agent no Setup e repetir F6-07; (b) aceitar a Fase 6 entregando só a ação de agente (`GenAiFunction` íntegra); (c) autorizar um probe controlado de `Bot` tipo `Employee` via bundle mdapi — caminho que a ferramenta MCP **não** expõe | F6-05, F6-06, F6-07, F6-08 | Fase 6 fica com a ação pronta e sem agente; `GenAiPlugin`/`GenAiPlannerBundle`/`Bot` permanecem no baseline |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
-> F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15.
+> F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15 · F6-10 → D30.
 
 ---
 
@@ -182,12 +181,13 @@ paradas no ponto indicado.
 | F6-02 | Escopo e limites do agente | **F6-01** | Que perguntas responde, o que **nunca** faz (jamais aprovar, jamais exibir margem numérica), tom e limites da resposta | HUMANO | CONCLUÍDO (2026-10-17): nunca aprova, nunca cita margem, ver D15 |
 | F6-03 | Deploy da `GenAiFunction` | **F6-02** | Bundle mdapi de 3 arquivos (`-meta.xml` + `input/schema.json` + `output/schema.json`) em API 66.0, pela skill `deploy-agentforce-action`; **não** usar `sf_create_agent_action` (A44) | IA | CONCLUÍDO (2026-10-17): `DD_CalculateMargin` `172as000008FaHtAAK`; dry-run `0Afas0000060DOPCA2` + deploy `0Afas0000060DQ1CAM`. Schema com `marginBp`/`worstLineBp`/`diagnostics` invisíveis ao planner (D15) e `CostPending`/`Pendente de Custo` documentados. Ver AF-001 |
 | F6-04 | Retrieve de integridade | **F6-03** | Conferir que os 3 arquivos voltam e fazem parse (A45); se faltar schema, corrigir antes de seguir | IA | CONCLUÍDO (2026-10-17): retrieve 66.0 devolveu os **3 arquivos**, todos fazem parse; input 2/2 e output **17/17** casando com as variáveis da org. Ver AF-001 |
-| F6-05 | Tópico do agente (`GenAiPlugin`) | **F6-02**, **F6-04** | Criar o tópico via MCP com as ações e as instruções do §6.3 da [`architecture.md`](architecture.md) | IA | BLOQUEADO (2026-10-17): depende do agente, que não pôde ser criado (AF-002). Payload das 11 instruções (D15) aprovado e pronto; ver **F6-10** |
-| F6-06 | Planner | **F6-05** | Criar/atualizar o planner via MCP com a lista **completa** de tópicos | IA | BLOQUEADO (2026-10-17): mesma causa; `GenAiPlannerBundle` segue 6. Ver **F6-10** |
-| F6-07 | Ligar o agente | **F6-06** | `sf_create_agent` com `plannerName`; registrar os IDs em `MEMORY.md` §1.5 | IA | BLOQUEADO (2026-10-17): `sf_create_agent` **falhou** — `Looks like you don't have access to agent templates associated with the EinsteinServiceAgent agent type`; **nenhum resíduo** (0 `Bot` `DDDealDeskAgent`). Erro literal em AF-002 e A78. Ver **F6-10** |
-| F6-08 | Testar 3 perguntas reais | **F6-07** | O agente resume o cenário, indica o próximo passo e **não** afirma que aprovou nem cita margem numérica | IA | PENDENTE (bloqueado por F6-10) |
-| F6-09 | Fechar a Fase 6 | **F6-08** | Atualizar `MEMORY.md`, `execution-log`, este plano, `roadmap` e `README`; commit e tag `fase-6` | IA | PENDENTE (bloqueado por F6-10) |
-| F6-10 | Destravar a criação do agente | — | Decidir entre: (a) habilitar/provisionar o template de Service Agent no Setup e repetir F6-07; (b) aceitar a Fase 6 só com a ação de agente; (c) autorizar probe de `Bot` tipo `Employee` via bundle mdapi (a ferramenta MCP não expõe esse tipo) | HUMANO | PENDENTE |
+| F6-05 | Tópico do agente (`GenAiPlugin`) | **F6-02**, **F6-04** | Criar o tópico via MCP com as ações e as instruções do §6.3 da [`architecture.md`](architecture.md) | IA | CONCLUÍDO (2026-10-17): `DD_DealDesk_Guardrail` (`179as000000E0rNAAS`) via MCP, com a ação `DD_CalculateMargin` e **11 instruções** (não aprovar, não citar margem, tratar `CostPending`). Ver AF-003 |
+| F6-06 | Planner | **F6-05** | Criar/atualizar o planner via MCP com a lista **completa** de tópicos | IA | CONCLUÍDO (2026-10-17): `DDDealDeskPlanner` (`16jas00000061avAAA`), `AiCopilot__ReAct`, com o tópico. **Desvio:** saiu por mdapi, no mesmo bundle do bot, para o vínculo ser atômico e não redeployar o bot com o tipo errado (AF-003). `GenAiPlannerBundle` 6 → **7** |
+| F6-07 | Ligar o agente | **F6-06** | `sf_create_agent` com `plannerName`; registrar os IDs em `MEMORY.md` §1.5 | IA | CONCLUÍDO (2026-10-17): o MCP **falhou** (AF-002, erro literal); o agente saiu por bundle mdapi `Bot`+`BotVersion` com `agentType = AgentforceEmployeeAgent` (**D30**). `DDDealDeskAgent` `0Xxas000000AJpNCAW`, v1 `0X9as000000F9kXCAS` **`Active`** (ativação no Builder, **A80**). `Bot` 6 → **7** |
+| F6-08 | Testar 3 perguntas reais | **F6-07** | O agente resume o cenário, indica o próximo passo e **não** afirma que aprovou nem cita margem numérica | IA | CONCLUÍDO (2026-10-17): **4/4** no Conversation Preview — `Saudável`/`AutoApproved`, `Requer Aprovação`/`ManagerApproval`, `Pendente de Custo`/`CostPending` e a adversaria de margem/custo, em que o agente **recusou** dar números. Desvio menor: não citou o nome da política → **F6-11**. Ver AF-004 |
+| F6-09 | Fechar a Fase 6 | **F6-08** | Atualizar `MEMORY.md`, `execution-log`, este plano, `roadmap` e `README`; commit e tag `fase-6` | IA | CONCLUÍDO (2026-10-17): `MEMORY.md` §1.2/§1.5/§1.6/§2 (D30)/§3 (A79/A80), `execution-log` (AF-003/AF-004), este plano, `roadmap` e `README`; tag `fase-6` |
+| F6-10 | Destravar a criação do agente | — | Decidir entre: (a) habilitar/provisionar o template de Service Agent no Setup e repetir F6-07; (b) aceitar a Fase 6 só com a ação de agente; (c) autorizar probe de `Bot` tipo `Employee` via bundle mdapi (a ferramenta MCP não expõe esse tipo) | HUMANO | CONCLUÍDO (2026-10-17): humano autorizou a opção (c); probe executado em AF-003 com sucesso — decisão **D30** |
+| F6-11 | Agente deve citar a política e o piso na resposta | **F6-08** | Nas respostas 1 e 2 o agente não citou o nome da política nem o piso no texto (instrução 3 do tópico), embora o trace os exiba. Reforçar a instrução e revalidar as 3 perguntas | IA | PENDENTE |
 
 ### Transversais (contínuas)
 
@@ -220,3 +220,4 @@ paradas no ponto indicado.
 | 2026-10-17 | **Fase 5 fechada:** F5-03 (validação visual do humano), F5-05 (ensaio) e F5-06 (fechamento) concluídas; tag `fase-5`. Fase 6 (Agentforce) liberada |
 | 2026-10-17 | **F6-01, F6-03 e F6-04 concluídas:** pré-requisitos provados por retrieve (Flow v25 ativo, 2 `isInput`/17 `isOutput`), bundle mdapi de 3 arquivos deployado (`DD_CalculateMargin`, `172as000008FaHtAAK`) e retrieve de integridade devolvendo os 3 arquivos. Ver AF-001 |
 | 2026-10-17 | **F6-05/F6-06/F6-07 bloqueadas** por falha de plataforma: `sf_create_agent` recusa o tipo `EinsteinServiceAgent` (sem acesso ao template), sem deixar resíduo. Criada **F6-10** (decisão humana de desbloqueio) e registrado **A78**. Fase 6: 4 de 10 ações concluídas |
+| 2026-10-17 | **F6-10 decidida e F6-05 a F6-09 concluídas:** humano autorizou o probe de `Bot` Employee; agente `DDDealDeskAgent` criado por mdapi, tópico via MCP, planner no bundle, ativação no Builder. **4/4 perguntas reais** validadas (AF-004). Novas decisões/aprendizados **D30/A79/A80**; aberta **F6-11** (citar a política). Fase 6: 10 de 11 ações |

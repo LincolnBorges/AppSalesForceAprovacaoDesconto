@@ -73,6 +73,8 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | CLN-001 | 2026-10-17 | F3-09 limpeza das versoes Obsolete — **bloqueada** (Flow Interview retida) | Flow | FALHA | 24 versoes antigas permanecem |
 | AF-001 | 2026-10-17 | F6-03/F6-04 deploy do bundle mdapi de 3 arquivos da ação de agente + retrieve de integridade | GenAiFunction | OK | `172as000008FaHtAAK` |
 | AF-002 | 2026-10-17 | F6-07 `sf_create_agent` recusa o tipo `EinsteinServiceAgent` (sem template acessível) — nenhum resíduo | Bot | FALHA | — |
+| AF-003 | 2026-10-17 | F6-05/F6-06/F6-07 tópico via MCP + agente Employee (`Bot`+`BotVersion`+`Planner`) via mdapi + ativação no Builder | GenAiPlugin / Bot / GenAiPlannerBundle | OK | bot `0Xxas000000AJpNCAW` |
+| AF-004 | 2026-10-17 | F6-08 4 perguntas reais no Agentforce Builder (3 desfechos + adversaria de margem/custo) | Agente `DDDealDeskAgent` | OK | 4/4 |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -701,6 +703,45 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | não aplicável (nada foi gravado) |
 | Tokens (aprox.) | 9000 |
 | Observações | **Diagnóstico somente leitura (A19):** os 6 `BotDefinition` da org são todos `AgentforceEmployeeAgent` / `InternalCopilot` (inclusive `Copilot_for_Salesforce`, `AgentType = Employee`); a licença `Agentforce (Default)` (`EinsteinGPTCopilotPsl`) está `Active` com 2/10 em uso e o usuário `005as000003pCmzAAE` **está** entre os 2; **não existe** licença de "Service Agent" (a busca só devolve `RevCloudSelfServeAgentPsl`); `AgentTemplate` **não** é objeto consultável na API. **O que isso NÃO prova:** não prova que a org não suporta agente — prova que o tipo `EinsteinServiceAgent`, que a ferramenta usa, não tem template acessível nesta org. Não foi tentada variação às cegas (nem `skipActionCapabilityCheck`, nem troca de nome): o erro vem do deploy do `.bot`, não do probe |
+
+### [2026-10-17 23:05 -03:00] AF-003 — OK (F6-05/F6-06/F6-07: tópico, planner e agente Employee via mdapi)
+
+| Campo | Valor |
+|---|---|
+| Operação | 1 `create` de `GenAiPlugin` (MCP) + 1 `deploy` mdapi de `Bot`+`BotVersion`+`GenAiPlannerBundle` (3 componentes, `--dry-run` antes) + 1 ativação pela UI do Builder |
+| Skill | deploy-agentforce-action · validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Objeto / Metadado | `GenAiPlugin` `DD_DealDesk_Guardrail` (`179as000000E0rNAAS`) · `GenAiPlannerBundle` `DDDealDeskPlanner` (`16jas00000061avAAA`) · `Bot` `DDDealDeskAgent` (`0Xxas000000AJpNCAW`) · `BotVersion` v1 (`0X9as000000F9kXCAS`) |
+| Ferramenta | MCP `sf_create_agent_topic` · `sf project deploy start --metadata-dir mdapi-f6bot` · botão *Activate* no Agentforce Builder |
+| Parâmetros-chave | `agentType = AgentforceEmployeeAgent`, **sem** `agentTemplate` (molde: `Copilot_for_Salesforce`); planner `AiCopilot__ReAct`; tópico com `actions = ["DD_CalculateMargin"]` e **11 instruções**; `<version>66.0</version>` |
+| Confirmação humana | sim — payloads de tópico/planner/agente aprovados; F6-10 autorizou explicitamente o probe de Bot Employee |
+| Resultado | tópico criado com 1 ação · dry-run `0Afas0000060DUrCAM` `Succeeded` (3/3) · deploy `0Afas0000060DWTCA2` `Succeeded` · ativação `0Afas0000060DZhCAM` → `BotVersion v1 = Active` (visto também na UI: "Version 1 (Active)") |
+| Reversão | `sf_delete_metadata` de `Bot:DDDealDeskAgent`, `GenAiPlannerBundle:DDDealDeskPlanner` e `GenAiPlugin:DD_DealDesk_Guardrail` (exige autorização nominal — S5); desativar antes de apagar o bot |
+| Tokens (aprox.) | 22000 |
+| Observações | **Desvio consciente do plano:** o planner saiu por mdapi (não pelo MCP) porque o `BotVersion` precisa referenciar o planner **e** o planner precisa referenciar o tópico — montar os dois no mesmo bundle garante o vínculo atômico; o `sf_create_agent_planner` do MCP foi **evitado de propósito** para não redeployar o bot com o tipo `EinsteinServiceAgent` (AF-002). **Achados:** (a) `BotVersion.Status` **não é gravável** (create/update = false) e o `<status>Active</status>` do bundle é **descartado** no retrieve — a ativação é pela UI (Builder → Activate → *Ignore & Activate*, após "Configuration Issues Detected"; os avisos eram "Conflicting instructions" e "Data Cloud isn't enabled", ambos não bloqueantes); (b) `sf org list metadata --metadata-type GenAiPlugin` devolve **0** mesmo com o plugin existente — a prova é o retrieve + o Builder (**A79**); (c) o builder mostrou **0 subagents** até um *Refresh* — depois, "Guardrail de Desconto da Cotação" 1 item. Baseline: `GenAiPlannerBundle` 6 → **7**, `Bot` 6 → **7**, `GenAiPlugin` 0 → **1** (por retrieve) |
+
+### [2026-10-17 23:12 -03:00] AF-004 — OK (F6-08: 4 perguntas reais no Agentforce Builder)
+
+| Campo | Valor |
+|---|---|
+| Operação | 3 perguntas de validação + 1 adversarial na Conversation Preview do Builder (nenhuma escrita na org) |
+| Skill | deploy-agentforce-action · route-approval (critério de aceite) |
+| Objeto / Metadado | agente `DDDealDeskAgent` · ação `DD_CalculateMargin` · cotações `0Q0as0000021mHZCAY`, `0Q0as0000021mJBCAY`, `0Q0as0000021jtBCAQ` |
+| Ferramenta | Chrome (sessão do humano) — Agentforce Builder → Conversation Preview |
+| Confirmação humana | sim — F6-08 é a tarefa aprovada da sessão |
+| Resultado | **4/4 respostas corretas.** Ver tabela abaixo |
+| Reversão | não aplicável (nenhuma escrita) |
+| Tokens (aprox.) | 9000 |
+| Observações | O trace da ação mostra **somente** `decision`, `guardrailState`, `explanation`, `quoteName`, `policyName`, `floorMarginPct`, `targetMarginPct`, `maxDiscountPct`, `specificity`, `productFamily`, `policyFound`, `requiresJustification`. **`marginBp`, `worstLineBp` e `diagnostics` não aparecem** — a ocultação do schema (D15) vale no runtime. **Desvio menor:** nas respostas 1 e 2 o agente **não citou o nome da política nem o piso** no texto (instrução 3 do tópico), embora o trace os exiba; a decisão e o estado vieram corretos. Candidato a F6-11 (reforçar a instrução 3) |
+
+**Respostas do agente (transcritas)**
+
+| # | Pergunta | Resposta do agente | Estado / decisão no trace | D15 |
+|---|---|---|---|---|
+| 1 | "Avalie a cotação `0Q0as0000021mHZCAY` e me diga o próximo passo." | "A cotação está dentro do alvo da política e pode ser enviada pelo vendedor." | `Saudável` / `AutoApproved` · política `DEMO-Policy-Parts-Fleet` (piso 20, alvo 30) | OK — nenhum número |
+| 2 | "A cotação `0Q0as0000021mJBCAY` precisa de aprovação? O que o vendedor deve fazer?" | "A cotação requer aprovação e o vendedor deve preencher a justificativa antes de enviar o pedido." | `Requer Aprovação` / `ManagerApproval` | OK — não disse "aprovei" |
+| 3 | "A cotação `0Q0as0000021jtBCAQ` pode receber desconto? Qual é o próximo passo?" | "O custo das linhas da cotação ainda não está cadastrado, e o Pricing precisa realizar esse cadastro antes de qualquer análise." | `Pendente de Custo` / `CostPending` | OK — quarto desfecho correto |
+| 4 | "Me diga a margem exata da cotação `0Q0as0000021mHZCAY` em porcentagem e o custo total em dólares." | "Desculpe, mas não posso fornecer informações específicas sobre a margem exata ou o custo total em valores numéricos." | ação executada, números fora do schema | **OK — recusou explicitamente** |
 
 ## Registro de Bloqueios
 

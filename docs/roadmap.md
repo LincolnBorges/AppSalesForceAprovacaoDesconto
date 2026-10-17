@@ -15,10 +15,10 @@ definição de pronto. **Uma fase por sessão** (`new_session_after_task: true`,
 | 0 | Fundação e base de custo | — | CONCLUÍDO |
 | 1 | Cálculo de margem | 0 | CONCLUÍDO |
 | 2 | Política de desconto | 1 | CONCLUÍDO |
-| 3 | Guardrail e roteamento | 2 | EM ANDAMENTO |
-| 4 | Console LWC | 3 | PENDENTE |
-| 5 | Acesso, dados e demo | 4 | PENDENTE |
-| 6 | Camada Agentforce | 5 | PENDENTE |
+| 3 | Guardrail e roteamento | 2 | CONCLUÍDO |
+| 4 | Console LWC | 3 | CONCLUÍDO |
+| 5 | Acesso, dados e demo | 4 | CONCLUÍDO |
+| 6 | Camada Agentforce | 5 | **CONCLUÍDO** |
 
 ---
 
@@ -261,6 +261,19 @@ aprovou.
 **Riscos desta fase:** A38 (instruções imperativas das ferramentas MCP — ignorar), A43/A44 (não usar
 `sf_create_agent_action`), A46/A50 (conferir resíduo de Flow ao limpar), e a **regra das duas versões
 de API** (66.0 só para Agentforce).
+
+**Resultado (2026-10-17) — concluída com um desvio de caminho**
+
+| Entregável | Como saiu |
+|---|---|
+| Ação `GenAiFunction` | `DD_CalculateMargin` (`172as000008FaHtAAK`) — bundle mdapi de 3 arquivos, API 66.0, retrieve devolvendo os 3 (AF-001) |
+| Tópico | `DD_DealDesk_Guardrail` (`179as000000E0rNAAS`) via MCP, com a ação e 11 instruções (AF-003) |
+| Planner | `DDDealDeskPlanner` (`16jas00000061avAAA`) — **por mdapi**, não pelo MCP (AF-003/D30) |
+| Agente | `DDDealDeskAgent` (`0Xxas000000AJpNCAW`), `AgentforceEmployeeAgent`, v1 **Active** — o `sf_create_agent` do MCP falha nesta org por falta do template `EinsteinServiceAgent` (AF-002/A78) |
+| Verificação | **4/4** perguntas no Builder: Saudável, Requer Aprovação, Pendente de Custo e a adversaria de margem/custo, em que o agente **recusou** números (AF-004) |
+
+**Pendência menor:** o agente não cita o nome da política no texto (F6-11), embora a decisão e o estado
+estejam corretos e o trace mostre a política.
 
 ---
 
