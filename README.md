@@ -2,9 +2,10 @@
 
 App Salesforce que impede a erosão de margem por desconto em cotações de venda.
 
-> **Status:** Fases 0 a 6 **concluídas** (2026-10-17). O app está na org `personal`: política, flows de
-> margem e roteamento, console LWC, permission set, massa de demonstração e o agente Agentforce
-> `DDDealDeskAgent` **ativo**, com a ação `DD_CalculateMargin` e 4 perguntas reais validadas.
+> **Status: v1.0.0 - Entregue** (2026-10-17). Fases 0 a 6 concluídas. O app está na org `personal`:
+> política, flows de margem e roteamento, console LWC, permission set, massa de demonstração e o agente
+> Agentforce `DDDealDeskAgent` **ativo**, com a ação `DD_CalculateMargin` e 4 perguntas reais validadas.
+> **Dívida conhecida (não bloqueia a v1.0):** F6-11 — o agente não cita o nome da política no texto.
 > Plano completo em [`docs/roadmap.md`](docs/roadmap.md) e o histórico de operações em
 > [`docs/execution-log.md`](docs/execution-log.md).
 

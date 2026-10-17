@@ -89,6 +89,12 @@ Os aprendizados marcados com **[D]** mudam **decisão de projeto** e estão repl
 | **A56 [D]** | Metadado | **`Restrict` e `Cascade` são proibidos em lookup para `Lead`, `User`, `Product2` e `Pricebook2`** — `custom cascade or restrict lookup relationship may not point to Lead, User, Product2, Pricebook2`. Só `SetNull` (ou omitir o `deleteConstraint`) é aceito. | Não há como proteger uma referência a `Pricebook2` contra exclusão pela plataforma. Quando a integridade semântica depender disso, o controle é **compensatório**: documentar a degradação possível e monitorar por SOQL. Pegou no dry-run de DPM-001 |
 | **A57 [D]** | Metadado | **Não se deploya `FieldPermissions` para campo `required`** — `You cannot deploy to a required field: <Objeto>.<Campo__c>`. A org nem cria a linha de `FieldPermissions` para esses campos. | A verificação de FLS por `FieldPermissions` volta **vazia** para campo obrigatório, o que *parece* falha de S13 e não é. Nesses casos a prova de visibilidade é **funcional**: criar o registro e reler o valor. Pegou no dry-run de DPM-001 |
 
+> **Aprendizados A58–A80.** Os que apareceram **durante a construção deste app** (A58 a A80) estão
+> registrados em [`MEMORY.md`](../MEMORY.md) §3, junto da implicação prática de cada um — e não são
+> duplicados aqui, para não existirem duas versões da mesma lição. Este catálogo cobre A1–A57.
+> **A60 não existe**: a numeração herdada foi preservada com a lacuna, em vez de renumerar os
+> aprendizados seguintes.
+
 ---
 
 ## 3. Padrões que emergem do conjunto
