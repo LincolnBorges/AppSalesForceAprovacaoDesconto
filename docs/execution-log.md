@@ -655,6 +655,20 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | não aplicável |
 | Observações | Não foi ação deste agente: na sessão houve apenas deploy de metadado, leitura e criação dos 7 registros de `DEM-001` (nenhum delete). Registrado para rastreio (S10). **Não recriar sem autorização nominal** — pode ter sido remoção deliberada. Baseline `MEMORY.md` §1.6 corrigido de 24 para 23 |
 
+### [2026-10-17 20:05 -03:00] ACES-001 — OK (F5-03 + F5-05 + F5-06: fase 5 fechada)
+
+| Campo | Valor |
+|---|---|
+| Operação | validação funcional (humano) + fechamento documental — nenhuma escrita na org |
+| Skill | validate-metadata |
+| Objeto / Metadado | `Quote` (FLS por perfil) · `PermissionSet:DD_DealDesk_User` |
+| Ferramenta | navegador (Admin × Standard User) + `sf data query` (FLS) |
+| Confirmação humana | sim — "O teste visual da F5-03 foi um sucesso absoluto… A segurança está provada" |
+| Resultado | **F5-03:** como Admin, `DD_Cost__c` e `DD_MarginPct__c` visíveis; como `Alan FieldTech` (`005as000003pCpEAAU`, Standard User, janela anônima), os campos **desaparecem por completo** e resta apenas o semáforo. A prova funcional **concorda** com a prova por dado (os 7 campos sensíveis só têm FLS no perfil System Administrator). **F5-05:** roteiro documentado e 3 estados + simulações + roteamento validados por API; ensaio de tempo fica com o humano. **F5-06:** `MEMORY.md` §1.2/§1.6/§1.8/§2 (D29)/§3 (A75–A77)/§5, `task-plan.md` §2/§4/§5 e `roadmap.md` atualizados |
+| Reversão | não aplicável |
+| Tokens (aprox.) | 6000 |
+| Observações | A validação **confirmou a conclusão do A75**: o permission set não nega nada; quem nega é o perfil. Fica registrado para a Fase 6: o estado `Pendente de Custo` (`decision = CostPending`) é um quarto desfecho e **não** pode ser verbalizado como margem saudável pelo agente (D15/D29). Tag `fase-5` criada no commit de fechamento |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

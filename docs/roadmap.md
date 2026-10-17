@@ -205,7 +205,7 @@ leitura por FLS no permission set (F5-01).
 
 ---
 
-## Fase 5 — Acesso, dados e demo
+## Fase 5 — Acesso, dados e demo — **CONCLUÍDA (2026-10-17)**
 
 **Objetivo:** o app é utilizável por outra pessoa e demonstrável em 30 minutos.
 
@@ -219,6 +219,22 @@ leitura por FLS no permission set (F5-01).
 percorrer os 3 cenários como um vendedor faria, sem acesso de admin.
 
 **Pronto quando:** a demo roda de ponta a ponta em ≤ 30 min, terminando numa decisão de negócio clara.
+
+**Executado em 2026-10-17 (ver FLW-004, UI-003, FLS-001, DEM-001, ACES-001 no `execution-log`):**
+
+| Entregável | Entrega real |
+|---|---|
+| Correção de guardrail (F5-07) | Literal `Pendente de Custo` na fórmula da `Quote`, checagem de custo **antes** da política no Flow (`decision = CostPending`), roteamento encerra sem pedido, console com badge cinza + alerta + envio bloqueado |
+| Permission set | `DD_DealDesk_User` (`0PSas000004H6puGAC`): 5 objetos read-only, 22 FLS de leitura, aba e app visíveis, 2 flows |
+| Negação de custo/margem | **Não** é possível no permission set (A75: FLS de PS é aditivo, `readable=false` é descartado). A negação é do **perfil**: os 7 campos sensíveis têm FLS só no System Administrator |
+| Prova funcional | Humano validou: como Admin os campos aparecem; como `Alan FieldTech` (Standard User, janela anônima) os campos **desaparecem** e resta o semáforo |
+| Massa de demo | `DEMO-Quote-Demo-Saudavel` 37,88% · `-Limite` 22,50% · `-Abaixo` 17,71% (Fleet & Corporate, `USD`, custo pelo before-save) |
+| Roteiro | [`demo-script.md`](demo-script.md) — 5 blocos cronometrados, falas, Q&A, prova de FLS e troubleshooting |
+
+**O que a Fase 5 ensinou e muda a Fase 6:** o estado `Pendente de Custo` é um **quarto** desfecho do
+guardrail além de verde/amarelo/vermelho — a ação de agente e o tópico precisam tratá-lo (o agente
+**não** pode dizer "margem saudável" quando o custo não existe; `decision = CostPending` pede
+"o Pricing precisa cadastrar o custo", não aprovação). Ver A76 e D29.
 
 ---
 

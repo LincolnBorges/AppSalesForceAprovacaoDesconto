@@ -480,12 +480,12 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 
 | Fase | Entrega | Pré-requisito | Status |
 |---|---|---|---|
-| **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida (hoje só 5 das 241 `PricebookEntry` têm custo), confirmação de moeda `USD` | — | **CONCLUÍDO** (2026-10-17: 24 entradas com custo · 2 price books · 2 famílias · todas `USD`) |
+| **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida, confirmação de moeda `USD` | — | **CONCLUÍDO** (2026-10-17: 19 entradas semeadas · 2 price books · 2 famílias · todas `USD`; hoje **23** com custo) |
 | **1** | Cálculo de margem: 9 campos `DD_*__c` na `Quote`/`QuoteLineItem` (fórmula + roll-up) + Flow `DD_CalculateLineCost` (`RecordBeforeSave`) | Fase 0 | **CONCLUÍDO** (2026-10-17: 3 faixas validadas — 41,67% / 28,00% / 17,71% — e o total da `Quote` fecha com a soma das linhas) |
-| **2** | Política de desconto: objeto `DD_DiscountPolicy__c` + dados de política + skill `create-discount-policy` | Fase 1 | PENDENTE |
-| **3** | Guardrail e roteamento: `DD_DiscountRequest__c` + Flow `DD_RouteDiscountApproval` + notificação ao aprovador | Fase 2 | PENDENTE |
-| **4** | UI: LWC `ddMarginConsole` + `FlexiPage` na `Quote` + `CustomTab` + `CustomApplication` | Fase 3 | PENDENTE |
-| **5** | Acesso e acabamento: permission set `DD_DealDesk_User`, dados de demonstração, testes, roteiro de demo de 30 min | Fase 4 | PENDENTE |
+| **2** | Política de desconto: objeto `DD_DiscountPolicy__c` + dados de política + skill `create-discount-policy` | Fase 1 | **CONCLUÍDO** (2026-10-17: 12 campos + 2 regras, 4 políticas `DEMO-`, precedência validada em 4 cenários) |
+| **3** | Guardrail e roteamento: `DD_DiscountRequest__c` + Flow `DD_RouteDiscountApproval` + notificação ao aprovador | Fase 2 | **CONCLUÍDO** (2026-10-17: 18 campos + 3 regras, 2 flows ativos, 3 cenários ponta a ponta) |
+| **4** | UI: LWC `ddMarginConsole` + `FlexiPage` na `Quote` + `CustomTab` + `CustomApplication` | Fase 3 | **CONCLUÍDO** (2026-10-17: console, página, aba e app; 3 estados validados) |
+| **5** | Acesso e acabamento: permission set `DD_DealDesk_User`, dados de demonstração, testes, roteiro de demo de 30 min | Fase 4 | **CONCLUÍDO** (2026-10-17: F5-07 corrigido, PS `DD_DealDesk_User`, 3 cotações de demo, roteiro de 30 min, acesso sem admin validado pelo humano) |
 | **6** | Agentforce: ações (bundle 3 arquivos, API 66.0) → tópico (MCP) → planner (MCP) → link | Fase 5 | PENDENTE |
 
 **Bloqueios conhecidos: nenhum.** As 4 incógnitas de plataforma foram eliminadas por teste
