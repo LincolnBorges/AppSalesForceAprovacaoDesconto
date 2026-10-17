@@ -30,7 +30,10 @@ Regras de uso:
 | PS do perfil | `0PSas000004GBdfGAG` — `PermissionsModifyAllData`, `ViewAllData`, `AuthorApex`, `CustomizeApplication` = true | SOQL `PermissionSet` |
 | Permission sets atribuídos | **118** (18 locais + pacotes `force`) | SOQL `PermissionSetAssignment` *(contagem de 2026-10-16)* |
 | Moeda de trabalho | **`USD`** — **todas as 31 `Quote`** e 83 das 88 `Opportunity` são `USD`; os 23 usuários ativos são todos `USD` | SOQL `GROUP BY CurrencyIsoCode` (2026-10-16) |
-| Multi-moeda | **habilitado** — 30 moedas ativas, default de plataforma `BRL` | SOQL `CurrencyType` |
+| Moeda corporativa | **`USD`** — `IsCorporate = true`, taxa 1; `BRL` = **3,6995** (secundária) | SOQL `CurrencyType` (2026-10-17) |
+| Advanced Currency Management | **desligado** — 0 taxas datadas (`DatedConversionRate`) | SOQL (2026-10-17) |
+| Moeda padrão dos usuários | **22 de 23 em `USD`**; exceção: **Lincoln Borges em `BRL`** (a tela dele já converte para BRL) | SOQL `User.DefaultCurrencyIsoCode` (2026-10-17) |
+| Multi-moeda | **habilitado** — 30 moedas ativas | SOQL `CurrencyType` |
 
 ### 1.2 Estado da construção do app Deal Desk
 
@@ -164,7 +167,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 
 | # | Aprendizado | Implicação prática |
 |---|---|---|
-| A13 | Em org multi-moeda, `CurrencyIsoCode` tem default = moeda da org (`BRL`) e é gravável; omitir cria o filho na moeda errada **sem erro nenhum**. | Enviar `CurrencyIsoCode` explicitamente em todo registro `DD_` e conferir a moeda do filho contra o pai na verificação pós-criação |
+| A13 | Em org multi-moeda, omitir `CurrencyIsoCode` cria o registro na moeda errada **sem erro nenhum**. **Corrigido em 2026-10-17 (F0-12):** o default **não** é "a moeda da org" — é a **moeda padrão do usuário que cria** (nesta org, 22/23 são `USD`; o usuário Lincoln é `BRL`) ou a moeda do pai (`PricebookEntry` herda do price book). A moeda corporativa é `USD`, não `BRL`. | Enviar `CurrencyIsoCode` explicitamente em todo registro `DD_` e conferir a moeda do filho contra o pai na verificação pós-criação. **Atenção:** registros criados pelo usuário Lincoln tendem a nascer em `BRL` — divergência silenciosa com o resto da org |
 | A14 | Nem todo objeto tem `Name` gravável (autonumber/readonly). | S11 só vale onde `Name` é gravável; onde não for, **registrar a exceção** em vez de forçar |
 | A15 | **A fonte estática mente:** `describe.createable = true` não garante que a org aceite a escrita (campo computado). | Antes de confiar em `createable`, procurar precedente na org. Campos calculados conhecidos: `Order.TotalAmount`, `Order.Number`, `WorkOrder.Subtotal/TotalPrice/GrandTotal`, `Claim.IsClosed`, `SalesAgreement.StatusCode`, `Quote`/`QuoteLineItem` totalizadores |
 | A19 | **Um resultado negativo não isola causa.** | Ao reportar um teste negativo, apresentar o conjunto de evidências e explicitar o que ele **não** prova |
@@ -213,6 +216,8 @@ Preenchido na primeira descoberta de cada objeto; **nunca redescobrir na mesma s
 
 - **Graváveis (5 campos):** `UnitPrice`, `IsActive`, `UseStandardPrice`, **`FixedCost__c`**,
   **`VariableCostPerUnit__c`**.
+- **`CurrencyIsoCode`:** `createable = true` mas **`updateable = false`** (verificado 2026-10-17) —
+  não existe "converter" a moeda de uma entrada; ela é herdada do price book e imutável.
 - **Campos de custo:** tipo `currency`, `createable = true`, `updateable = true` — **verificado por
   escrita real em T3** (A41).
 - **Não existe `ListPrice`** nesta org (A42).

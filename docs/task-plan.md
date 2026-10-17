@@ -58,7 +58,7 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 
 | Fase | Nome | Ações | Concluídas | Status |
 |---|---|---|---|---|
-| 0 | Fundação e base de custo | 12 | 6 | EM ANDAMENTO |
+| 0 | Fundação e base de custo | 15 | 7 | EM ANDAMENTO |
 | 1 | Cálculo de margem | 8 | 0 | PENDENTE |
 | 2 | Política de desconto | 7 | 0 | PENDENTE |
 | 3 | Guardrail e roteamento | 10 | 1 | EM ANDAMENTO |
@@ -66,7 +66,7 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 4 | 1 | EM ANDAMENTO |
-| **Total** | | **63** | **10** | |
+| **Total** | | **66** | **11** | |
 
 *Atualizado em 2026-10-17. Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -81,6 +81,7 @@ paradas no ponto indicado.
 |---|---|---|---|
 | F0-07 | Aprovar a Tabela de Custos Proposta ([`cost-proposal.md`](cost-proposal.md)) | F0-08 | Sem validação, custo entra na org com número não acordado |
 | F0-11 | Price book de `Medical Equipment` (opções A/B/C na §5 do `cost-proposal.md`) | F0-08 | 10 entradas de `Medical Equipment` ficam sem destino |
+| F0-13 | Moeda dos dados do app: manter USD ou adotar BRL nativo | F0-08 | Sem definição, a F0-08 pode gravar na moeda errada (A13) |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
 > F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15.
@@ -101,10 +102,13 @@ paradas no ponto indicado.
 | F0-05 | Levantar base de custo faltante | **F0-03** | Listar as `PricebookEntry` alvo com `Product2`, `UnitPrice`, família e custo atual nulo | IA | CONCLUÍDO (2026-10-17): 9 no Fleet & Corporate + 10 no Standard, ver `cost-proposal.md` |
 | F0-06 | Propor tabela de custos | **F0-04**, **F0-05** | Calcular `FixedCost__c` + `VariableCostPerUnit__c` por entrada para produzir margens coerentes com o piso aprovado, cobrindo faixa verde, amarela e vermelha | IA | CONCLUÍDO (2026-10-17): [`cost-proposal.md`](cost-proposal.md) — 19 entradas, 8 verdes / 5 amarelas / 6 vermelhas |
 | F0-07 | Aprovar a tabela de custos | **F0-06** | Validar os números antes de qualquer escrita; última barreira antes do seeding | HUMANO | PENDENTE (aguardando "OK") |
-| F0-08 | Semear custo no price book | **F0-02**, **F0-07**, **F0-11** | Gravar `FixedCost__c` e `VariableCostPerUnit__c` com `CurrencyIsoCode = USD`, um registro por vez, registrando o valor anterior para rollback (S10) | IA | PENDENTE |
+| F0-08 | Semear custo no price book | **F0-02**, **F0-07**, **F0-11**, **F0-13** | Gravar `FixedCost__c` e `VariableCostPerUnit__c` com `CurrencyIsoCode = USD`, um registro por vez, registrando o valor anterior para rollback (S10) | IA | PENDENTE |
 | F0-09 | Validar a semeadura | **F0-08** | Conferir ≥20 entradas com custo, ≥2 price books, ≥2 famílias, todas `USD`; bater a margem de 3 amostras contra o cálculo manual | IA | PENDENTE |
 | F0-10 | Fechar a Fase 0 | **F0-09** | Atualizar `MEMORY.md` §1.3/§1.6, `execution-log`, este plano e o `roadmap`; commit e tag `fase-0` | IA | PENDENTE |
 | F0-11 | Price book de `Medical Equipment` | **F0-05** | Escolher entre semear no `Standard Price Book` (só updates) ou criar entradas no `Fleet & Corporate` (10 creates); ver §5 do `cost-proposal.md` | HUMANO | PENDENTE |
+| F0-12 | Viabilidade de moeda (USD × BRL) | — | Verificar moeda corporativa, ACM, moeda de price books/entradas/cotações, efeito em roll-ups e limites de org trial; emitir veredito | IA | CONCLUÍDO (2026-10-17): manter USD, não tocar na moeda corporativa — [`currency-feasibility.md`](currency-feasibility.md) |
+| F0-13 | Moeda dos dados do app | **F0-12** | Confirmar `USD` nos dados (BRL só na exibição, via moeda do usuário) ou optar por BRL nativo pelo caminho F0-14 | HUMANO | PENDENTE |
+| F0-14 | Price book BRL dedicado (condicional) | **F0-13** | **Só se F0-13 escolher BRL:** criar price book `DD Deal Desk BRL`, entradas em BRL para os 24 produtos e semear custo nelas — sem tocar na moeda corporativa nem nas entradas USD | IA | PENDENTE (condicional) |
 
 ### Fase 1 — Cálculo de margem
 
@@ -202,3 +206,4 @@ paradas no ponto indicado.
 | 2026-10-17 | 6 decisões respondidas pelo humano (F0-02, F0-03, F0-04, F3-01, F4-01, F6-02). Fila da §3 caiu para 2 (F0-07, F0-11) |
 | 2026-10-17 | F3-06 **cancelada** (D12: vermelho não bloqueia) e criada **F3-10** (aprovação via `User.ManagerId`). Criada **F0-11** (price book de `Medical Equipment`) após a descoberta de que a família não existe no Fleet & Corporate. Total: 61 → 63 ações |
 | 2026-10-17 | F0-05/F0-06 concluídas: [`cost-proposal.md`](cost-proposal.md) com 19 entradas propostas |
+| 2026-10-17 | F0-12 (viabilidade de moeda) concluída: veredito "manter USD". Criadas **F0-13** (decisão humana) e **F0-14** (price book BRL, condicional). F0-08 passou a depender de F0-13. Total: 63 → 66 ações |

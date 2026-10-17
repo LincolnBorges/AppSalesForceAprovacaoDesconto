@@ -54,6 +54,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | DOCS-001 | 2026-10-17 | convenção de rastreio por git — D11 (nenhuma escrita na org) | — | OK | — |
 | DOCS-002 | 2026-10-17 | plano de ações vivo `docs/task-plan.md` (nenhuma escrita na org) | — | OK | — |
 | DEC-001 | 2026-10-17 | 6 decisões de negócio + descoberta F0-05 + proposta de custos (nenhuma escrita na org) | — | OK | — |
+| INV-001 | 2026-10-17 | F0-12 investigação de viabilidade de moeda USD × BRL (nenhuma escrita na org) | — | OK | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -127,6 +128,26 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
 | Tokens (aprox.) | 14000 |
 | Observações | achados: família `Part` ≠ `Parts`; `Medical Equipment` só existe no Standard Price Book; 3 de 23 usuários têm `ManagerId`; as 31 `Quote` têm `Pricebook2Id` nulo |
+
+### [2026-10-17 11:40 -03:00] INV-001 — OK (viabilidade de moeda, F0-12)
+
+| Campo | Valor |
+|---|---|
+| Operação | leitura (SOQL, describe, Setup em browser) — **nenhuma escrita na org** |
+| Skill | query-salesforce · chrome |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `CurrencyType`, `DatedConversionRate`, `Pricebook2`, `PricebookEntry`, `Quote`, `Opportunity`, `User` |
+| Ferramenta | `sf data query`, `sf sobject describe`, Chrome (Setup `CompanyCurrency`) |
+| Parâmetros-chave | moeda corporativa `USD` (taxa 1) · `BRL` 3,6995 · ACM desligado · 9 price books todos `USD` · `PricebookEntry.CurrencyIsoCode` imutável |
+| Resultado | veredito: **manter USD**, não alterar a moeda corporativa — [`currency-feasibility.md`](../docs/currency-feasibility.md) |
+| Confirmação humana | não aplicável (investigação sem escrita) |
+| Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
+| Tokens (aprox.) | 21000 |
+| Observações | a página de Setup existiu mas não renderizou o corpo; a afirmação sobre pré-requisitos da troca de moeda é documentada, **não** observada (A19) |
+
+**Correção de memória aplicada nesta entrada:** A13 dizia que o default de `CurrencyIsoCode` era "a moeda
+da org (`BRL`)". O correto é a **moeda padrão do usuário que cria** (22/23 em `USD`; Lincoln em `BRL`) ou a
+moeda do pai. Registrado em `MEMORY.md` §3 (A13) e §1.1.
 
 ---
 
