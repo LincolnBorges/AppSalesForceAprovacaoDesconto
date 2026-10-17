@@ -48,14 +48,14 @@ nomes reservados — serve para evitar retrabalho e colisão.
 | `DD_DiscountRequest__c` | **criado (Fase 3, 2026-10-17)** | Pedido de desconto: **snapshot da política aplicada e do estado do guardrail**, sem margem/custo/receita (D14/D23). 18 campos + 3 regras; `Name` **AutoNumber** `DR-{00000}` (exceção A14). Deploy `0Afas00000606d4CAA`. Ver §4.10 |
 | `DD_*__c` em `Quote` / `QuoteLineItem` | **criado (Fase 1, 2026-10-17)** | 9 campos — ver §4.8 |
 | Flow `DD_CalculateLineCost` | **criado (Fase 1, 2026-10-17)** | `RecordBeforeSave` na `QuoteLineItem`, `Active` |
-| Flow `DD_CalculateQuoteMargin` | **criado (Fase 3, 2026-10-17)** | `AutoLaunchedFlow` ativo, 29 elementos, saídas em **pontos-base** (D27). Ver FLW-003 |
+| Flow `DD_CalculateQuoteMargin` | **criado (Fase 3, 2026-10-17)** | `AutoLaunchedFlow` ativo, **31 elementos** após a F5-07 (checagem de custo antes da política, decisão `CostPending`), saídas em **pontos-base** (D27). Versão ativa **v25** (deploy `0Afas0000060B1fCAE`). Ver FLW-003/FLW-004 |
 | Flow `DD_RouteDiscountApproval` | **criado (Fase 3, 2026-10-17)** | `AutoLaunchedFlow` ativo, 28 elementos; subflow do cálculo, escada D26, cria/atualiza `DD_DiscountRequest__c`, e-mail. Ver RTE-001 |
-| LWC `ddMarginConsole` | **criado (Fase 4, 2026-10-17)** | Console do guardrail: estado por `getRecord` (só `DD_GuardrailState__c`), simulador e pedido de desconto por `lightning-flow`. Deploy final `0Afas0000060AiHCAU`. Ver UI-001/UI-002 |
+| LWC `ddMarginConsole` | **criado (Fase 4, 2026-10-17)** | Console do guardrail: estado por `getRecord` (só `DD_GuardrailState__c`), simulador e pedido de desconto por `lightning-flow`. Deploy final da Fase 4 `0Afas0000060AiHCAU`; **republicado na Fase 5** (`0Afas0000060C49CAE`) com badge cinza, alerta de custo pendente e envio bloqueado. Ver UI-001/UI-002/UI-003 |
 | `FlexiPage` `DD_Quote_Record_Page` | **criado (Fase 4, 2026-10-17)** | Página da `Quote` com highlights, console, related list e detalhe; ativada **só no app** via `actionOverrides` (o resto da org mantém a página padrão) |
 | `CustomTab` `DD_Margin_Console` | **criado (Fase 4, 2026-10-17)** | Aba do LWC: `<lwcComponent>ddMarginConsole</lwcComponent>` sem `c:` (A69) e `<motif>Custom41: Stack of Cash</motif>` (A70) |
 | `CustomApplication` `DD_DealDesk` | **criado (Fase 4, 2026-10-17)** | App "Deal Desk": Home, Quotes e Console de Margem; visibilidade no perfil Admin (A72) |
 | Ações Agentforce `DD_*` | planejado (Fase 6) | bundle mdapi de 3 arquivos, API **66.0** |
-| Permission set `DD_DealDesk_User` | planejado (Fase 5) | Acesso ao app |
+| Permission set `DD_DealDesk_User` | **criado (Fase 5, 2026-10-17)** | `0PSas000004H6puGAC`, deploy `0Afas0000060D6fCAE`: 5 objetos read-only, 22 FLS de leitura (só `DD_GuardrailState__c` entre os campos de número), aba e app visíveis, 2 Flows habilitados. Ver FLS-001 |
 
 ### 1.3 Base de cálculo da margem — custo já semeado (T3, 2026-10-16)
 
@@ -133,7 +133,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | `GenAiFunction` | **1** | `--metadata-type GenAiFunction --api-version 66.0` |
 | `GenAiPlugin` | **0** | `--metadata-type GenAiPlugin` |
 | `Bot` / `GenAiPlannerBundle` | **6 / 6** | `--api-version 66.0` |
-| `PricebookEntry` com `FixedCost__c` | **24** (5 originais + 19 semeadas em 2026-10-17) | `SELECT COUNT() FROM PricebookEntry WHERE FixedCost__c != null` |
+| `PricebookEntry` com `FixedCost__c` | **23** (5 originais + 18 das 19 semeadas — ver nota do MedCart) | `SELECT COUNT() FROM PricebookEntry WHERE FixedCost__c != null` |
 
 > **Reconferido em 2026-10-17 (F0-01):** todos os valores de metadado **idênticos** ao baseline de
 > 2026-10-16 — nenhum resíduo. Única mudança: `PricebookEntry` com custo passou de 5 para 24 (F0-08,
@@ -155,6 +155,13 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 > cada, correspondente a `ddMarginConsole`, `DD_Margin_Console`, `DD_Quote_Record_Page` e `DD_DealDesk`.
 > Nenhum **Flow**, campo ou objeto foi tocado na Fase 4: o console consome o que a Fase 3 entregou, então
 > não há versão `Obsolete` nova (A50).
+>
+> **Achado de 2026-10-17 (F5-07):** a contagem de entradas com custo é **23**, não 24. A entrada
+> `01uas000000RousAAC` (`MediScan MedCart`, Standard PB, custo `1700/790` semeado em `SED-001`) **não
+> existe mais** — não está nem em `queryAll` (lixeira vazia ou exclusão definitiva). Não foi este
+> agente: na sessão da F5-07 só houve deploy de metadado e leitura. O `Product2` `MediScan MedCart`
+> (`01tas000007Va6yAAC`) permanece **sem nenhuma** `PricebookEntry`. Consequência prática: nenhuma;
+> a demo não usa esse produto. **Não recriar sem autorização nominal** (S3/S8).
 >
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
@@ -183,6 +190,19 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
   **Warranty & Goodwill** (`01sas000001nOBIAA2`). Verificado por SOQL em 2026-10-17.
   **Surpresa:** o `Parts Price Book` (`01sas000001nOBBAA2`) **não** contém a família `Parts`.
   Hoje só a Fleet & Corporate tem política específica; as outras 3 caem na genérica.
+
+### 1.8 Massa de demonstração e acesso (Fase 5, 2026-10-17)
+
+| Item | Valor |
+|---|---|
+| `DEMO-Quote-Demo-Saudavel` | `0Q0as0000021mHZCAY` — 2 linhas (`01uas000000RovXAAS` 120×1 · `01uas000000RovIAAS` 144×1) · receita 264 · custo 164 · **37,8788%** (pior linha 34,7222) · Saudável |
+| `DEMO-Quote-Demo-Limite` | `0Q0as0000021mFyCAI` — 1 linha (`01uas000000RovjAAC` 160×1) · 160 / 124 · **22,50%** · Requer Justificativa; a 5% de desconto vira Requer Aprovação (18,42%) |
+| `DEMO-Quote-Demo-Abaixo` | `0Q0as0000021mJBCAY` — 1 linha (`01uas000000RovOAAS` 96×2) · 192 / 158 · **17,7083%** · Requer Aprovação |
+| Cotação sem custo (demo de A74) | `Teste cotação` `0Q0as0000021jtBCAQ` (EUR, 58.000) — o caso original do teste do humano; alternativa `DEMO-Quote-Guardrail-Generic` `0Q0as0000021j3ZCAQ` (USD) |
+| As 3 `DEMO-Quote-Demo-*` | `Pricebook2Id = 01sas000001nOBJAA2` (Fleet & Corporate), `USD`, `Draft`, `ExpirationDate = 2026-10-31`; custo gravado pelo `DD_CalculateLineCost` no insert (nenhuma escrita manual de custo) |
+| Policy aplicada | `DEMO-Policy-Parts-Fleet` (`a0Mas000000PR6fEAG`): piso 20 · alvo 30 · teto 10 · exige justificativa |
+| PS `DD_DealDesk_User` | `0PSas000004H6puGAC`; atribuído ao Standard User `005as000003pCpEAAU` (Alan FieldTech) via `PermissionSetAssignment` `0Paas00000BpdrHCAR` |
+| Aprovador resolvido hoje (D26) | dono Lincoln sem gestor → dono da política é o próprio solicitante → 3º degrau = **Alan FieldTech** (1º ativo por nome). Para a demo, a opção é mudar o dono da cotação B para `005as000003pCovAAE` (Mehmood Zac, gestora Lincoln) — ver `docs/demo-script.md` §1.5 |
 
 ---
 
@@ -218,6 +238,7 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | D26 | **Escada de aprovador (F3-10):** `User.ManagerId` do dono da cotação → dono da política aplicada (se ativo e ≠ solicitante) → admin ativo (`Profile.Name = System Administrator`, ≠ solicitante) → `Blocked` com mensagem nomeando o que falta cadastrar. O degrau usado é gravado em `ApproverSource__c`. | 20 de 23 usuários ativos não têm gerente — inclusive o dono da cotação de teste. Sem fallback, o caminho principal da demo não geraria pedido. Nunca autoaprova: o solicitante é excluído de todos os degraus. **Ressalva (RTE-001):** como `Profile.Name` não é filtrável em `Get Records` (A65), o 3º degrau hoje escolhe o **primeiro usuário ativo ≠ solicitante** por `Name` — não garante administrador | 2026-10-17 |
 | D27 | **O cálculo do guardrail opera em pontos-base inteiros** (`marginBp`, `worstLineBp`: 10000 = 100%; piso 2000, alvo 3000). As saídas numéricas de margem do Flow são inteiras por isso. | A62: a engine do Flow arredonda Number para inteiro na atribuição, e trabalhar em fração/percentual decimal inverteria a faixa (o caso 29,57% × 30% é o limite exato da demo). Comparar em pontos-base preserva 2 casas de precisão real | 2026-10-17 |
 | D28 | **O console chama os dois flows por `lightning-flow` (declarativo); Apex está vetado nesta org.** O componente executa o `AutoLaunchedFlow` desde que o handler trate `status = FINISHED_SCREEN` e leia `outputVariables` como **array** de `{name, value}` (A67), e que o flow seja desmontado ao concluir. | A tentativa de um invocador Apex (`Flow.Interview`) foi barrada pela própria plataforma: cobertura Apex org-wide = **0%** e org não-sandbox exige 75% para deploy de Apex (A68/APX-001). O caminho declarativo mantém a regra de negócio nos flows (arquitetura §5) e o console lê só a whitelist (estado, política, decisão, mensagem) — `marginBp`/`worstLineBp`/`diagnostics` nunca são lidos pelo componente (D14) | 2026-10-17 |
+| D29 | **Custo ausente é um estado próprio (`Pendente de Custo`) e tem precedência sobre a política.** A checagem de custo roda **antes** da resolução de política no `DD_CalculateQuoteMargin`; a decisão é o literal novo `CostPending` e o `DD_RouteDiscountApproval` **encerra sem criar pedido**. Corolário sobre FLS (F5-01): **permission set é aditivo** — `FieldPermissions` com `readable=false` é descartado pela org (A75), então a negação de leitura de custo/margem é responsabilidade do **perfil** do usuário, e o PS só concede o estado. | Sem custo não existe margem: tratar dado ausente como margem 100% fazia um desconto de 90% passar verde (A74). Colocar o custo antes da política evita a divergência entre o campo da `Quote` (que não vê política) e o Flow (que via) — os dois passaram a dizer a mesma coisa na mesma cotação. A negação por perfil mantém D14 com um mecanismo que a plataforma realmente honra | 2026-10-17 |
 
 ---
 
@@ -270,6 +291,10 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | A72 | **App custom novo nasce INACESSÍVEL.** Deploy `Succeeded`, `AppMenuItem.IsVisible = true`, mas `IsAccessible = false`, nenhum resultado no App Launcher e `/lightning/app/c__<App>` redireciona para Home. | O app só abre depois de `applicationVisibilities` (`<application>`, `<default>false</default>`, `<visible>true</visible>`) no perfil; a aba de LWC também precisa de `tabVisibilities` `DefaultOn`. Ambas entram como fragmento no `Admin.profile-meta.xml` (merge; ordem alfabética dos elementos) |
 | A73 | **A moeda está no `PricebookEntry`, não no `Pricebook2`.** Nesta org o custo foi semeado só nas entradas **USD** (24 com custo); as **3 entradas BRL** do Standard Price Book (`MediScan Ventilator`, `MediScan Imager`, `MediScan Hospital Bed`) estão **sem** `FixedCost__c`/`VariableCostPerUnit__c`. | Uma cotação criada em BRL (default da moeda do usuário) escolhe a entrada BRL do produto e fica com custo 0 — **mesmo** estando no price book certo. Não existe price book "BRL" na org: apagar as entradas não corrige nada. Decisão em aberto na **F5-08** |
 | A74 | **Custo ausente é lido como margem 100%.** `DD_CostAmount__c` nulo → margem 100% → `DD_GuardrailState__c` = `Saudável`, inclusive com 90% de desconto (o simulador do console confirmou). | Buraco no guardrail: dado incompleto passa como performance perfeita. Corrigir na **F5-07** com um estado próprio (`Pendente de Custo`) em vez de margem máxima. Descoberto pelo teste do humano em 2026-10-17 (QRY-001) |
+| A75 | **`FieldPermissions` com `readable=false` não existe em permission set.** A org aceita o deploy e **descarta a linha**: o PS ficou com 22 grants e **zero** negações. Permission set é lista de **concessão**, aditivo ao perfil — não subtrai nada. | Para negar leitura de campo, o único mecanismo é o **perfil** (ou um perfil restritivo). O PS deve simplesmente **não conceder**; declarar `read=false` só documenta intenção, não produz efeito. Prova da negação é por `FieldPermissions` do perfil + teste funcional. Pegou na F5-01 |
+| A76 | **A fórmula do campo, o Flow e o console contam a mesma história — ou a demo mostra a divergência.** A checagem de custo estava depois da política no Flow: a cotação sem custo **e** sem política devolvia `Pendente de Política` no simulador enquanto o campo da `Quote` já dizia `Pendente de Custo`. O `--dry-run` e o deploy passaram nos dois casos — é falha **semântica**, invisível para o compilador. | Fórmula e Flow têm de compartilhar a **ordem de precedência** dos gaps de dado. Testar o cenário de fronteira (dois gaps ao mesmo tempo) explicitamente. Corrigir custou um redeploy e uma versão `Obsolete` a mais no Flow (A50). Pegou na F5-07 |
+| A77 | **Quirks de `PermissionSet` que o dry-run pega barato:** (a) `PermissionSetApplicationVisibility` **não aceita `<default>`** (`Element ...default invalid at this location`); (b) `description` do PS tem **limite 255** caracteres; (c) **`Quote` read exige `Opportunity` read** (`Permission Read Quote depends on permission(s): Read Opportunity`); (d) campo `required` não recebe FLS (A57) e as linhas dos 5 obrigatórios da política/4 do pedido ficam de fora do PS. | Escrever o PS com o pacote mínimo e deixar o dry-run guiar: 3 erros apareceram antes de qualquer escrita. Não tentar "negar" FLS no PS (A75). Ver FLS-001 |
+
 
 ---
 
@@ -365,7 +390,7 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 | `Quote` | `DD_Cost__c` | Roll-Up SUM | `QuoteLineItem.DD_CostAmount__c` |
 | `Quote` | `DD_MarginPct__c` | Formula Percent(18,4) | `IF(DD_Revenue__c = 0, 0, (DD_Revenue__c - DD_Cost__c) / DD_Revenue__c)` |
 | `Quote` | `DD_WorstLineMarginPct__c` | Roll-Up MIN | `QuoteLineItem.DD_MarginPct__c` |
-| `Quote` | `DD_GuardrailState__c` | Formula Text | `IF(DD_MarginPct__c >= 0.30, "Saudável", IF(DD_MarginPct__c >= 0.20, "Requer Justificativa", "Requer Aprovação"))` |
+| `Quote` | `DD_GuardrailState__c` | Formula Text | `IF(OR(ISBLANK(DD_Cost__c), DD_Cost__c = 0), "Pendente de Custo", IF(DD_MarginPct__c >= 0.30, "Saudável", IF(DD_MarginPct__c >= 0.20, "Requer Justificativa", "Requer Aprovação")))` — **alterado na F5-07** (A74) |
 
 - **FLS:** 9/9 `read=true` no perfil System Administrator; só `DD_CostAmount__c` com `edit=true`.
 - **Layouts:** 4 no `Quote Line Item Layout`, 5 no `Quote Layout`, todos `<behavior>Readonly</behavior>`

@@ -63,12 +63,12 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
-| 5 | Acesso, dados e demo | 8 | 0 | PENDENTE |
+| 5 | Acesso, dados e demo | 8 | 4 | EM ANDAMENTO |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **69** | **48** | |
+| **Total** | | **69** | **52** | |
 
-*Atualizado em 2026-10-17 (Fase 4 fechada). Decisões antecipadas fora da ordem das fases estão na §5.*
+*Atualizado em 2026-10-17 (Fase 5 em andamento: F5-01, F5-02, F5-04 e F5-07 concluídas; F5-08 cancelada).*
 
 ---
 
@@ -164,14 +164,14 @@ paradas no ponto indicado.
 
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
-| F5-01 | Permission set `DD_DealDesk_User` | **F4-07** | Acesso a objetos `DD_`, campos, tab, Flows e LWC — mínimo necessário para vendedor e gerente, **negando leitura** de `DD_MarginPct__c`/`DD_Cost__c`/`DD_CostAmount__c` (D14); confirmação dupla (S6) | IA | PENDENTE |
-| F5-02 | Massa de demonstração | **F4-07** | 3 cotações: margem confortável, no limite e abaixo do piso, com `Pricebook2Id` explícito (as 31 existentes têm nulo) e linhas com custo real | IA | PENDENTE |
-| F5-03 | Validar acesso sem admin | **F5-01**, **F5-02** | Conferir o que um usuário não-admin enxerga e executa, inclusive que a margem numérica não é legível | IA | PENDENTE |
-| F5-04 | Roteiro de demo (30 min) | **F5-02** | Sequência de cliques e falas, terminando numa decisão de negócio clara | IA | PENDENTE |
+| F5-01 | Permission set `DD_DealDesk_User` | **F4-07** | Acesso a objetos `DD_`, campos, tab, Flows e LWC — mínimo necessário para vendedor e gerente, **negando leitura** de `DD_MarginPct__c`/`DD_Cost__c`/`DD_CostAmount__c` (D14); confirmação dupla (S6) | IA | CONCLUÍDO (2026-10-17): PS `0PSas000004H6puGAC`, deploy `0Afas0000060D6fCAE` — 22 FLS de leitura (só `DD_GuardrailState__c` entre os campos de número), 5 objetos read-only, aba e app visíveis, 2 Flows habilitados. **Achado A75:** `FieldPermissions` com `readable=false` é descartado pela org em permission set — a negação é do perfil, provada por SOQL (F5-03). Dry-run pegou 3 erros antes da escrita. Ver FLS-001 |
+| F5-02 | Massa de demonstração | **F4-07** | 3 cotações: margem confortável, no limite e abaixo do piso, com `Pricebook2Id` explícito (as 31 existentes têm nulo) e linhas com custo real | IA | CONCLUÍDO (2026-10-17): `DEMO-Quote-Demo-Saudavel` `0Q0as0000021mHZCAY` (37,88%) · `DEMO-Quote-Demo-Limite` `0Q0as0000021mFyCAI` (22,50%) · `DEMO-Quote-Demo-Abaixo` `0Q0as0000021mJBCAY` (17,71%), 4 linhas, custo gravado pelo before-save. Ver DEM-001 |
+| F5-03 | Validar acesso sem admin | **F5-01**, **F5-02** | Conferir o que um usuário não-admin enxerga e executa, inclusive que a margem numérica não é legível | IA | EM ANDAMENTO (2026-10-17): **prova por dado concluída** — os 7 campos sensíveis têm FLS só no perfil System Administrator; nenhum perfil de vendedor tem leitura; o PS concede apenas `DD_GuardrailState__c`; PS atribuído ao Standard User `005as000003pCpEAAU`. Falta a **prova visual** com usuário não-admin: `login as` encerra a sessão de admin do navegador do usuário (decisão pendente) |
+| F5-04 | Roteiro de demo (30 min) | **F5-02** | Sequência de cliques e falas, terminando numa decisão de negócio clara | IA | CONCLUÍDO (2026-10-17): [`demo-script.md`](demo-script.md) — 5 blocos cronometrados, falas, Q&A, anexo de prova de FLS e troubleshooting |
 | F5-05 | Ensaiar a demo | **F5-04** | Rodar ponta a ponta, medir o tempo e corrigir os atritos encontrados | IA | PENDENTE |
 | F5-06 | Fechar a Fase 5 | **F5-03**, **F5-05** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-5` | IA | PENDENTE |
-| F5-07 | Custo ausente não pode parecer margem perfeita | **F4-07** | Hoje `DD_CostAmount__c` nulo vira margem 100% e a cotação passa **verde** — inclusive com desconto de 90% (achado do teste do humano em 2026-10-17). Tratar dado incompleto como estado próprio (ex.: `Pendente de Custo`) no Flow de cálculo e no campo `DD_GuardrailState__c`, em vez de margem máxima | IA+H | PENDENTE |
-| F5-08 | Custo das entradas BRL | **F5-07** | As 3 entradas **BRL** do Standard Price Book (`MediScan Ventilator`, `Imager`, `Hospital Bed`) não têm `FixedCost__c`/`VariableCostPerUnit__c`; o custo foi semeado só em USD (24 entradas). Decidir entre semear custo proporcional (31% / 34% / 22,08%) ou restringir os testes a cotações USD | HUMANO | PENDENTE |
+| F5-07 | Custo ausente não pode parecer margem perfeita | **F4-07** | Hoje `DD_CostAmount__c` nulo vira margem 100% e a cotação passa **verde** — inclusive com desconto de 90% (achado do teste do humano em 2026-10-17). Tratar dado incompleto como estado próprio (ex.: `Pendente de Custo`) no Flow de cálculo e no campo `DD_GuardrailState__c`, em vez de margem máxima | IA+H | CONCLUÍDO (2026-10-17): literal `Pendente de Custo` na fórmula da `Quote`, checagem **antes** da política no `DD_CalculateQuoteMargin` (decisão `CostPending`), `DD_RouteDiscountApproval` encerra sem pedido, LWC com badge cinza + alerta + envio bloqueado. 5 cenários testados; cotação do teste do humano saiu de `Saudável` para `Pendente de Custo`. Ver FLW-004/UI-003 |
+| F5-08 | Custo das entradas BRL | **F5-07** | As 3 entradas **BRL** do Standard Price Book (`MediScan Ventilator`, `Imager`, `Hospital Bed`) não têm `FixedCost__c`/`VariableCostPerUnit__c`; o custo foi semeado só em USD (24 entradas). Decidir entre semear custo proporcional (31% / 34% / 22,08%) ou restringir os testes a cotações USD | HUMANO | CANCELADO (2026-10-17, decisão do humano): não semear BRL — o humano já opera cotações em USD e a F5-07 protege o caso de uma cotação sem custo (estado `Pendente de Custo`, nunca verde). Semear BRL não paga o esforço |
 
 ### Fase 6 — Camada Agentforce
 
@@ -213,3 +213,5 @@ paradas no ponto indicado.
 | 2026-10-17 | **F1-01 e F1-02 concluídas** por dry-run: referência cruzada ao `PricebookEntry` é aceita; roll-up sobre fórmula determinística é aceito, mas sobre fórmula com referência cruzada é recusado (A53) |
 | 2026-10-17 | **Fase 1 fechada:** 9 campos de margem + FLS + layout (FLD-001), Flow `DD_CalculateLineCost` ativo (FLW-001), 3 faixas validadas (VAL-001). Novos aprendizados A54/A55 e decisão D21. Fase 1: 8 de 8 ações |
 | 2026-10-17 | **Fase 2 fechada:** objeto `DD_DiscountPolicy__c` com 12 campos + 2 validation rules + FLS + layout (DPM-001) · 4 políticas `DEMO-` (POL-001) · precedência provada em 4 cenários (PRE-001) · skill `create-discount-policy` validada com 6 correções. Novos aprendizados A56/A57 e decisão D22. Fase 2: 7 de 7 ações |
+| 2026-10-17 | **F5-07 concluída** (custo ausente ≠ margem 100%): `Pendente de Custo` na `Quote`, `CostPending` nos dois Flows, badge/alerta no LWC. **F5-08 cancelada** por decisão do humano (operação em USD + F5-07 cobre o caso) |
+| 2026-10-17 | **F5-01, F5-02 e F5-04 concluídas:** permission set `DD_DealDesk_User`, 3 cotações de demonstração e o roteiro de 30 min. F5-03 em andamento (prova por dado feita; falta a visual com usuário não-admin). Aprendizado **A75** registrado |

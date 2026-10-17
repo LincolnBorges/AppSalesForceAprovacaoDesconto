@@ -564,6 +564,97 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 
 ---
 
+### [2026-10-17 18:25 -03:00] FLW-004 — OK (F5-07: custo ausente deixa de parecer margem perfeita)
+
+| Campo | Valor |
+|---|---|
+| Operação | 1 `update` de campo de fórmula + 1 `update` de picklist + 2 `deploy` de Flow (3 deploys no total: o Flow de cálculo foi republicado) |
+| Skill | validate-metadata · calculate-margin |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Objeto / Metadado | `Quote.DD_GuardrailState__c` (fórmula) · `DD_DiscountRequest__c.GuardrailState__c` (picklist) · `Flow:DD_CalculateQuoteMargin` · `Flow:DD_RouteDiscountApproval` |
+| Ferramenta | `sf project deploy start --metadata <componente>` com `--dry-run` antes de cada escrita |
+| Parâmetros-chave | `--test-level NoTestRun`; deploy restrito por componente (nunca `--source-dir force-app`) para não republicar `DD_CalculateLineCost` (A50) |
+| Confirmação humana | sim — plano de deploy apresentado e aprovado; segunda confirmação no "pode prosseguir com os deploys" |
+| Resultado | 5 deploys `Succeeded`: campos `0Afas0000060Bw5CAE`/`0Afas0000060BxhCAE` · cálculo `0Afas0000060C0vCAE` e correção `0Afas0000060B1fCAE` · roteamento `0Afas0000060C2XCAU`. 5 `dry-run` aprovados antes |
+| Reversão | `git revert` dos 6 arquivos + redeploy; a fórmula anterior era `IF(DD_MarginPct__c >= 0.30, "Saudável", IF(DD_MarginPct__c >= 0.20, "Requer Justificativa", "Requer Aprovação"))`; o literal novo da picklist pode ficar (aditivo) |
+| Tokens (aprox.) | 30000 |
+| Observações | **Duas correções em sequência:** o 1º deploy colocou a checagem de custo **depois** da política e a cotação sem custo e sem política devolveu `Pendente de Política` no simulador enquanto o campo da `Quote` dizia `Pendente de Custo` (A76). O 2º deploy moveu a checagem para **antes** de `Get_Product`. `--dry-run` e deploy passaram nos dois casos: falha semântica não é pega pelo compilador |
+
+**Cenários testados (execução via `POST /actions/custom/flow/DD_CalculateQuoteMargin`)**
+
+| # | Cotação | Desconto | Estado | Decisão | Observação |
+|---|---|---|---|---|---|
+| 1 | `0Q0as0000021jtBCAQ` (sem custo) | 90% | **Pendente de Custo** | `CostPending` | `costPending=1` no `diagnostics`; antes da correção era `Saudável` |
+| 2 | `0Q0as0000021jtBCAQ` | 0% | **Pendente de Custo** | `CostPending` | estado independe do desconto |
+| 3 | `0Q0as0000021j1xCAA` (Green) | 0% | Saudável | `AutoApproved` | **sem regressão** |
+| 4 | `0Q0as0000021hOLCAY` (Margin-Bands) | 0% | Requer Justificativa | `ManagerApproval` | **sem regressão** |
+| 5 | `0Q0as0000021j3ZCAQ` (sem custo e sem política) | 0% | **Pendente de Custo** | `CostPending` | custo tem precedência sobre a política (D29) |
+
+**Roteamento (execução via `POST /actions/custom/flow/DD_RouteDiscountApproval`)**
+
+| Campo | Valor |
+|---|---|
+| Entrada | `quoteId=0Q0as0000021jtBCAQ`, `requestedDiscountPct=90`, justificativa preenchida |
+| Saída | `decision=CostPending`, `status=CostPending`, **`requestId` nulo**, mensagem "o custo das linhas nao esta cadastrado… Nenhum pedido foi criado" |
+| Contagem de `DD_DiscountRequest__c` | **1 antes / 1 depois** — nenhum pedido criado com custo pendente |
+| Resíduo de versão (A46/A50) | `DD_CalculateQuoteMargin`: v24 e v25 criadas nesta sessão (v25 `Active`, v24 `Obsolete`) · `DD_RouteDiscountApproval`: v4 `Active`, v3 `Obsolete` |
+
+### [2026-10-17 19:00 -03:00] UI-003 — OK (console exibe Pendente de Custo)
+
+| Campo | Valor |
+|---|---|
+| Operação | 1 deploy de `LightningComponentBundle` |
+| Skill | validate-metadata |
+| Objeto / Metadado | `LWC ddMarginConsole` (`.js`, `.html`, `.css`) |
+| Ferramenta | `sf project deploy start --metadata LightningComponentBundle:ddMarginConsole` (`--dry-run` antes) |
+| Confirmação humana | sim — incluída no mesmo plano do FLW-004 |
+| Resultado | `Succeeded` — deploy `0Afas0000060C49CAE` |
+| Reversão | `git revert` do bundle + redeploy `.lightningComponentBundle` |
+| Tokens (aprox.) | 8000 |
+| Observações | Verificação no navegador na cotação `0Q0as0000021jtBCAQ`: badge `Pendente de Custo` com fundo `rgb(112,110,107)` (cinza), alerta `data-testid="cost-pending-alert"` renderizado, botão *Pedir desconto* desabilitado com a frase de bloqueio. Simulador a 90% devolveu "Estado projetado: Pendente de Custo" + "Pendente de Custo — o Pricing precisa cadastrar o custo". Nenhum número de margem ou custo na tela (D14) |
+
+### [2026-10-17 19:15 -03:00] FLS-001 — OK (F5-01: permission set DD_DealDesk_User)
+
+| Campo | Valor |
+|---|---|
+| Operação | 1 `create` de `PermissionSet` + 1 `create` de `PermissionSetAssignment` |
+| Skill | validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `PermissionSet:DD_DealDesk_User` (`0PSas000004H6puGAC`) · `PermissionSetAssignment` `0Paas00000BpdrHCAR` |
+| Ferramenta | `sf project deploy start --metadata PermissionSet:DD_DealDesk_User` (`--dry-run` antes, 4 vezes) + `sf data create record` |
+| Confirmação humana | sim — payload + impacto apresentados; "Confirmo o payload" (S6) |
+| Resultado | `Succeeded` — deploy `0Afas0000060D6fCAE` · 5 `objectPermissions` (todos read-only) · tab `DD_Margin_Console` visível · app `DD_DealDesk` visível · 2 `flowAccesses` · **22 `FieldPermissions` de leitura** e **0 negações** |
+| Reversão | apagar `0PSas000004H6puGAC` e o assignment `0Paas00000BpdrHCAR` (exige autorização nominal — S5) |
+| Tokens (aprox.) | 15000 |
+| Observações | **Achado A75:** as 7 linhas com `readable=false` (`Quote.DD_MarginPct__c`, `Quote.DD_Cost__c`, `Quote.DD_WorstLineMarginPct__c`, `QuoteLineItem.DD_MarginPct__c`, `DD_MarginAmount__c`, `DD_CostAmount__c`, `DD_CostPerUnit__c`) foram **descartadas pela org** — permission set só concede. A negação efetiva vem do perfil, provada por SOQL: os 7 campos têm FLS **apenas** no perfil System Administrator e nenhum perfil de vendedor. **Quirks pegos no dry-run (A77):** `<default>` inválido em `PermissionSetApplicationVisibility`; `description` > 255; `Quote` read exige `Opportunity` read. Atribuído ao Standard User `005as000003pCpEAAU` (Alan FieldTech) para a validação sem admin |
+
+### [2026-10-17 19:30 -03:00] DEM-001 — OK (F5-02: massa de demonstração)
+
+| Campo | Valor |
+|---|---|
+| Operação | 3 `create` em `Quote` + 4 `create` em `QuoteLineItem` (lote único autorizado, precedente D16) |
+| Skill | query-salesforce |
+| Objeto / Metadado | `Quote` / `QuoteLineItem` |
+| Ferramenta | `sf api request rest services/data/v68.0/sobjects/<obj>` (`POST`) |
+| Parâmetros-chave | `CurrencyIsoCode=USD` explícito · `Pricebook2Id=01sas000001nOBJAA2` explícito · `Status=Draft` · `ExpirationDate=2026-10-31` · nomes com prefixo `DEMO-` (S11) |
+| Confirmação humana | sim — tabela de 7 registros aprovada ("Confirmo os 7 registros") |
+| Resultado | `DEMO-Quote-Demo-Saudavel` `0Q0as0000021mHZCAY` (264/164, **37,8788%**, Saudável) · `DEMO-Quote-Demo-Limite` `0Q0as0000021mFyCAI` (160/124, **22,50%**, Requer Justificativa) · `DEMO-Quote-Demo-Abaixo` `0Q0as0000021mJBCAY` (192/158, **17,7083%**, Requer Aprovação) · linhas `0QLas00000291yDGAQ`, `0QLas00000291zpGAA`, `0QLas000002921RGAQ`, `0QLas0000029233GAA` |
+| Reversão | apagar as 3 cotações (cascade nas linhas) — exige autorização nominal (S5) |
+| Tokens (aprox.) | 7000 |
+| Observações | Custo **não** foi escrito à mão: veio do `DD_CalculateLineCost` no insert (prova de que o before-save segue funcionando após os deploys da Fase 5). Simulações validadas: A a 15% → Requer Justificativa (26,9%); B a 5% → Requer Aprovação (18,4%); C a 0% → Requer Aprovação |
+
+### [2026-10-17 19:40 -03:00] QRY-002 — OK (recontagem de custo: 23, e a entrada do MedCart não existe mais)
+
+| Campo | Valor |
+|---|---|
+| Operação | leitura (`SOQL`, `queryAll`) — nenhuma escrita |
+| Skill | query-salesforce |
+| Objeto / Metadado | `PricebookEntry` / `Product2` |
+| Ferramenta | `sf data query` + `sf api request rest services/data/v68.0/queryAll` |
+| Resultado | **23** entradas com `FixedCost__c` (Fleet 14 · Standard 9), não 24. A entrada `01uas000000RousAAC` (`MediScan MedCart`, `1700/790`, semeada em `SED-001`) **não existe mais**, nem em `queryAll` (lixeira vazia / exclusão definitiva). O `Product2` `MediScan MedCart` (`01tas000007Va6yAAC`) está sem nenhuma `PricebookEntry` |
+| Reversão | não aplicável |
+| Observações | Não foi ação deste agente: na sessão houve apenas deploy de metadado, leitura e criação dos 7 registros de `DEM-001` (nenhum delete). Registrado para rastreio (S10). **Não recriar sem autorização nominal** — pode ter sido remoção deliberada. Baseline `MEMORY.md` §1.6 corrigido de 24 para 23 |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
