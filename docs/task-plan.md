@@ -62,13 +62,13 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 1 | Cálculo de margem | 8 | 8 | CONCLUÍDO |
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
-| 4 | Console LWC | 7 | 1 | PENDENTE |
+| 4 | Console LWC | 7 | 7 | CONCLUÍDO |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **67** | **42** | |
+| **Total** | | **67** | **48** | |
 
-*Atualizado em 2026-10-17 (Fase 2 fechada). Decisões antecipadas fora da ordem das fases estão na §5.*
+*Atualizado em 2026-10-17 (Fase 4 fechada). Decisões antecipadas fora da ordem das fases estão na §5.*
 
 ---
 
@@ -153,12 +153,12 @@ paradas no ponto indicado.
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
 | F4-01 | Desenhar o console | **F3-09** | Definir o que aparece na tela: estado do guardrail, política aplicável e simulador — **sem** margem em % e **sem** custo em valor | HUMANO | CONCLUÍDO (2026-10-17): só `Saudável` / `Requer Justificativa` / `Requer Aprovação`, ver D14 |
-| F4-02 | Criar LWC `ddMarginConsole` | **F4-01** | Componente (`.js`, `.html`, `.css`, `.js-meta.xml`) com `targets` `lightning__RecordPage` e `lightning__Tab`; renderiza estado, nunca número de margem; simulador sem DML | IA | PENDENTE |
-| F4-03 | FlexiPage da `Quote` | **F4-02** | Página de registro da cotação com o componente na região principal; ativar para o app do Deal Desk | IA | PENDENTE |
-| F4-04 | Tab e app Deal Desk | **F4-02** | `CustomTab` **com `<motif>`** (A39/A47) e `CustomApplication` do Deal Desk | IA | PENDENTE |
-| F4-05 | Ação "Pedir desconto" | **F4-02**, **F3-05** | Botão do console chama o Flow de roteamento e mostra o resultado na tela (sem aprovar nada por conta própria) | IA | PENDENTE |
-| F4-06 | Testar os 3 estados e o simulador | **F4-03** a **F4-05** | Verde/âmbar/vermelho com dados reais; conferir que o simulador não grava (nenhum DML) e que nenhum número de margem aparece na tela | IA | PENDENTE |
-| F4-07 | Fechar a Fase 4 | **F4-06** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-4` | IA | PENDENTE |
+| F4-02 | Criar LWC `ddMarginConsole` | **F4-01** | Componente (`.js`, `.html`, `.css`, `.js-meta.xml`) com `targets` `lightning__RecordPage` e `lightning__Tab`; renderiza estado, nunca número de margem; simulador sem DML | IA | CONCLUÍDO (2026-10-17): estado por `getRecord` (só `DD_GuardrailState__c`), simulador e pedido por `lightning-flow`; deploy final `0Afas0000060AiHCAU`. **A67** (status `FINISHED_SCREEN` + `outputVariables` em array) e **A68** (Apex vetado). Ver UI-001 |
+| F4-03 | FlexiPage da `Quote` | **F4-02** | Página de registro da cotação com o componente na região principal; ativar para o app do Deal Desk | IA | CONCLUÍDO (2026-10-17): `DD_Quote_Record_Page` (highlights + console + related list + detalhe), ativada **só no app** via `actionOverrides`. **A71** (região sem `<mode>`) e **A72** (app inacessível). Ver UI-001 |
+| F4-04 | Tab e app Deal Desk | **F4-02** | `CustomTab` **com `<motif>`** (A39/A47) e `CustomApplication` do Deal Desk | IA | CONCLUÍDO (2026-10-17): aba `DD_Margin_Console` e app `DD_DealDesk`; **A69** (`lwcComponent` sem `c:`) e **A70** (`Custom61` = Castle → `Custom41: Stack of Cash`). Ver UI-001 |
+| F4-05 | Ação "Pedir desconto" | **F4-02**, **F3-05** | Botão do console chama o Flow de roteamento e mostra o resultado na tela (sem aprovar nada por conta própria) | IA | CONCLUÍDO (2026-10-17): `lightning-flow` → `DD_RouteDiscountApproval`; decisão, mensagem, pedido e aprovador na tela. Plano A (Apex) barrado por A68/APX-001. Ver UI-002 |
+| F4-06 | Testar os 3 estados e o simulador | **F4-03** a **F4-05** | Verde/âmbar/vermelho com dados reais; conferir que o simulador não grava (nenhum DML) e que nenhum número de margem aparece na tela | IA | CONCLUÍDO (2026-10-17): 6/6 no navegador; `DD_DiscountRequest__c` 1→1 e `LastModifiedDate` inalterado; zero número de margem no card. **Achado aberto:** o layout padrão mostra margem/custo ao **admin** → fechar na F5-01. Ver UI-002 |
+| F4-07 | Fechar a Fase 4 | **F4-06** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-4` | IA | CONCLUÍDO (2026-10-17) |
 
 ### Fase 5 — Acesso, dados e demo
 

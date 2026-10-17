@@ -172,13 +172,36 @@ e o `--dry-run` dos dois Flow passou antes do deploy (S6/S7).
 2. `FlexiPage` da `Quote` com o componente na região principal.
 3. `CustomTab` — **com `<motif>`** (A39/A47) — e `CustomApplication` do Deal Desk.
 4. Semáforo visual: verde (≥ alvo), âmbar (entre piso e alvo), vermelho (< piso).
-5. Simulador: campo de desconto pretendido que mostra a margem resultante **sem gravar nada**.
+5. Simulador: campo de desconto pretendido que mostra o **estado resultante** (D14: nunca a margem
+   em % nem o custo) **sem gravar nada**.
 
 **Verificação:** deploy com `--dry-run` primeiro; abrir uma `Quote` na FlexiPage e conferir os 3
 estados; conferir que o simulador não escreve (nenhum DML no componente).
 
 **Pronto quando:** o console renderiza os 3 estados com dados reais e o botão *Pedir desconto*
 dispara o Flow da Fase 3.
+
+---
+
+**Executado em 2026-10-17 — Fase 4 CONCLUÍDA (ver UI-001, APX-001 e UI-002 no `execution-log`):**
+
+| Entregável | Entrega real |
+|---|---|
+| LWC | `ddMarginConsole` com `wire` em `DD_GuardrailState__c`, semáforo, simulador e ação de pedido |
+| FlexiPage | `DD_Quote_Record_Page`, ativada **apenas no app Deal Desk** via `actionOverrides` |
+| Aba e app | `DD_Margin_Console` (motif `Custom41: Stack of Cash`) e `DD_DealDesk` |
+| Semáforo | 3 estados validados com dados reais (`Saudável`, `Requer Justificativa`, `Requer Aprovação`) |
+| Simulador | `d=25` no verde projeta âmbar sem DML (contagens e `LastModifiedDate` idênticos) |
+
+**Como o console conversa com os flows:** por `lightning-flow` (declarativo), não por Apex — a org
+trial recusa deploy de Apex (cobertura org-wide 0%, A68). O handler precisa tratar
+`status = FINISHED_SCREEN` e `outputVariables` em **array** de `{name, value}` (A67). O componente lê
+somente a whitelist `guardrailState`, `policyName`, `decision`, `message`, `requestId` e
+`approverName`; margem, custo e `diagnostics` nunca chegam ao cliente (D14/D28).
+
+**Fica para a Fase 5:** o painel de detalhes da `Quote` (layout padrão) ainda exibe `DD Receita`,
+`DD Custo Total` e `DD Margem % da Cotacao` para o **admin**. O fechamento para o vendedor é negar
+leitura por FLS no permission set (F5-01).
 
 ---
 

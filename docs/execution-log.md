@@ -475,6 +475,78 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 
 ---
 
+### [2026-10-17 19:00 -03:00] UI-001 — OK (F4-02 a F4-05: console LWC + FlexiPage + aba + app)
+
+| Campo | Valor |
+|---|---|
+| Operação | deploy de metadata: `LightningComponentBundle`, `FlexiPage`, `CustomTab`, `CustomApplication` + fragmento de `Profile` |
+| Skill | `validate-metadata` §2/§3/§4 · `sf-lwc` |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: **false**) |
+| Objeto / Metadado | `ddMarginConsole` · `DD_Quote_Record_Page` · `DD_Margin_Console` · `DD_DealDesk` · `Admin.profile` |
+| Ferramenta | `sf project deploy start` (com `--dry-run` antes em cada pacote) |
+| Parâmetros-chave | `apiVersion=68.0`; `--test-level NoTestRun`; `--source-dir` restrito a `lwc/`, `flexipages/`, `tabs/`, `applications/`, `profiles/` |
+| Confirmação humana | sim — plano apresentado com código e riscos; "Confirmo — prossiga" |
+| Resultado | **dry-run 1: FALHA com 2 erros** (A69/A71) → corrigidos · deploy `0Afas00000609kbCAA` (4/4) · re-deploy da aba `0Afas00000609r3CAA` (A70) · perfil `0Afas00000609z7CAA` (A72) · LWC final `0Afas0000060AiHCAU` |
+| Reversão | remover os 4 metadados e as entradas `applicationVisibilities`/`tabVisibilities` do `Admin.profile-meta.xml`; a página da `Quote` volta ao padrão ao remover a `actionOverride` do app |
+| Tokens (aprox.) | 26000 |
+| Observações | O dry-run pegou **2 defeitos que só apareceriam no deploy real**: `lwcComponent` com `c:` (A69) e região `sidebar` com `<mode>Replace</mode>` sem região-mãe (A71). O app ficou **inacessível** após deploy `Succeeded` (A72) e só abriu após `applicationVisibilities` no perfil |
+
+| # | Componente | API name | Verificação |
+|---|---|---|---|
+| 1 | LWC | `ddMarginConsole` | `targets` `lightning__RecordPage`+`lightning__Tab`, `isExposed=true`, `apiVersion=68.0` |
+| 2 | FlexiPage | `DD_Quote_Record_Page` | retrieve confirma `c:ddMarginConsole`, `force:highlightsPanel`, `force:relatedListContainer` (A71) e `force:detailPanel` |
+| 3 | CustomTab | `DD_Margin_Console` | `<motif>Custom41: Stack of Cash</motif>` persistido (A70); URL `/lightning/n/DD_Margin_Console` abre |
+| 4 | CustomApplication | `DD_DealDesk` | label "Deal Desk"; `actionOverrides` View/Quote → FlexiPage, **Large e Small** (escopo: só este app) |
+
+---
+
+### [2026-10-17 19:15 -03:00] APX-001 — FALHA (plano B com Apex vetado pela plataforma)
+
+| Campo | Valor |
+|---|---|
+| Operação | tentativa de deploy de `ApexClass` invocadora (`Flow.Interview`) + classe de teste |
+| Skill | `validate-metadata` §3 |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `ApexClass:DD_FlowConsoleController` + `DD_FlowConsoleControllerTest` |
+| Ferramenta | `sf project deploy start --dry-run --test-level RunLocalTests` |
+| Confirmação humana | sim — escolha explícita do plano B por Apex |
+| Resultado | **dry-run `Failed` com `numberComponentErrors = 0` e `numFailures = 0`**: 64 testes locais rodaram sem falha, mas a cobertura **org-wide é 0%** (`ApexOrgWideCoverage`) — org não-sandbox exige 75%. **Nenhuma classe chegou a ser criada na org** |
+| Reversão | não aplicável (nada deployado); os 4 arquivos locais foram **removidos** do projeto |
+| Tokens (aprox.) | 9000 |
+| Observações | 2 falhas de teste precederam o veredito e foram corrigidas (A: `STANDARD_PRICE_NOT_DEFINED` exige entrada no price book padrão; moeda do `PricebookEntry` deve casar com a da `Quote`). O bloqueio real é **cobertura org-wide** (A68) — Apex está fora de escopo nesta org. O caminho declarativo com `lightning-flow` foi então depurado e funciona (A67/UI-002) |
+
+---
+
+### [2026-10-17 19:40 -03:00] UI-002 — OK (F4-06: 3 estados, simulador sem DML e botão)
+
+| Campo | Valor |
+|---|---|
+| Operação | teste funcional no navegador (Chrome real, sessão do usuário) + 3 SOQL de controle |
+| Skill | `validate-metadata` §4 · `sf-lwc` |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Quote` (3 registros) + `ddMarginConsole` + flows `DD_CalculateQuoteMargin`/`DD_RouteDiscountApproval` |
+| Ferramenta | `mcp__chrome__*` (navegação, snapshot, innerText) + `sf data query` |
+| Confirmação humana | sim — "faça o teste (F4-06) e me apresente o resultado" |
+| Resultado | **6/6 verificações OK** (tabela abaixo) |
+| Reversão | não aplicável — o teste **não gravou nada** (contagens e `LastModifiedDate` idênticos) |
+| Tokens (aprox.) | 14000 |
+| Observações | **Achado D14 em aberto:** o painel de detalhes da `Quote` (layout padrão) exibe `DD Receita`, `DD Custo Total` e `DD Margem % da Cotacao` para o **admin**. O console é limpo, mas o fechamento do vazamento para o vendedor é a F5-01 (negar leitura por perm set) |
+
+| # | Verificação | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Estado verde | `DEMO-Quote-Guardrail-Green` | badge **Saudável** + orientação "não exige pedido" |
+| 2 | Estado âmbar | `DEMO-Quote-Margin-Bands` | badge **Requer Justificativa** + campo "Justificativa (obrigatória)" |
+| 3 | Estado vermelho | `Dec Asset Repair` | badge **Requer Aprovação** + "sobe para o aprovador da alçada" |
+| 4 | Simulador 25% no verde | `d=25` | **Requer Justificativa** · política `DEMO-Policy-Parts-Fleet` · botão volta a "Simular" (flow desmontado, sem banner — A67) |
+| 5 | Simulador não grava | 3 SOQL antes/depois | `DD_DiscountRequest__c` = **1 → 1**; `Quote.LastModifiedDate` = **2026-10-17T18:21:52Z** nas duas leituras |
+| 6 | Botão "Pedir desconto" | `d=10` + justificativa, cotação verde | **AutoApproved** · "Nenhum pedido foi criado" · zero DML. Sem justificativa no estado projetado âmbar: bloqueia com a mensagem "O estado Requer Justificativa exige justificativa antes do envio" |
+
+**D14 — prova de ausência de número:** `grep` do bundle por `DD_MarginPct__c`, `DD_Cost__c`, `marginBp`, `worstLineBp`, `floorMarginPct` e `diagnostics` → **zero ocorrências**; o texto renderizado do card não contém nenhuma porcentagem numérica. O componente lê apenas `guardrailState`, `policyName`, `decision`, `message`, `requestId` e `approverName` (whitelist em `toOutputMap`).
+
+**Aba:** `/lightning/n/DD_Margin_Console` renderiza o componente sem `recordId` e mostra "Abra o console a partir de uma cotação".
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
