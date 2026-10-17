@@ -42,7 +42,11 @@ FROM PricebookEntry WHERE FixedCost__c != null GROUP BY Pricebook2Id, CurrencyIs
 ```
 
 **Pronto quando:** ≥ 20 `PricebookEntry` com custo, todas em `USD`, distribuídas em ≥ 2 price books e
-≥ 3 famílias de produto — o suficiente para a política ter o que comparar.
+≥ 2 famílias de produto — o suficiente para a política ter o que comparar.
+
+> **Revisão de 2026-10-17:** a meta original era "≥ 3 famílias"; o humano definiu **2 famílias**
+> (`Parts` e `Medical Equipment`, D17). O critério passa a ser 2 famílias — a precedência da Fase 2
+> continua testável porque são 2 famílias em 2 price books diferentes.
 
 **Atenção:** S4 manda **um registro por vez**. Semear 15+ registros = 15+ confirmações. Definir com o
 humano se a semeadura de dados de demonstração pode ser autorizada em lote (é a única forma prática).
@@ -105,14 +109,17 @@ testada (uma família com política específica e uma genérica ao mesmo tempo).
 2. Flow `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, **Active**, com `isInput`/`isOutput` — D8).
 3. Flow `DD_RouteDiscountApproval` (`AutoLaunchedFlow`, **Active**) — cria o pedido, define
    `Decision__c` / `Status__c` / `Approver__c`, notifica a alçada.
-4. Regra de bloqueio: `Blocked` **não** cria pedido — devolve motivo.
+4. Três estados de saída, definidos em 2026-10-17 (D12/D13/D14):
+   `Saudável` (verde, ≥ alvo) · `Requer Justificativa` (amarelo, piso ≤ m < alvo) ·
+   `Requer Aprovação` (vermelho, < piso, aprovador = `User.ManagerId` do dono).
+   **Não há mais estado `Blocked`** — o vermelho sobe para aprovação, não é impedido.
 
 **Verificação:** 3 cenários ponta a ponta —
 | Cenário | Margem | Esperado |
 |---|---|---|
-| Acima do alvo | ≥ `TargetMarginPct__c` | `AutoApproved`, notifica o vendedor |
-| Entre piso e alvo | `Floor` ≤ m < `Target` | `ManagerApproval`, cria pedido, notifica a alçada |
-| Abaixo do piso | < `FloorMarginPct__c` | `Blocked`, **sem** pedido, com motivo |
+| Acima do alvo | ≥ `TargetMarginPct__c` | `Saudável`: envio liberado, notifica o vendedor |
+| Entre piso e alvo | `Floor` ≤ m < `Target` | `Requer Justificativa`: cria pedido com justificativa obrigatória |
+| Abaixo do piso | < `FloorMarginPct__c` | `Requer Aprovação`: cria pedido e notifica o **gerente imediato** (`User.ManagerId`) |
 
 **Pronto quando:** os 3 cenários produzem o resultado esperado, o pedido registra a política aplicada
 e o `--dry-run` dos dois Flow passou antes do deploy (S6/S7).

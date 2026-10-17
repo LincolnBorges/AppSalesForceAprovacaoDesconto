@@ -66,6 +66,11 @@ Price book alvo: **`Fleet & Corporate Pricebook` = `01sas000001nOBJAA2`** (não-
 Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 
 - **Fórmula da margem:** `margem% = (UnitPrice − FixedCost__c − VariableCostPerUnit__c) / UnitPrice × 100`
+- **Famílias em escopo (D17, 2026-10-17):** `Parts` e `Medical Equipment`. Existe também a família
+  `Part` (7 produtos: tinta, condensador, pistão) — **não** entra; não confundir `Part` com `Parts`.
+- **Onde cada família vive:** `Parts` está em 4 price books, inclusive o **Fleet & Corporate** (14
+  entradas). `Medical Equipment` (10 produtos) **só existe no `Standard Price Book`** — 13 entradas,
+  sendo 3 em `BRL` a ignorar (A13). Por isso o price book dessa família é decisão pendente (F0-11).
 - **Estado do resto da org:** as outras **236** `PricebookEntry` têm `FixedCost__c = null` — a
   semeadura de custo precisa ser estendida na Fase 0/1 para dar massa à demonstração.
 - **Rollback (se necessário):** `FixedCost__c = null` e `VariableCostPerUnit__c = null` nos 5 Ids
@@ -138,6 +143,12 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | D9 | **Não usar scratch org.** A org alvo é a `personal`. | A feature e a massa já estão provisionadas nela; scratch orgs não expõem o necessário (A7/A8/A9). | 2026-10-16 |
 | D10 | **A limpeza de metadado de teste exige conferência de resíduo dupla** (listagem de metadados **+** `FlowDefinitionView`/Tooling). | A46/A50: o delete de Flow deixa versão `Obsolete` quando houve redeploy. | 2026-10-16 |
 | D11 | **Toda alteração de arquivo termina obrigatoriamente em `git commit`**, com mensagem que descreva a mudança (Conventional Commits em pt-BR). O histórico do git é o rastro de evolução do projeto. | Requisito explícito do humano (2026-10-17): "quero que todas as mudanças sejam registradas para termos um rastreio". Detalhe operacional na convenção 11 do [`AGENTS.md`](AGENTS.md) §4 | 2026-10-17 |
+| D12 | **Faixas de margem (negócio):** VERDE ≥ 30% · AMARELO 20% ≤ m < 30% (requer justificativa) · VERMELHO < 20% (requer aprovação). "Abaixo de 20% é vermelho". | Insumo direto de `DD_DiscountPolicy__c` (`TargetMarginPct__c` = 30, `FloorMarginPct__c` = 20). **Substitui o cenário `Blocked` do roadmap:** vermelho **não** bloqueia, sobe para aprovação (ação F3-06 cancelada) | 2026-10-17 |
+| D13 | **Aprovador do vermelho = gerente imediato** do dono da cotação, via `User.ManagerId` nativo — sem objeto de alçada custom. | Verificado na org em 2026-10-17: **3 de 23** usuários ativos têm `ManagerId` (Sam Elliott, Drake Chloe, Mehmood Zac → gestor Lincoln Borges). Os outros **20 não têm** → o Flow precisa tratar `ManagerId` nulo (ação F3-10) | 2026-10-17 |
+| D14 | **O console não exibe margem em % nem custo em valor** — só o estado visual: `Saudável` (verde) · `Requer Justificativa` (amarelo) · `Requer Aprovação` (vermelho). | Custo e margem são dados sensíveis: número na tela convida o vendedor a negociar contra o custo. Consequência: o permission set deve **negar leitura** de `DD_MarginPct__c`/`DD_Cost__c`/`DD_CostAmount__c` ao vendedor (F5-01) | 2026-10-17 |
+| D15 | **O agente Agentforce nunca aprova e nunca cita margem numérica** — resume o cenário e indica o próximo passo (enviar ou pedir aprovação). | Mantém a decisão no humano (objetivo do projeto) e impede vazamento de custo por linguagem natural; o agente pode ler os campos, mas não os verbaliza | 2026-10-17 |
+| D16 | **Semeadura de custo em lote autorizada** (exceção explícita e registrada à S4), restrita a `PricebookEntry.FixedCost__c` e `VariableCostPerUnit__c` das famílias `Parts` e `Medical Equipment`. | Sem isso seriam 19 confirmações uma a uma. Cada registro continua logado individualmente com o valor anterior (`null`) para rollback (S10) | 2026-10-17 |
+| D17 | **Famílias em escopo: `Parts` (14 produtos) e `Medical Equipment` (10).** Existe também a família **`Part`** (7 produtos sem relação) — **não** entra. | `Parts` está no Fleet & Corporate; `Medical Equipment` só existe no Standard Price Book → o price book dessa família é a decisão pendente F0-11 | 2026-10-17 |
 
 ---
 
@@ -247,7 +258,7 @@ Preenchido na primeira descoberta de cada objeto; **nunca redescobrir na mesma s
 
 | Fase | Entrega | Pré-requisito | Status |
 |---|---|---|---|
-| **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida (hoje só 5 das 241 `PricebookEntry` têm custo), confirmação de moeda `USD` | — | **PENDENTE** |
+| **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida (hoje só 5 das 241 `PricebookEntry` têm custo), confirmação de moeda `USD` | — | **EM ANDAMENTO** (2026-10-17: D12–D17 decididas; proposta em [`docs/cost-proposal.md`](docs/cost-proposal.md); aguarda F0-07 e F0-11) |
 | **1** | Cálculo de margem: campos `DD_*__c` na `Quote`/`QuoteLineItem` + Flow `DD_CalculateQuoteMargin` (**com `isInput`/`isOutput`** — D8) | Fase 0 | PENDENTE |
 | **2** | Política de desconto: objeto `DD_DiscountPolicy__c` + dados de política + skill `create-discount-policy` | Fase 1 | PENDENTE |
 | **3** | Guardrail e roteamento: `DD_DiscountRequest__c` + Flow `DD_RouteDiscountApproval` + notificação ao aprovador | Fase 2 | PENDENTE |

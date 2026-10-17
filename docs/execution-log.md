@@ -53,6 +53,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | INIT-001 | 2026-10-16 | estruturação do projeto (nenhuma escrita na org) | — | OK | — |
 | DOCS-001 | 2026-10-17 | convenção de rastreio por git — D11 (nenhuma escrita na org) | — | OK | — |
 | DOCS-002 | 2026-10-17 | plano de ações vivo `docs/task-plan.md` (nenhuma escrita na org) | — | OK | — |
+| DEC-001 | 2026-10-17 | 6 decisões de negócio + descoberta F0-05 + proposta de custos (nenhuma escrita na org) | — | OK | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -109,6 +110,23 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
 | Tokens (aprox.) | 9000 |
 | Observações | documento vivo: a ação X-02 mantém status e progresso em sincronia a cada ação |
+
+### [2026-10-17 10:55 -03:00] DEC-001 — OK (decisões de negócio + descoberta + proposta)
+
+| Campo | Valor |
+|---|---|
+| Operação | leitura (SOQL) + edição de arquivos — **nenhuma escrita na org** |
+| Skill | query-salesforce |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | leitura: `Product2`, `PricebookEntry`, `Pricebook2`, `User`, `Quote` |
+| Ferramenta | `sf data query` + edição de arquivo |
+| Parâmetros-chave | 6 decisões (D12–D17); famílias `Parts`/`Medical Equipment`; alvo 30% / piso 20%; aprovador = `User.ManagerId` |
+| Payload / SOQL | famílias por `Product2`; entradas por `Pricebook2Id`; `ManagerId` dos 23 usuários ativos; `Pricebook2Id` das 31 `Quote` |
+| Confirmação humana | sim — decisões dadas diretamente pelo humano na conversa |
+| Resultado | 19 `PricebookEntry` propostas (8 verdes/5 amarelas/6 vermelhas) em [`cost-proposal.md`](../docs/cost-proposal.md); 24 no total após as 5 já semeadas |
+| Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
+| Tokens (aprox.) | 14000 |
+| Observações | achados: família `Part` ≠ `Parts`; `Medical Equipment` só existe no Standard Price Book; 3 de 23 usuários têm `ManagerId`; as 31 `Quote` têm `Pricebook2Id` nulo |
 
 ---
 
