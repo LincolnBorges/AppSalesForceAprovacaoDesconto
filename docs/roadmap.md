@@ -14,8 +14,8 @@ definição de pronto. **Uma fase por sessão** (`new_session_after_task: true`,
 |---|---|---|---|
 | 0 | Fundação e base de custo | — | CONCLUÍDO |
 | 1 | Cálculo de margem | 0 | CONCLUÍDO |
-| 2 | Política de desconto | 1 | PENDENTE |
-| 3 | Guardrail e roteamento | 2 | PENDENTE |
+| 2 | Política de desconto | 1 | CONCLUÍDO |
+| 3 | Guardrail e roteamento | 2 | EM ANDAMENTO |
 | 4 | Console LWC | 3 | PENDENTE |
 | 5 | Acesso, dados e demo | 4 | PENDENTE |
 | 6 | Camada Agentforce | 5 | PENDENTE |
@@ -85,16 +85,19 @@ das linhas.
 
 ---
 
-## Fase 2 — Política de desconto
+## Fase 2 — Política de desconto — **CONCLUÍDA (2026-10-17)**
 
 **Objetivo:** existir a política que define o piso, e uma forma confiável de criá-la.
 
 **Entregáveis**
-1. Objeto `DD_DiscountPolicy__c` com os campos de [`architecture.md`](architecture.md) §3.1.
-2. Skill `create-discount-policy` validada na prática (criar 1 política real via skill).
+1. Objeto `DD_DiscountPolicy__c` com os campos de [`architecture.md`](architecture.md) §3.1. ✅
+   deploy `0Afas00000606GVCAY` — 12 campos, 2 validações, FLS e layout.
+2. Skill `create-discount-policy` validada na prática (criar 1 política real via skill). ✅
+   dirigiu as 4 criações; 6 divergências corrigidas no `SKILL.md`.
 3. Regra de **precedência** documentada e implementada: família + price book específico vence
-   família genérica.
-4. Dados: no mínimo 1 política por família em escopo, com `DEMO-` no `Name` (S11).
+   família genérica. ✅ derivada em `Specificity__c` (3/2/1/0), testada em 4 cenários (PRE-001).
+4. Dados: no mínimo 1 política por família em escopo, com `DEMO-` no `Name` (S11). ✅ 4 políticas
+   (`MEMORY.md` §1.7) — genérica + específica por price book nas 2 famílias.
 
 **Verificação**
 ```sql
@@ -103,7 +106,12 @@ FROM DD_DiscountPolicy__c ORDER BY ProductFamily__c
 ```
 
 **Pronto quando:** ≥ 3 políticas ativas, cobrindo as famílias semeadas na Fase 0, e a precedência
-testada (uma família com política específica e uma genérica ao mesmo tempo).
+testada (uma família com política específica e uma genérica ao mesmo tempo). ✅ **4 ativas; precedência
+provada nas duas famílias.**
+
+> **O que ficou para a Fase 3:** a resolução foi provada por **SOQL** (`ORDER BY` em campo de fórmula
+> funciona). Falta provar que o **Flow** consegue reproduzir a ordenação via `Get Records` — é o
+> contrato que `DD_CalculateQuoteMargin` tem de honrar.
 
 ---
 

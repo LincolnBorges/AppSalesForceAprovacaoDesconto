@@ -60,15 +60,15 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 |---|---|---|---|---|
 | 0 | Fundação e base de custo | 15 | 14 | CONCLUÍDO |
 | 1 | Cálculo de margem | 8 | 8 | CONCLUÍDO |
-| 2 | Política de desconto | 7 | 0 | PENDENTE |
+| 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 1 | EM ANDAMENTO |
 | 4 | Console LWC | 7 | 1 | PENDENTE |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **67** | **27** | |
+| **Total** | | **67** | **34** | |
 
-*Atualizado em 2026-10-17. Decisões antecipadas fora da ordem das fases estão na §5.*
+*Atualizado em 2026-10-17 (Fase 2 fechada). Decisões antecipadas fora da ordem das fases estão na §5.*
 
 ---
 
@@ -125,13 +125,13 @@ paradas no ponto indicado.
 
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
-| F2-01 | Modelar `DD_DiscountPolicy__c` | **F0-10** | Definir campos (família, price book, piso, alvo, teto, alçada, vigência, ativa), tipos, obrigatoriedade e a chave de precedência; piso/alvo vêm de D12 | IA | PENDENTE |
-| F2-02 | Criar objeto e campos da política | **F2-01** | Deploy do objeto custom + campos + layout; `--dry-run` obrigatório (S7) | IA | PENDENTE |
-| F2-03 | Implementar a precedência | **F2-02** | Mecanismo que resolve a política aplicável: família + price book específico vence família genérica | IA | PENDENTE |
-| F2-04 | Criar políticas `DEMO-` | **F2-02**, **F0-04** | Políticas ativas cobrindo as 2 famílias × (genérica + específica por price book), com prefixo `DEMO-` no `Name` (S11) e `CurrencyIsoCode` explícito (A13) | IA | PENDENTE |
-| F2-05 | Validar a skill `create-discount-policy` | **F2-04** | Criar 1 política real usando a skill e corrigir as divergências do `SKILL.md` encontradas na prática | IA | PENDENTE |
-| F2-06 | Testar a precedência | **F2-04** | Uma família com política específica e genérica ao mesmo tempo; conferir qual vence e registrar a evidência | IA | PENDENTE |
-| F2-07 | Fechar a Fase 2 | **F2-05**, **F2-06** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-2` | IA | PENDENTE |
+| F2-01 | Modelar `DD_DiscountPolicy__c` | **F0-10** | Definir campos (família, price book, piso, alvo, teto, alçada, vigência, ativa), tipos, obrigatoriedade e a chave de precedência; piso/alvo vêm de D12 | IA | CONCLUÍDO (2026-10-17): 12 campos; precedência é campo de fórmula `Specificity__c` (3/2/1/0). Decisão **D22** |
+| F2-02 | Criar objeto e campos da política | **F2-01** | Deploy do objeto custom + campos + layout; `--dry-run` obrigatório (S7) | IA | CONCLUÍDO (2026-10-17): 12 campos + 2 validações + FLS + layout, deploy `0Afas00000606GVCAY`. **Dry-run pegou 2 erros** (A56, A57). Ver DPM-001 |
+| F2-03 | Implementar a precedência | **F2-02** | Mecanismo que resolve a política aplicável: família + price book específico vence família genérica | IA | CONCLUÍDO (2026-10-17): `Specificity__c` derivado + query canônica com `ORDER BY Specificity__c DESC, EffectiveFrom__c DESC LIMIT 1` |
+| F2-04 | Criar políticas `DEMO-` | **F2-02**, **F0-04** | Políticas ativas cobrindo as 2 famílias × (genérica + específica por price book), com prefixo `DEMO-` no `Name` (S11) e `CurrencyIsoCode` explícito (A13) | IA | CONCLUÍDO (2026-10-17): 4 políticas, teto 15 genérica / 10 específica. Ver POL-001 e `MEMORY.md` §1.7 |
+| F2-05 | Validar a skill `create-discount-policy` | **F2-04** | Criar 1 política real usando a skill e corrigir as divergências do `SKILL.md` encontradas na prática | IA | CONCLUÍDO (2026-10-17): a skill dirigiu as 4 criações; 6 divergências corrigidas (§1 decisão já tomada, §3 nível `All`, §4 nome da genérica, §5 `Specificity__c`, §7 percentual, §8 novo) |
+| F2-06 | Testar a precedência | **F2-04** | Uma família com política específica e genérica ao mesmo tempo; conferir qual vence e registrar a evidência | IA | CONCLUÍDO (2026-10-17): 4 cenários — específica vence em `Parts`@Fleet e `Medical`@Standard; genérica resolve sozinha em `Parts`@Retail; família sem política devolve 0 linhas. Ver PRE-001 |
+| F2-07 | Fechar a Fase 2 | **F2-05**, **F2-06** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-2` | IA | CONCLUÍDO (2026-10-17) |
 
 ### Fase 3 — Guardrail e roteamento
 
@@ -210,3 +210,4 @@ paradas no ponto indicado.
 | 2026-10-17 | Criada **X-05** (D20/S13: FLS + layout na mesma operação de criação de campo) e atualizada a skill `validate-metadata`. Verificação de `FixedCost__c`/`VariableCostPerUnit__c`: já estavam com FLS e layout corretos. Total: 66 → 67 ações |
 | 2026-10-17 | **F1-01 e F1-02 concluídas** por dry-run: referência cruzada ao `PricebookEntry` é aceita; roll-up sobre fórmula determinística é aceito, mas sobre fórmula com referência cruzada é recusado (A53) |
 | 2026-10-17 | **Fase 1 fechada:** 9 campos de margem + FLS + layout (FLD-001), Flow `DD_CalculateLineCost` ativo (FLW-001), 3 faixas validadas (VAL-001). Novos aprendizados A54/A55 e decisão D21. Fase 1: 8 de 8 ações |
+| 2026-10-17 | **Fase 2 fechada:** objeto `DD_DiscountPolicy__c` com 12 campos + 2 validation rules + FLS + layout (DPM-001) · 4 políticas `DEMO-` (POL-001) · precedência provada em 4 cenários (PRE-001) · skill `create-discount-policy` validada com 6 correções. Novos aprendizados A56/A57 e decisão D22. Fase 2: 7 de 7 ações |
