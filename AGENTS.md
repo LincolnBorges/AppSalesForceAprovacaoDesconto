@@ -219,6 +219,7 @@ Estes vêm do projeto `ProgramaRebateQ42026` e são **transversais**. A lista co
 | [`.dsh/skills/*/SKILL.md`](.dsh/skills) | sob demanda | Procedimentos detalhados |
 | [`docs/architecture.md`](docs/architecture.md) | sob demanda | Camadas e decisões de arquitetura |
 | [`docs/roadmap.md`](docs/roadmap.md) | sob demanda | Fases 0–6 de construção |
+| [`docs/task-plan.md`](docs/task-plan.md) | sob demanda | **Plano de ações vivo**: IDs, predecessores, responsável e status de cada passo |
 | [`docs/risks.md`](docs/risks.md) | sob demanda | Riscos mapeados e mitigações |
 | [`docs/lessons-learned.md`](docs/lessons-learned.md) | sob demanda | A1–A51 herdados, contextualizados |
 | [`docs/glossary.md`](docs/glossary.md) | sob demanda | Termos de negócio e técnicos |

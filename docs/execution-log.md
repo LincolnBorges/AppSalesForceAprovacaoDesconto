@@ -52,6 +52,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 |---|---|---|---|---|---|
 | INIT-001 | 2026-10-16 | estruturação do projeto (nenhuma escrita na org) | — | OK | — |
 | DOCS-001 | 2026-10-17 | convenção de rastreio por git — D11 (nenhuma escrita na org) | — | OK | — |
+| DOCS-002 | 2026-10-17 | plano de ações vivo `docs/task-plan.md` (nenhuma escrita na org) | — | OK | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -92,6 +93,22 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
 | Tokens (aprox.) | 6000 |
 | Observações | repositório já existia (branch `master`, commit base `44c6d61`); convenção vale a partir desta sessão |
+
+### [2026-10-17 10:35 -03:00] DOCS-002 — OK (plano de ações vivo)
+
+| Campo | Valor |
+|---|---|
+| Operação | criação de arquivo local + referências cruzadas — **nenhuma escrita na org** |
+| Skill | — (não aplicável) |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | — (`docs/task-plan.md`, `AGENTS.md`, `docs/roadmap.md`, `.dsh/config.yaml`) |
+| Ferramenta | edição de arquivo + `git` |
+| Parâmetros-chave | 61 ações (F0 11 · F1 8 · F2 7 · F3 9 · F4 7 · F5 6 · F6 9 · X 4); 7 decisões humanas |
+| Resultado | plano de acompanhamento criado e referenciado em `AGENTS.md` §10, no `roadmap.md` e na política de carregamento do `.dsh/config.yaml` |
+| Confirmação humana | sim — pedido direto do humano |
+| Reversão | `git revert` do commit desta entrada (nenhum efeito na org) |
+| Tokens (aprox.) | 9000 |
+| Observações | documento vivo: a ação X-02 mantém status e progresso em sincronia a cada ação |
 
 ---
 

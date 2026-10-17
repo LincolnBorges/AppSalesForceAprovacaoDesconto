@@ -43,6 +43,8 @@ context:
       trigger: "quando a descrição da skill corresponder à tarefa"
     - path: docs/roadmap.md
       trigger: "ao iniciar uma fase de construção"
+    - path: docs/task-plan.md
+      trigger: "ao iniciar ou fechar uma ação; status (§4) e progresso (§2) em sincronia"
     - path: docs/risks.md
       trigger: "antes de qualquer deploy de metadado ou trabalho com Agentforce"
     - path: docs/architecture.md

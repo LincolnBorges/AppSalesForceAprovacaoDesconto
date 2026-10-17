@@ -5,6 +5,10 @@ definição de pronto. **Uma fase por sessão** (`new_session_after_task: true`,
 
 > **Estado geral:** nenhuma fase iniciada. As 4 incógnitas de plataforma foram eliminadas por teste
 > antes de começar — ver [`risks.md`](risks.md).
+>
+> **Acompanhamento fino:** este roadmap guarda os critérios macro de cada fase. O passo a passo
+> executável — IDs, predecessores, responsável (IA ou humano) e status — está em
+> [`task-plan.md`](task-plan.md), que é a lista viva de acompanhamento.
 
 | Fase | Nome | Depende de | Status |
 |---|---|---|---|
