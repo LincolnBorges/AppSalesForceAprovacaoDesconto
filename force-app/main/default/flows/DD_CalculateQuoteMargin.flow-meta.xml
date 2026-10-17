@@ -82,6 +82,9 @@
                 <numberValue>999</numberValue>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Get_Lines</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Worst</name>
@@ -102,6 +105,9 @@
                 <elementReference>eachLine.Product2Id</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Loop_Lines</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_No_Lines</name>
@@ -142,6 +148,9 @@
                 <elementReference>product.Family</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Decision_Has_Discount</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Factor</name>
@@ -155,6 +164,9 @@
                 <elementReference>F_Factor</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Margin</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Factor_One</name>
@@ -168,6 +180,9 @@
                 <numberValue>1</numberValue>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Margin</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Margin</name>
@@ -181,6 +196,9 @@
                 <elementReference>F_EffectiveRevenue</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Decision_Revenue_Zero</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Margin_Zero</name>
@@ -194,6 +212,9 @@
                 <numberValue>0</numberValue>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Worst_Adjusted</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Margin_Calc</name>
@@ -207,6 +228,9 @@
                 <elementReference>F_EffectiveMargin</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Worst_Adjusted</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Worst_Adjusted</name>
@@ -227,6 +251,9 @@
                 <elementReference>effectiveMargin</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Get_Policy_L3</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Use_L3</name>
@@ -240,6 +267,9 @@
                 <elementReference>policyL3</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Policy</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Use_L2</name>
@@ -253,6 +283,9 @@
                 <elementReference>policyL2</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Policy</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Use_L1</name>
@@ -266,6 +299,9 @@
                 <elementReference>policyL1</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Policy</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Use_L0</name>
@@ -279,6 +315,9 @@
                 <elementReference>policyL0</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Decision_Policy_Found</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_No_Policy</name>
@@ -382,6 +421,9 @@
                 <elementReference>appliedPolicy.RequiresJustification__c</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Decision_Band</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Green</name>
@@ -409,6 +451,9 @@
                 <elementReference>F_Expl_Green</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Diagnostics</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Yellow</name>
@@ -436,6 +481,9 @@
                 <elementReference>F_Expl_Yellow</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Diagnostics</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Red</name>
@@ -463,6 +511,9 @@
                 <elementReference>F_Expl_Red</elementReference>
             </value>
         </assignmentItems>
+        <connector>
+            <targetReference>Assign_Diagnostics</targetReference>
+        </connector>
     </assignments>
     <assignments>
         <name>Assign_Diagnostics</name>
@@ -477,6 +528,7 @@
             </value>
         </assignmentItems>
     </assignments>
+
     <decisions>
         <name>Decision_Quote_Found</name>
         <label>A cotação existe</label>
@@ -846,7 +898,8 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Quote</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>quote</outputReference>
     </recordLookups>
     <recordLookups>
         <name>Get_Lines</name>
@@ -867,7 +920,8 @@
         </filters>
         <getFirstRecordOnly>false</getFirstRecordOnly>
         <object>QuoteLineItem</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>lineItems</outputReference>
     </recordLookups>
     <recordLookups>
         <name>Get_Product</name>
@@ -888,7 +942,8 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Product2</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>product</outputReference>
     </recordLookups>
     <recordLookups>
         <name>Get_Policy_L3</name>
@@ -939,7 +994,8 @@
         <object>DD_DiscountPolicy__c</object>
         <sortField>EffectiveFrom__c</sortField>
         <sortOrder>Desc</sortOrder>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>policyL3</outputReference>
     </recordLookups>
     <recordLookups>
         <name>Get_Policy_L2</name>
@@ -990,7 +1046,8 @@
         <object>DD_DiscountPolicy__c</object>
         <sortField>EffectiveFrom__c</sortField>
         <sortOrder>Desc</sortOrder>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>policyL2</outputReference>
     </recordLookups>
     <recordLookups>
         <name>Get_Policy_L1</name>
@@ -1041,7 +1098,8 @@
         <object>DD_DiscountPolicy__c</object>
         <sortField>EffectiveFrom__c</sortField>
         <sortOrder>Desc</sortOrder>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>policyL1</outputReference>
     </recordLookups>
     <recordLookups>
         <name>Get_Policy_L0</name>
@@ -1092,7 +1150,8 @@
         <object>DD_DiscountPolicy__c</object>
         <sortField>EffectiveFrom__c</sortField>
         <sortOrder>Desc</sortOrder>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+        <outputReference>policyL0</outputReference>
     </recordLookups>
     <start>
         <locationX>176</locationX>

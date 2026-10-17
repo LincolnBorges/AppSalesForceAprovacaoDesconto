@@ -66,6 +66,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | POL-001 | 2026-10-17 | F2-04 criação de 4 políticas `DEMO-` (Parts e Medical Equipment, genérica + específica) | DD_DiscountPolicy__c | OK | 4 Ids |
 | PRE-001 | 2026-10-17 | F2-06 teste da precedência genérica × específica por price book (nenhuma escrita) | DD_DiscountPolicy__c | OK | 4 cenários |
 | DRE-001 | 2026-10-17 | F3-03 criação do objeto `DD_DiscountRequest__c` + 18 campos + 3 regras + FLS + layout | DD_DiscountRequest__c | OK | deploy `0Afas00000606d4CAA` |
+| FLW-002 | 2026-10-17 | F3-04 Flow de cálculo: deployado e **NÃO funcional** (falha em tempo de execução) | DD_CalculateQuoteMargin | FALHA | deploy `0Afas00000608ADCAY` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -377,6 +378,24 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | `sf_delete_metadata` de `CustomObject:DD_DiscountRequest__c` remove objeto e filhos; o layout e as 14 `fieldPermissions` saem junto com o objeto (o arquivo `Admin.profile-meta.xml` precisa perder os blocos `DD_DiscountRequest__c.*`, o `layoutAssignments` e o `objectPermissions`) |
 | Tokens (aprox.) | 15000 |
 | Observações | **O dry-run pagou o custo:** o Profile foi rejeitado com `Element fieldPermissions is duplicated at this location in type Profile (166:24)` — a causa **não** era duplicidade de campo, era **ordem de elementos** no MDAPI (`fieldPermissions` tem de vir antes de `layoutAssignments`, que vem antes de `objectPermissions`). Corrigido reinserindo nos três pontos de ordem. Pós-deploy: FLS **14/14** `read+edit` (os 4 obrigatórios não recebem linha — A57); layout com **19/19** campos esperados, obrigatórios como `Required`, `Name` como `Readonly`; **1** layout só (sem duplicata); 3 regras `Active=true`; 4 campos `nillable=false` exatamente como planejado; `CurrencyIsoCode` presente (consulta sem erro) |
+
+---
+
+### [2026-10-17 17:10 -03:00] FLW-002 — FALHA (F3-04: Flow de cálculo deployado, não funcional)
+
+| Campo | Valor |
+|---|---|
+| Operação | `deploy_metadata` de Flow + 9 invocações via `/services/data/v68.0/actions/custom/flow/...` |
+| Skill | `validate-metadata` §2/§3 · skill `calculate-margin` (conferência) |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, `Active`, 40 elementos, 37 variáveis, 12 fórmulas) |
+| Ferramenta | `sf project deploy start` + `sf api request rest` (POST actions/custom/flow) |
+| Parâmetros-chave | entrada `quoteId='0Q0as0000021hOLCAY'`, `requestedDiscountPct=0` (cotação de 29,5673%, PB Fleet) |
+| Confirmação humana | sim — confirmação dupla S6 dada ("Confirmo") |
+| Resultado | deploys OK: `0Afas00000607qrCAA` (v1), `0Afas00000607sTCAQ` (v2), `0Afas000006080XCAQ` (v3), `0Afas00000608ADCAY` (v4, estado atual, `Active`). **Toda invocação falha** com `An unhandled fault has occurred in this flow`; nenhum `outputValue` é devolvido |
+| Reversão | desativar o Flow e remover versões via Tooling; conferir `FlowDefinitionView` **e** Tooling `Flow` (A46/A50). Já existem **4 versões** → 3 `Obsolete` a limpar |
+| Tokens (aprox.) | 22000 |
+| Observações | **3 defeitos reais encontrados e corrigidos, 1 aberto.** (1) Os 7 `Get Records` usavam `storeOutputAutomatically=true` e as variáveis de registro declaradas (`quote`, `policyL3`…) **nunca eram populadas** → "cotação não encontrada"; corrigido com `outputReference` (A58). (2) **21 `Assignments` sem `<connector>`**: o Flow deploya e simplesmente termina no meio — o deploy **não valida travessia** (A59). (3) `TEXT()` sobre `Id` é inválido: o Flow já trata `Id` como Text. (4) **Defeito aberto:** após as correções o Flow atravessa a cadeia e estoura num elemento que não foi possível localizar — `FlowInterview`, `FlowInterviewLogEntry` e `Assign_Fault` não ajudaram: `FlowAssignment` e `FlowLoop` **recusam `faultConnector`** na posição tentada (só `Get Records` aceita, e o erro parou antes) |
 
 ---
 
