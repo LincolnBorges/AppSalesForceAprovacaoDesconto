@@ -1,0 +1,174 @@
+# .dsh/config.yaml — Configuração do projeto para o DeepSeek Harness (DSH)
+# Projeto: DealDeskGuardrail
+#
+# NOTA DE COMPATIBILIDADE (importante):
+# O DSH descobre nativamente, neste checkout:
+#   - instruções em  AGENTS.md / CLAUDE.md  (raiz, .dsh/ e $DSH_HOME)
+#   - skills em      .dsh/skills/<nome>/SKILL.md   (frontmatter: name, description)
+#   - plugins/MCP em cordis.yml / cordis.patch.yml  (perfil do DSH)
+# Este arquivo é a POLÍTICA DECLARATIVA do projeto: documenta os limites de custo e
+# segurança que o agente/harness devem respeitar e é a fonte para a configuração
+# equivalente do perfil do DSH (ver §7 para o bloco pronto de MCP).
+# =============================================================================
+
+project:
+  name: DealDeskGuardrail
+  language: pt-BR
+  objective: "App Salesforce de governança de desconto: cálculo de margem por linha de cotação, semáforo contra o piso da política e roteamento condicional de aprovação (LWC + Flow + Agentforce)"
+  api_version: "68.0"           # sfdx-project.json (sourceApiVersion)
+  agentforce_api_version: "66.0" # metadata de Agentforce: usar SEMPRE esta versão (ver AGENTS.md §3)
+  default_org_alias: personal   # org alvo (Org ID 00Das00000GrzvPEAR), trial — NUNCA production
+  target_environment: dev-trial # dev-trial | sandbox | dev  (NUNCA production)
+  uses_scratch_orgs: false      # a org alvo já tem tudo provisionado (A7/A8/A9)
+
+# -----------------------------------------------------------------------------
+# 1. Carregamento automático (toda sessão) — manter enxuto
+# -----------------------------------------------------------------------------
+context:
+  auto_load:
+    - AGENTS.md          # regras, guardrails, custo
+    - PREFERENCES.md     # idioma, tom, formato, comportamento
+    - SKILLS.md          # índice de skills e tools MCP
+
+  # ---------------------------------------------------------------------------
+  # 2. Carregamento sob demanda (lazy load) — só quando a tarefa exigir
+  # ---------------------------------------------------------------------------
+  lazy_load:
+    - path: MEMORY.md
+      section_scoped: true     # ler apenas a seção necessária (IDs, decisões, cache)
+      trigger: "quando precisar de IDs, decisões de arquitetura ou cache de metadados"
+    - path: .dsh/skills
+      discovery: auto          # DSH descobre .dsh/skills/<nome>/SKILL.md
+      max_skills_per_task: 1   # carregar no máximo 1 skill por tarefa
+      trigger: "quando a descrição da skill corresponder à tarefa"
+    - path: docs/roadmap.md
+      trigger: "ao iniciar uma fase de construção"
+    - path: docs/risks.md
+      trigger: "antes de qualquer deploy de metadado ou trabalho com Agentforce"
+    - path: docs/architecture.md
+      trigger: "ao desenhar ou alterar uma camada do app"
+    - path: docs/execution-log.md
+      read_mode: append_only   # ler apenas ao registrar (últimas entradas)
+      trigger: "ao registrar ou auditar operações executadas"
+
+# -----------------------------------------------------------------------------
+# 3. Custo — orçamento por sessão
+# -----------------------------------------------------------------------------
+cost:
+  max_tokens_per_session: 50000
+  warn_at_tokens: 35000
+  auto_compact_at: 45000
+  prefer_cache: true
+  new_session_after_task: true
+  rules:
+    - "Contexto enxuto: não colar catálogo de tools nem schemas completos no prompt"
+    - "Cache de metadados: sf_describe_object no máximo 1x por objeto por sessão (MEMORY.md §4)"
+    - "Sessões curtas: uma tarefa por sessão; nova feature = nova sessão"
+    - "Saídas compactas: tabelas, sem emojis, sem dump de JSON bruto"
+    - "Não reler arquivos já lidos na sessão"
+    - "Log em uma linha por operação"
+  on_warn: "consolidar coleta, encerrar tarefa em andamento e abrir nova sessão"
+  on_limit: "parar, resumir o estado e pedir ao humano uma nova sessão"
+
+# -----------------------------------------------------------------------------
+# 4. Segurança — guardrails
+# -----------------------------------------------------------------------------
+security:
+  require_confirmation_for_writes: true   # toda escrita exige "confirmo" explícito (S3)
+  allow_deletes: false                    # S5: só com autorização nominal do humano
+  allow_production: false                 # S1
+  max_records_per_batch: 1                # S4: um registro por vez, sempre
+  require_dry_run_for_metadata: true      # S7: --dry-run antes de qualquer deploy
+  verify_residue_after_metadata_delete: true  # A46/A50: conferir FlowDefinitionView + Tooling
+  double_confirmation_required:      # S6: payload + impacto
+    - flows
+    - apex_deploy
+    - permission_sets
+    - agentforce_metadata
+  forbidden_tools:
+    - sf_delete_record
+    - sf_delete_metadata
+    - sf_create_agent_action      # A44: grava ação sem schema; usar o bundle de 3 arquivos
+  secrets_policy: "credenciais apenas no env do registro MCP; nunca em arquivos, logs ou chat"
+
+# -----------------------------------------------------------------------------
+# 5. Elicitação — comportamento interativo
+# -----------------------------------------------------------------------------
+elicitation:
+  max_questions_per_message: 1
+  max_options_per_question: 3
+  assume_defaults: false          # nunca assumir valor padrão
+  confirm_before_write: true
+  language: pt-BR
+  tone: technical_direct
+  emojis: false
+
+# -----------------------------------------------------------------------------
+# 6. Ferramentas MCP esperadas (nomes reais do salesforce-metadata-mcp)
+# -----------------------------------------------------------------------------
+mcp:
+  server_name: salesforce                 # tools publicadas como mcp__salesforce__<tool>
+  package: salesforce-metadata-mcp
+  version: "3.x"
+  transport: stdio
+  api_version: "66.0"                     # versão que o servidor fala; é o que faz Agentforce funcionar
+  tool_naming_note: >
+    Os nomes reais divergem do pedido original: sf_query_records (não sf_query) e
+    sf_describe_object (não sf_describe). sf_create_record e sf_deploy_metadata existem
+    com esses nomes. Tools de toolsets não carregados só são chamáveis via sf_call_tool.
+  tools:
+    read:
+      - sf_query_records
+      - sf_describe_object
+      - sf_get_record
+      - sf_search_records
+      - sf_retrieve_metadata
+      - sf_find_tool
+      - sf_load_toolset
+      - sf_list_toolsets
+      - sf_tool_schema
+      - sf_call_tool
+    write:
+      - sf_create_record
+      - sf_update_record
+      - sf_deploy_metadata
+    agentforce:
+      - sf_create_agent_topic       # GenAiPlugin — funciona (T1)
+      - sf_create_agent_planner     # GenAiPlannerBundle — funciona em API 66.0
+      - sf_create_agent             # Bot/BotVersion — funciona
+    forbidden:
+      - sf_delete_record
+      - sf_delete_metadata
+      - sf_create_agent_action      # produz ação incompleta (A43/A44)
+  cost_guard:
+    SF_TOOLSETS: "core,metadata,data"   # ~35 tools. NUNCA 'all' (~230 tools)
+    note: "carregar toolset extra sob demanda com sf_load_toolset"
+  safety_guard:
+    SF_PRODUCTION_GUARD: strict     # recusa qualquer escrita quando a org é produção
+
+# -----------------------------------------------------------------------------
+# 7. Registro no DSH (bloco pronto)
+# -----------------------------------------------------------------------------
+# O DSH registra servidores MCP via plugin @deepseek-ai/dsh-mcp-client em um
+# cordis.patch.yml (perfil do usuário, ex.: $DSH_HOME/profiles/<perfil>/cordis.patch.yml).
+# Cole o bloco abaixo nesse arquivo e reinicie/recarregue o DSH:
+#
+# - insert:
+#     - id: salesforce-metadata-mcp
+#       name: '@deepseek-ai/dsh-mcp-client'
+#       config:
+#         transport: stdio
+#         serverName: salesforce
+#         command: npx
+#         args: ['-y', 'salesforce-metadata-mcp']
+#         env:
+#           SF_INSTANCE_URL: 'https://personalproject.my.salesforce.com'
+#           SF_ALIAS: 'personal'              # apenas letras, numeros, hifen e underscore
+#           SF_TOOLSETS: 'core,metadata,data'
+#           SF_PRODUCTION_GUARD: 'strict'
+#         failOnStartupError: true
+#         reconnect:
+#           enabled: true
+#
+# Preferir SF_ALIAS (usa a autenticação do Salesforce CLI) em vez de tokens
+# estáticos. NUNCA versionar credenciais neste repositório.

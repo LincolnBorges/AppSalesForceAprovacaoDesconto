@@ -1,0 +1,17 @@
+-- Cotações em aberto — onde o guardrail atua.
+-- Baseline em 2026-10-16: 31 Quotes (Draft 18 · Approved 9 · Accepted 4), todas em USD.
+
+SELECT Id, Name, Status, OpportunityId, Pricebook2Id, ExpirationDate, CurrencyIsoCode
+FROM Quote WHERE Status = 'Draft' ORDER BY CreatedDate DESC LIMIT 20
+
+-- Distribuição por status (visão de funil da cotação)
+SELECT Status, COUNT(Id) c FROM Quote GROUP BY Status
+
+-- Linhas da cotação com o custo do price book
+SELECT Id, Product2.Name, Product2.Family, Quantity, UnitPrice, Discount,
+       PricebookEntry.FixedCost__c, PricebookEntry.VariableCostPerUnit__c
+FROM QuoteLineItem WHERE QuoteId = '<quoteId>' ORDER BY UnitPrice DESC
+
+-- Nota: OpportunityLineItem NAO tem campo Discount nesta org (A42/A4.4 do MEMORY).
+--       Por isso o app opera sobre QuoteLineItem.
+-- Nota: SyncedQuoteId esta preenchido em 0 Opportunities — o sync nativo nao esta em uso.

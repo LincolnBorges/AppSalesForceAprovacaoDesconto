@@ -1,0 +1,26 @@
+-- Base de cálculo da margem: entradas do price book alvo COM custo.
+-- Price book: Fleet & Corporate Pricebook = 01sas000001nOBJAA2
+-- Baseline em 2026-10-16: 5 entradas com custo (do total de 241 da org).
+--
+-- Fórmula da margem: (UnitPrice - FixedCost__c - VariableCostPerUnit__c) / UnitPrice * 100
+
+SELECT Id, Product2Id, UnitPrice, FixedCost__c, VariableCostPerUnit__c, CurrencyIsoCode
+FROM PricebookEntry
+WHERE Pricebook2Id = '01sas000001nOBJAA2' AND FixedCost__c != null
+ORDER BY UnitPrice DESC
+
+-- Linhas de uma cotação, já cruzando o custo do price book pela própria linha
+SELECT Id, Product2.Name, Product2.Family, Quantity, UnitPrice, Discount, DiscountAmount,
+       PricebookEntry.FixedCost__c, PricebookEntry.VariableCostPerUnit__c,
+       DD_CostPerUnit__c, DD_MarginPct__c
+FROM QuoteLineItem
+WHERE QuoteId = '<quoteId>'
+ORDER BY UnitPrice DESC
+
+-- O que falta semear (Fase 0): entradas sem custo, por price book
+SELECT Pricebook2Id, COUNT(Id) c FROM PricebookEntry
+WHERE FixedCost__c = null GROUP BY Pricebook2Id ORDER BY COUNT(Id) DESC
+
+-- Rollback da semeadura de custo (T3) — valores anteriores eram null nos dois campos
+-- Ids: 01uas000000RovFAAS · 01uas000000RovjAAC · 01uas000000RovIAAS
+--      01uas000000RovXAAS · 01uas000000RovOAAS

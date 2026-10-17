@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Referencia de FLOW alvo de uma acao de agente Agentforce.
+  Forma validada no teste T7: AutoLaunchedFlow, sem trigger, com variaveis isInput/isOutput
+  EXPLICITAS (D8). O deploy foi feito por source-dir (API 68.0) e o Flow ficou Active.
+
+  Regras aprendidas no dry-run (A47):
+    - Os elementos label e processType sao OBRIGATORIOS; sem eles o deploy falha com
+      "Required field is missing: label" e o erro so aparece no dry-run.
+    - O Flow precisa estar com status Active: agente nao invoca Flow em Draft.
+    - As variaveis isInput/isOutput sao o que da sentido aos schema.json da acao (A43).
+
+  ATENCAO: comentario XML nao aceita dois hifens seguidos. Escrever "dry-run" e "source-dir"
+  sem o prefixo de dois hifens, senao o arquivo fica malformado e o deploy falha na validacao.
+-->
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <assignments>
+        <name>Set_Output_Value</name>
+        <label>Set Output Value</label>
+        <locationX>176</locationX>
+        <locationY>158</locationY>
+        <assignmentItems>
+            <assignToReference>outputValue</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>inputValue</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <description>Referencia de Flow alvo de acao de agente. Uma entrada, uma saida, um Assignment.</description>
+    <label>Agentforce Action Flow Reference</label>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>50</locationY>
+        <connector>
+            <targetReference>Set_Output_Value</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>inputValue</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>outputValue</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+</Flow>

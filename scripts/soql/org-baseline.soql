@@ -1,0 +1,20 @@
+-- Baseline da org — usar para detectar resíduo após qualquer operação de metadado.
+-- Comparar com MEMORY.md §1.6.
+-- Baseline em 2026-10-16: total 253 · ativos 216 · locais 29
+
+SELECT COUNT() FROM FlowDefinitionView
+SELECT COUNT() FROM FlowDefinitionView WHERE IsActive = true
+SELECT COUNT() FROM FlowDefinitionView WHERE NamespacePrefix = null
+
+-- Resíduo de metadado do projeto (deve ser 0 fora de uma sessão de trabalho)
+SELECT ApiName, Label, ProcessType, IsActive, VersionNumber
+FROM FlowDefinitionView WHERE ApiName LIKE 'DD_%'
+
+-- Contagens de metadado (via CLI, não SOQL):
+--   sf org list metadata --metadata-type LightningComponentBundle   -- baseline 466
+--   sf org list metadata --metadata-type CustomTab                   -- baseline 31
+--   sf org list metadata --metadata-type FlexiPage                   -- baseline 74
+--   sf org list metadata --metadata-type GenAiFunction --api-version 66.0   -- baseline 1
+--   sf org list metadata --metadata-type GenAiPlugin                 -- baseline 0
+--   sf org list metadata --metadata-type Bot --api-version 66.0      -- baseline 6
+--   sf org list metadata --metadata-type GenAiPlannerBundle --api-version 66.0 -- baseline 6

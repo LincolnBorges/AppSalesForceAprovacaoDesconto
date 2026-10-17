@@ -1,0 +1,61 @@
+{
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "marginPct" : {
+      "title" : "Margin Pct",
+      "description" : "Margem consolidada da cotacao, em porcentagem, calculada a partir do custo do price book.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "worstLineMarginPct" : {
+      "title" : "Worst Line Margin Pct",
+      "description" : "Pior margem entre as linhas da cotacao, em porcentagem.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "policyName" : {
+      "title" : "Policy Name",
+      "description" : "Nome da politica de desconto aplicada a esta cotacao.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "floorMarginPct" : {
+      "title" : "Floor Margin Pct",
+      "description" : "Piso de margem vigente, em porcentagem.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "decision" : {
+      "title" : "Decision",
+      "description" : "Decisao do guardrail: AutoApproved, ManagerApproval ou Blocked. O agente recomenda; o humano decide.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "explanation" : {
+      "title" : "Explanation",
+      "description" : "Explicacao em uma frase sobre a decisao e a politica aplicada, pronta para exibir ao vendedor.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}
