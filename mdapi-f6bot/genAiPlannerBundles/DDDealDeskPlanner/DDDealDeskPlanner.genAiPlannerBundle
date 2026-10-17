@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlannerBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Planner do agente Deal Desk: roteia pedidos de avaliacao de desconto para o topico de guardrail.</description>
+    <genAiPlugins>
+        <genAiPluginName>DD_DealDesk_Guardrail</genAiPluginName>
+    </genAiPlugins>
+    <masterLabel>DDDealDeskPlanner</masterLabel>
+    <plannerType>AiCopilot__ReAct</plannerType>
+</GenAiPlannerBundle>

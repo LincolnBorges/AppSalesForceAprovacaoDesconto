@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bot xmlns="http://soap.sforce.com/2006/04/metadata">
+    <agentDSLEnabled>false</agentDSLEnabled>
+    <agentType>AgentforceEmployeeAgent</agentType>
+    <botMlDomain>
+        <label>Guardrail de Desconto Deal Desk</label>
+        <name>DDDealDeskAgent</name>
+    </botMlDomain>
+    <botSource>None</botSource>
+    <botVersions>
+        <fullName>v1</fullName>
+        <articleAnswersGPTEnabled>false</articleAnswersGPTEnabled>
+        <botDialogs>
+            <botSteps>
+                <botMessages>
+                    <message>Olá! Sou o agente de guardrail de desconto do Deal Desk. Posso avaliar uma cotação, apontar a política aplicável e recomendar o próximo passo. Qual cotação você quer analisar?</message>
+                    <messageIdentifier>8763cc25-daa3-4587-8ea4-27b5db13d794</messageIdentifier>
+                </botMessages>
+                <stepIdentifier>3d2026bc-1daa-49da-bafa-532dc0e23a61</stepIdentifier>
+                <type>Message</type>
+            </botSteps>
+            <botSteps>
+                <stepIdentifier>44ba9431-fb2e-4e3c-a3d5-40aa16793ca0</stepIdentifier>
+                <type>Wait</type>
+            </botSteps>
+            <developerName>Welcome</developerName>
+            <isPlaceholderDialog>false</isPlaceholderDialog>
+            <label>Boas-vindas</label>
+            <showInFooterMenu>false</showInFooterMenu>
+        </botDialogs>
+        <botDialogs>
+            <botSteps>
+                <botMessages>
+                    <message>Algo deu errado. Tente novamente ou fale com um administrador.</message>
+                    <messageIdentifier>8f1df573-fa92-4fd4-8caf-3bb20f109ff1</messageIdentifier>
+                </botMessages>
+                <stepIdentifier>be5a9048-7fe1-4c6d-8626-eaf857bfdbfe</stepIdentifier>
+                <type>Message</type>
+            </botSteps>
+            <botSteps>
+                <stepIdentifier>1dd83627-e531-46cb-aa4d-3223dc30a3fe</stepIdentifier>
+                <type>Wait</type>
+            </botSteps>
+            <developerName>Rich_Content_Error_Handling</developerName>
+            <isPlaceholderDialog>false</isPlaceholderDialog>
+            <label>Erro</label>
+            <showInFooterMenu>false</showInFooterMenu>
+        </botDialogs>
+        <citationsEnabled>false</citationsEnabled>
+        <conversationDefinitionPlanners>
+            <genAiPlannerName>DDDealDeskPlanner</genAiPlannerName>
+        </conversationDefinitionPlanners>
+        <conversationSystemDialogs>
+            <dialog>Rich_Content_Error_Handling</dialog>
+            <type>ErrorHandling</type>
+        </conversationSystemDialogs>
+        <defaultStdObjForContactIdFltrEnabled>false</defaultStdObjForContactIdFltrEnabled>
+        <entryDialog>Welcome</entryDialog>
+        <intentDisambiguationEnabled>false</intentDisambiguationEnabled>
+        <intentV3Enabled>false</intentV3Enabled>
+        <isScriptCompatibleAgent>false</isScriptCompatibleAgent>
+        <knowledgeActionEnabled>false</knowledgeActionEnabled>
+        <knowledgeFallbackEnabled>false</knowledgeFallbackEnabled>
+        <role>Analista de Deal Desk que protege a margem: explica o estado do guardrail de desconto e aponta o proximo passo, sem decidir pelo humano e sem verbalizar margem ou custo.</role>
+        <smallTalkEnabled>false</smallTalkEnabled>
+        <staticPromptsEnabled>false</staticPromptsEnabled>
+        <status>Active</status>
+        <stopRecPrompts>false</stopRecPrompts>
+        <stopWelcomePrompts>false</stopWelcomePrompts>
+        <surfacesEnabled>false</surfacesEnabled>
+        <toneType>Neutral</toneType>
+    </botVersions>
+    <contextVariables>
+        <contextVariableMappings>
+            <SObjectType>MessagingEndUser</SObjectType>
+            <fieldName>MessagingEndUser.ContactId</fieldName>
+            <messageType>AppleBusinessChat</messageType>
+        </contextVariableMappings>
+        <contextVariableMappings>
+            <SObjectType>MessagingEndUser</SObjectType>
+            <fieldName>MessagingEndUser.ContactId</fieldName>
+            <messageType>Text</messageType>
+        </contextVariableMappings>
+        <contextVariableMappings>
+            <SObjectType>MessagingEndUser</SObjectType>
+            <fieldName>MessagingEndUser.ContactId</fieldName>
+            <messageType>Line</messageType>
+        </contextVariableMappings>
+        <contextVariableMappings>
+            <SObjectType>MessagingEndUser</SObjectType>
+            <fieldName>MessagingEndUser.ContactId</fieldName>
+            <messageType>EmbeddedMessaging</messageType>
+        </contextVariableMappings>
+        <contextVariableMappings>
+            <SObjectType>MessagingEndUser</SObjectType>
+            <fieldName>MessagingEndUser.ContactId</fieldName>
+            <messageType>WhatsApp</messageType>
+        </contextVariableMappings>
+        <contextVariableMappings>
+            <SObjectType>MessagingEndUser</SObjectType>
+            <fieldName>MessagingEndUser.ContactId</fieldName>
+            <messageType>Facebook</messageType>
+        </contextVariableMappings>
+        <dataType>Id</dataType>
+        <description>This variable may also be referred to as MessagingEndUser ContactId</description>
+        <developerName>ContactId</developerName>
+        <includeInPrompt>false</includeInPrompt>
+        <label>Contact Id</label>
+    </contextVariables>
+    <contextVariables>
+        <dataType>Id</dataType>
+        <description>This variable may also be referred to as MessagingEndUser Id</description>
+        <developerName>EndUserId</developerName>
+        <includeInPrompt>false</includeInPrompt>
+        <label>End User Id</label>
+    </contextVariables>
+    <contextVariables>
+        <dataType>Text</dataType>
+        <description>This variable may also be referred to as MessagingSession EndUserLanguage</description>
+        <developerName>EndUserLanguage</developerName>
+        <includeInPrompt>false</includeInPrompt>
+        <label>End User Language</label>
+    </contextVariables>
+    <contextVariables>
+        <dataType>Id</dataType>
+        <description>This variable may also be referred to as MessagingSession Id</description>
+        <developerName>RoutableId</developerName>
+        <includeInPrompt>false</includeInPrompt>
+        <label>Routable Id</label>
+    </contextVariables>
+    <description>Agente de guardrail de desconto do Deal Desk: avalia uma cotacao, aponta a politica aplicavel e recomenda o proximo passo. Nunca aprova e nunca cita margem ou custo em numero.</description>
+    <label>Guardrail de Desconto Deal Desk</label>
+    <logPrivateConversationData>false</logPrivateConversationData>
+    <richContentEnabled>true</richContentEnabled>
+    <sessionTimeout>480</sessionTimeout>
+    <type>InternalCopilot</type>
+</Bot>

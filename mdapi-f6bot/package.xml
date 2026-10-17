@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Probe F6-07 (autorizado pelo humano em F6-10): agente Employee via mdapi,
+  contornando a limitacao de tipo do sf_create_agent (A78/AF-002).
+  API 66.0. NUNCA misturar com tipos nao-Agentforce.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>DDDealDeskAgent</members>
+        <name>Bot</name>
+    </types>
+    <types>
+        <members>DDDealDeskPlanner</members>
+        <name>GenAiPlannerBundle</name>
+    </types>
+    <version>66.0</version>
+</Package>
