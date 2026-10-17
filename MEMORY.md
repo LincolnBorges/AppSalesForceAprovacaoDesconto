@@ -54,7 +54,8 @@ nomes reservados — serve para evitar retrabalho e colisão.
 | `FlexiPage` `DD_Quote_Record_Page` | **criado (Fase 4, 2026-10-17)** | Página da `Quote` com highlights, console, related list e detalhe; ativada **só no app** via `actionOverrides` (o resto da org mantém a página padrão) |
 | `CustomTab` `DD_Margin_Console` | **criado (Fase 4, 2026-10-17)** | Aba do LWC: `<lwcComponent>ddMarginConsole</lwcComponent>` sem `c:` (A69) e `<motif>Custom41: Stack of Cash</motif>` (A70) |
 | `CustomApplication` `DD_DealDesk` | **criado (Fase 4, 2026-10-17)** | App "Deal Desk": Home, Quotes e Console de Margem; visibilidade no perfil Admin (A72) |
-| Ações Agentforce `DD_*` | planejado (Fase 6) | bundle mdapi de 3 arquivos, API **66.0** |
+| Ações Agentforce `DD_*` | **criado (Fase 6, 2026-10-17)** | `GenAiFunction` **`DD_CalculateMargin`** = `172as000008FaHtAAK`, aponta para o Flow `DD_CalculateQuoteMargin`; bundle mdapi de 3 arquivos, API **66.0**, deploy `0Afas0000060DQ1CAM`; retrieve devolveu os 3 arquivos. Ver AF-001 |
+| Agente `DDDealDeskAgent` | **NÃO criado (F6-07 falhou)** | MCP `sf_create_agent` recusa o tipo `EinsteinServiceAgent` ("don't have access to agent templates associated with the EinsteinServiceAgent agent type"); nenhum resíduo. Ver AF-002 e **A78** |
 | Permission set `DD_DealDesk_User` | **criado (Fase 5, 2026-10-17)** | `0PSas000004H6puGAC`, deploy `0Afas0000060D6fCAE`: 5 objetos read-only, 22 FLS de leitura (só `DD_GuardrailState__c` entre os campos de número), aba e app visíveis, 2 Flows habilitados. Ver FLS-001 |
 
 ### 1.3 Base de cálculo da margem — custo já semeado (T3, 2026-10-16)
@@ -111,12 +112,13 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | `AgentforceForDevelopersSettings.agentforceForDevelopersOptOut` | **false** (habilitado) |
 | `EinsteinCopilotSettings.enableEinsteinGptCopilot` | false (só o Copilot clássico está off) |
 | `BotDefinition` (6) | `0Xxas000000AJ1NCAW` Copilot_for_Salesforce · `0Xxas000000AJ1OCAW` Inventory_Management · `0Xxas000000AJ1PCAW` Channel_Revenue_Management · `0Xxas000000AJ1QCAW` Sales_Planning · `0Xxas000000AJ1RCAW` Industries_Sales_Assistance · `0Xxas000000AJ1SCAW` Asset_Service_Management — **6 versões #1, todas `Active`** |
-| `GenAiFunction` | **1** (padrão: `AnswerQuestionsWithKnowledge_16jWs000000RqYn`) |
+| `GenAiFunction` | **2** — o padrão `AnswerQuestionsWithKnowledge_16jWs000000RqYn` + `DD_CalculateMargin` (`172as000008FaHtAAK`, F6-03) |
 | `GenAiPlugin` (tópicos) | **0** |
 | `GenAiPlannerBundle` | **6** — inclui `EmployeeCopilotPlanner` |
 | Acesso do meu usuário | **já concedido**: o PS do perfil concede 5 dos 6 agentes via `SetupEntityAccess` (`SetupEntityType = 'BotDefinition'`); `CopilotSalesforceUser` cobre o 6º. `AgentAccess1` está atribuído a **outro** usuário (Alan FieldTech) e **não é o mecanismo** |
 | Tipos de metadado Agentforce | usar **API 66.0** (`GenAiPlannerBundle` falha em 68.0 com *"Cannot use … in this version"*) |
 | `sf_create_agent_topic` (MCP) | **funciona** — provado em T1 (tópico criado e removido) |
+| `sf_create_agent` (MCP) | **FALHA nesta org** (AF-002) — tenta um `Bot` do tipo **`EinsteinServiceAgent`** e a org recusa: *"Looks like you don't have access to agent templates associated with the EinsteinServiceAgent agent type"*. Os 6 agentes existentes são todos `AgentforceEmployeeAgent`/`InternalCopilot`; a licença `Agentforce (Default)` está ativa e o usuário a tem; **não** existe licença de Service Agent. Nenhum `Bot` foi criado (sem resíduo). Ver **A78** |
 | `GenAiFunction` via MCP | **incompleto** — grava só o `-meta.xml`, sem `input/schema.json` nem `output/schema.json`; a org recusa o retrieve (A43/A44) |
 | `GenAiFunction` via CLI | **funciona** — bundle de 3 arquivos em mdapi com `<version>66.0</version>` (T7). Receita em [`docs/artifacts/`](docs/artifacts) |
 
@@ -130,7 +132,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | `LightningComponentBundle` | **466** | `sf org list metadata --metadata-type LightningComponentBundle` |
 | `CustomTab` | **31** | idem |
 | `FlexiPage` | **74** | idem |
-| `GenAiFunction` | **1** | `--metadata-type GenAiFunction --api-version 66.0` |
+| `GenAiFunction` | **2** (1 padrão + `DD_CalculateMargin` desde F6-03) | `sf org list metadata --metadata-type GenAiFunction --api-version 66.0` |
 | `GenAiPlugin` | **0** | `--metadata-type GenAiPlugin` |
 | `Bot` / `GenAiPlannerBundle` | **6 / 6** | `--api-version 66.0` |
 | `PricebookEntry` com `FixedCost__c` | **23** (5 originais + 18 das 19 semeadas — ver nota do MedCart) | `SELECT COUNT() FROM PricebookEntry WHERE FixedCost__c != null` |
@@ -162,6 +164,10 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 > agente: na sessão da F5-07 só houve deploy de metadado e leitura. O `Product2` `MediScan MedCart`
 > (`01tas000007Va6yAAC`) permanece **sem nenhuma** `PricebookEntry`. Consequência prática: nenhuma;
 > a demo não usa esse produto. **Não recriar sem autorização nominal** (S3/S8).
+>
+> **Reconferido em 2026-10-17 (F6-03):** `GenAiFunction` 1 → **2** (`DD_CalculateMargin`, AF-001).
+> `GenAiPlugin` **0** e `GenAiPlannerBundle` **6** e `Bot` **6** seguem no baseline — o tópico e o planner
+> **não** foram criados e o `sf_create_agent` falhou sem deixar `Bot` (AF-002).
 >
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
@@ -294,6 +300,7 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | A75 | **`FieldPermissions` com `readable=false` não existe em permission set.** A org aceita o deploy e **descarta a linha**: o PS ficou com 22 grants e **zero** negações. Permission set é lista de **concessão**, aditivo ao perfil — não subtrai nada. | Para negar leitura de campo, o único mecanismo é o **perfil** (ou um perfil restritivo). O PS deve simplesmente **não conceder**; declarar `read=false` só documenta intenção, não produz efeito. Prova da negação é por `FieldPermissions` do perfil + teste funcional. Pegou na F5-01 |
 | A76 | **A fórmula do campo, o Flow e o console contam a mesma história — ou a demo mostra a divergência.** A checagem de custo estava depois da política no Flow: a cotação sem custo **e** sem política devolvia `Pendente de Política` no simulador enquanto o campo da `Quote` já dizia `Pendente de Custo`. O `--dry-run` e o deploy passaram nos dois casos — é falha **semântica**, invisível para o compilador. | Fórmula e Flow têm de compartilhar a **ordem de precedência** dos gaps de dado. Testar o cenário de fronteira (dois gaps ao mesmo tempo) explicitamente. Corrigir custou um redeploy e uma versão `Obsolete` a mais no Flow (A50). Pegou na F5-07 |
 | A77 | **Quirks de `PermissionSet` que o dry-run pega barato:** (a) `PermissionSetApplicationVisibility` **não aceita `<default>`** (`Element ...default invalid at this location`); (b) `description` do PS tem **limite 255** caracteres; (c) **`Quote` read exige `Opportunity` read** (`Permission Read Quote depends on permission(s): Read Opportunity`); (d) campo `required` não recebe FLS (A57) e as linhas dos 5 obrigatórios da política/4 do pedido ficam de fora do PS. | Escrever o PS com o pacote mínimo e deixar o dry-run guiar: 3 erros apareceram antes de qualquer escrita. Não tentar "negar" FLS no PS (A75). Ver FLS-001 |
+| A78 | **`sf_create_agent` (MCP) cria `Bot` do tipo `EinsteinServiceAgent` e a org trial recusa por falta de acesso aos *agent templates* desse tipo.** Erro literal: `Looks like you don't have access to agent templates associated with the EinsteinServiceAgent agent type. Make sure that you have the required permissions for the type and try again.` A falha acontece no deploy do `.bot` — **não** é o probe de `GenAiFunction`, então `skipActionCapabilityCheck` não muda nada. Os 6 `BotDefinition` da org são todos `AgentforceEmployeeAgent`/`InternalCopilot`; a licença `Agentforce (Default)` (`EinsteinGPTCopilotPsl`) está ativa (2/10) e o usuário está entre os 2; **não** existe licença de Service Agent; `AgentTemplate` não é objeto consultável na API. | **Não** tentar variações às cegas (S8): o que resolve é habilitar/provisionar o template de Service Agent no Setup (ação humana) ou aceitar que esta org só cria agente do tipo `Employee` — caminho que a ferramenta MCP **não** expõe. Nenhum resíduo foi deixado (o shell não chegou a ser criado). Ver AF-002 |
 
 
 ---

@@ -64,11 +64,11 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
 | 5 | Acesso, dados e demo | 8 | 6 | CONCLUÍDO |
-| 6 | Camada Agentforce | 9 | 1 | PENDENTE |
+| 6 | Camada Agentforce | 10 | 4 | BLOQUEADO (F6-07: sem template `EinsteinServiceAgent`) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **69** | **54** | |
+| **Total** | | **70** | **57** | |
 
-*Atualizado em 2026-10-17 (Fase 5 fechada: 6 de 8 ações concluídas, F5-08 cancelada; tag `fase-5`).*
+*Atualizado em 2026-10-17 (Fase 6 em andamento: ação de agente íntegra; agente bloqueado pela plataforma).*
 
 ---
 
@@ -80,6 +80,7 @@ paradas no ponto indicado.
 | ID | Decisão | Bloqueia | Efeito se não houver resposta |
 |---|---|---|---|
 | — | Nenhuma pendente — Fases 0 e 1 fechadas em 2026-10-17 | — | — |
+| F6-10 | **Como destravar o agente Agentforce** — a criação do `Bot` falha por falta de acesso aos *agent templates* do tipo `EinsteinServiceAgent` (AF-002/A78). Caminhos: (a) habilitar/provisionar o template de Service Agent no Setup e repetir F6-07; (b) aceitar a Fase 6 entregando só a ação de agente (`GenAiFunction` íntegra); (c) autorizar um probe controlado de `Bot` tipo `Employee` via bundle mdapi — caminho que a ferramenta MCP **não** expõe | F6-05, F6-06, F6-07, F6-08 | Fase 6 fica com a ação pronta e sem agente; `GenAiPlugin`/`GenAiPlannerBundle`/`Bot` permanecem no baseline |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
 > F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15.
@@ -177,15 +178,16 @@ paradas no ponto indicado.
 
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
-| F6-01 | Checar pré-requisitos do agente | **F3-09** | Confirmar Flows `Active` com `isInput`/`isOutput` e que o tipo `GenAiFunction` responde em **API 66.0** (regra das duas versões) | IA | PENDENTE |
+| F6-01 | Checar pré-requisitos do agente | **F3-09** | Confirmar Flows `Active` com `isInput`/`isOutput` e que o tipo `GenAiFunction` responde em **API 66.0** (regra das duas versões) | IA | CONCLUÍDO (2026-10-17): `DD_CalculateQuoteMargin` **`Active` v25** com **2** `isInput` e **17** `isOutput`, provados por retrieve da org (não só pelo arquivo local); tipos Agentforce respondem em 66.0 com `GenAiFunction` 1 · `GenAiPlugin` 0 · `GenAiPlannerBundle` 6 |
 | F6-02 | Escopo e limites do agente | **F6-01** | Que perguntas responde, o que **nunca** faz (jamais aprovar, jamais exibir margem numérica), tom e limites da resposta | HUMANO | CONCLUÍDO (2026-10-17): nunca aprova, nunca cita margem, ver D15 |
-| F6-03 | Deploy da `GenAiFunction` | **F6-02** | Bundle mdapi de 3 arquivos (`-meta.xml` + `input/schema.json` + `output/schema.json`) em API 66.0, pela skill `deploy-agentforce-action`; **não** usar `sf_create_agent_action` (A44) | IA | PENDENTE |
-| F6-04 | Retrieve de integridade | **F6-03** | Conferir que os 3 arquivos voltam e fazem parse (A45); se faltar schema, corrigir antes de seguir | IA | PENDENTE |
-| F6-05 | Tópico do agente (`GenAiPlugin`) | **F6-02**, **F6-04** | Criar o tópico via MCP com as ações e as instruções do §6.3 da [`architecture.md`](architecture.md) | IA | PENDENTE |
-| F6-06 | Planner | **F6-05** | Criar/atualizar o planner via MCP com a lista **completa** de tópicos | IA | PENDENTE |
-| F6-07 | Ligar o agente | **F6-06** | `sf_create_agent` com `plannerName`; registrar os IDs em `MEMORY.md` §1.5 | IA | PENDENTE |
-| F6-08 | Testar 3 perguntas reais | **F6-07** | O agente resume o cenário, indica o próximo passo e **não** afirma que aprovou nem cita margem numérica | IA | PENDENTE |
-| F6-09 | Fechar a Fase 6 | **F6-08** | Atualizar `MEMORY.md`, `execution-log`, este plano, `roadmap` e `README`; commit e tag `fase-6` | IA | PENDENTE |
+| F6-03 | Deploy da `GenAiFunction` | **F6-02** | Bundle mdapi de 3 arquivos (`-meta.xml` + `input/schema.json` + `output/schema.json`) em API 66.0, pela skill `deploy-agentforce-action`; **não** usar `sf_create_agent_action` (A44) | IA | CONCLUÍDO (2026-10-17): `DD_CalculateMargin` `172as000008FaHtAAK`; dry-run `0Afas0000060DOPCA2` + deploy `0Afas0000060DQ1CAM`. Schema com `marginBp`/`worstLineBp`/`diagnostics` invisíveis ao planner (D15) e `CostPending`/`Pendente de Custo` documentados. Ver AF-001 |
+| F6-04 | Retrieve de integridade | **F6-03** | Conferir que os 3 arquivos voltam e fazem parse (A45); se faltar schema, corrigir antes de seguir | IA | CONCLUÍDO (2026-10-17): retrieve 66.0 devolveu os **3 arquivos**, todos fazem parse; input 2/2 e output **17/17** casando com as variáveis da org. Ver AF-001 |
+| F6-05 | Tópico do agente (`GenAiPlugin`) | **F6-02**, **F6-04** | Criar o tópico via MCP com as ações e as instruções do §6.3 da [`architecture.md`](architecture.md) | IA | BLOQUEADO (2026-10-17): depende do agente, que não pôde ser criado (AF-002). Payload das 11 instruções (D15) aprovado e pronto; ver **F6-10** |
+| F6-06 | Planner | **F6-05** | Criar/atualizar o planner via MCP com a lista **completa** de tópicos | IA | BLOQUEADO (2026-10-17): mesma causa; `GenAiPlannerBundle` segue 6. Ver **F6-10** |
+| F6-07 | Ligar o agente | **F6-06** | `sf_create_agent` com `plannerName`; registrar os IDs em `MEMORY.md` §1.5 | IA | BLOQUEADO (2026-10-17): `sf_create_agent` **falhou** — `Looks like you don't have access to agent templates associated with the EinsteinServiceAgent agent type`; **nenhum resíduo** (0 `Bot` `DDDealDeskAgent`). Erro literal em AF-002 e A78. Ver **F6-10** |
+| F6-08 | Testar 3 perguntas reais | **F6-07** | O agente resume o cenário, indica o próximo passo e **não** afirma que aprovou nem cita margem numérica | IA | PENDENTE (bloqueado por F6-10) |
+| F6-09 | Fechar a Fase 6 | **F6-08** | Atualizar `MEMORY.md`, `execution-log`, este plano, `roadmap` e `README`; commit e tag `fase-6` | IA | PENDENTE (bloqueado por F6-10) |
+| F6-10 | Destravar a criação do agente | — | Decidir entre: (a) habilitar/provisionar o template de Service Agent no Setup e repetir F6-07; (b) aceitar a Fase 6 só com a ação de agente; (c) autorizar probe de `Bot` tipo `Employee` via bundle mdapi (a ferramenta MCP não expõe esse tipo) | HUMANO | PENDENTE |
 
 ### Transversais (contínuas)
 
@@ -216,3 +218,5 @@ paradas no ponto indicado.
 | 2026-10-17 | **F5-07 concluída** (custo ausente ≠ margem 100%): `Pendente de Custo` na `Quote`, `CostPending` nos dois Flows, badge/alerta no LWC. **F5-08 cancelada** por decisão do humano (operação em USD + F5-07 cobre o caso) |
 | 2026-10-17 | **F5-01, F5-02 e F5-04 concluídas:** permission set `DD_DealDesk_User`, 3 cotações de demonstração e o roteiro de 30 min. F5-03 em andamento (prova por dado feita; falta a visual com usuário não-admin). Aprendizado **A75** registrado |
 | 2026-10-17 | **Fase 5 fechada:** F5-03 (validação visual do humano), F5-05 (ensaio) e F5-06 (fechamento) concluídas; tag `fase-5`. Fase 6 (Agentforce) liberada |
+| 2026-10-17 | **F6-01, F6-03 e F6-04 concluídas:** pré-requisitos provados por retrieve (Flow v25 ativo, 2 `isInput`/17 `isOutput`), bundle mdapi de 3 arquivos deployado (`DD_CalculateMargin`, `172as000008FaHtAAK`) e retrieve de integridade devolvendo os 3 arquivos. Ver AF-001 |
+| 2026-10-17 | **F6-05/F6-06/F6-07 bloqueadas** por falha de plataforma: `sf_create_agent` recusa o tipo `EinsteinServiceAgent` (sem acesso ao template), sem deixar resíduo. Criada **F6-10** (decisão humana de desbloqueio) e registrado **A78**. Fase 6: 4 de 10 ações concluídas |

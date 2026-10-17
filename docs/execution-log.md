@@ -71,6 +71,8 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | QTE-001 | 2026-10-17 | F3-08 massa de teste: 2 cotações + 2 linhas DEMO- | Quote | OK | ver FLW-003 |
 | RTE-001 | 2026-10-17 | F3-05/F3-07/F3-08 Flow de roteamento + 3 cenarios ponta a ponta (pedido DR-00000) | DD_DiscountRequest__c | OK | deploy `0Afas00000609HZCAY` |
 | CLN-001 | 2026-10-17 | F3-09 limpeza das versoes Obsolete — **bloqueada** (Flow Interview retida) | Flow | FALHA | 24 versoes antigas permanecem |
+| AF-001 | 2026-10-17 | F6-03/F6-04 deploy do bundle mdapi de 3 arquivos da ação de agente + retrieve de integridade | GenAiFunction | OK | `172as000008FaHtAAK` |
+| AF-002 | 2026-10-17 | F6-07 `sf_create_agent` recusa o tipo `EinsteinServiceAgent` (sem template acessível) — nenhum resíduo | Bot | FALHA | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -668,6 +670,37 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | não aplicável |
 | Tokens (aprox.) | 6000 |
 | Observações | A validação **confirmou a conclusão do A75**: o permission set não nega nada; quem nega é o perfil. Fica registrado para a Fase 6: o estado `Pendente de Custo` (`decision = CostPending`) é um quarto desfecho e **não** pode ser verbalizado como margem saudável pelo agente (D15/D29). Tag `fase-5` criada no commit de fechamento |
+
+### [2026-10-17 22:51 -03:00] AF-001 — OK (F6-03/F6-04: ação de agente DD_CalculateMargin íntegra)
+
+| Campo | Valor |
+|---|---|
+| Operação | 1 `deploy` mdapi de `GenAiFunction` (com `--dry-run` antes) + 1 `retrieve` de integridade |
+| Skill | deploy-agentforce-action |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Objeto / Metadado | `GenAiFunction:DD_CalculateMargin` (`172as000008FaHtAAK`) → `Flow:DD_CalculateQuoteMargin` (v25, `Active`) |
+| Ferramenta | `sf project deploy start --metadata-dir mdapi --dry-run` e sem dry-run · `sf project retrieve start --api-version 66.0` |
+| Parâmetros-chave | `<version>66.0</version>` no `package.xml`; `invocationTargetType = flow`; `isConfirmationRequired = false`; `--test-level NoTestRun` |
+| Confirmação humana | sim — plano dos 3 arquivos apresentado e "Confirmo o bundle como apresentado" |
+| Resultado | dry-run `Succeeded` (`0Afas0000060DOPCA2`, 1/1) · deploy `Succeeded` (`0Afas0000060DQ1CAM`, 1/1) · **retrieve devolveu os 3 arquivos** (`-meta.xml`, `input/schema.json`, `output/schema.json`) e todos fazem parse |
+| Reversão | `sf_delete_metadata` de `GenAiFunction:DD_CalculateMargin` (exige autorização nominal — S5) |
+| Tokens (aprox.) | 12000 |
+| Observações | Schema validado **contra a cópia da org** do Flow: input 2 propriedades = 2 `isInput`; output 17 propriedades = 17 `isOutput`, sem faltar nem sobrar. Os campos `marginBp`, `worstLineBp`, `diagnostics`, `policyId` e `ownerId` saíram com `isDisplayable=false` e `isUsedByPlanner=false` (**D15 por contrato**); `decision` documenta `CostPending` e `guardrailState` documenta `Pendente de Custo` (F5-07/D29). Divergência normal do retrieve (A51): só o acréscimo de `<isIncludeInProgressIndicator>false</isIncludeInProgressIndicator>`. O Flow **não** foi reimplantado (v25 segue `Active`) → nenhuma versão `Obsolete` nova (A50). O MCP `sf_create_agent_action` **não** foi usado (A44). `GenAiFunction` na org: 1 → **2** |
+
+### [2026-10-17 22:58 -03:00] AF-002 — FALHA (F6-07: `sf_create_agent` recusa o tipo `EinsteinServiceAgent`)
+
+| Campo | Valor |
+|---|---|
+| Operação | 1 tentativa de `create` (`Bot`) via MCP — **falhou antes de gravar**; leituras de diagnóstico depois |
+| Skill | deploy-agentforce-action (pré-requisito do tópico/planner) |
+| Objeto / Metadado | `Bot:DDDealDeskAgent` — **não criado** |
+| Ferramenta | MCP `sf_create_agent` (`agentName=DDDealDeskAgent`, `label=Guardrail de Desconto Deal Desk`) |
+| Confirmação humana | sim — payloads de tópico, planner e agente aprovados ("Confirmo tópico, planner e agente") |
+| Resultado | **FALHA.** Erro literal: `Deployment failed: Looks like you don’t have access to agent templates associated with the EinsteinServiceAgent agent type. Make sure that you have the required permissions for the type and try again. / bots/DDDealDeskAgent.bot: Looks like you don’t have access to agent templates associated with the EinsteinServiceAgent agent type. Make sure that you have the required permissions for the type and try again.` |
+| Resíduo | **nenhum** — `SELECT Id FROM BotDefinition WHERE DeveloperName = 'DDDealDeskAgent'` devolve 0 linhas; `BotDefinition` segue com 6 |
+| Reversão | não aplicável (nada foi gravado) |
+| Tokens (aprox.) | 9000 |
+| Observações | **Diagnóstico somente leitura (A19):** os 6 `BotDefinition` da org são todos `AgentforceEmployeeAgent` / `InternalCopilot` (inclusive `Copilot_for_Salesforce`, `AgentType = Employee`); a licença `Agentforce (Default)` (`EinsteinGPTCopilotPsl`) está `Active` com 2/10 em uso e o usuário `005as000003pCmzAAE` **está** entre os 2; **não existe** licença de "Service Agent" (a busca só devolve `RevCloudSelfServeAgentPsl`); `AgentTemplate` **não** é objeto consultável na API. **O que isso NÃO prova:** não prova que a org não suporta agente — prova que o tipo `EinsteinServiceAgent`, que a ferramenta usa, não tem template acessível nesta org. Não foi tentada variação às cegas (nem `skipActionCapabilityCheck`, nem troca de nome): o erro vem do deploy do `.bot`, não do probe |
 
 ## Registro de Bloqueios
 
