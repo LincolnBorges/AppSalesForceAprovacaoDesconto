@@ -59,14 +59,14 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | Fase | Nome | Ações | Concluídas | Status |
 |---|---|---|---|---|
 | 0 | Fundação e base de custo | 15 | 14 | CONCLUÍDO |
-| 1 | Cálculo de margem | 8 | 0 | PENDENTE |
+| 1 | Cálculo de margem | 8 | 2 | EM ANDAMENTO |
 | 2 | Política de desconto | 7 | 0 | PENDENTE |
 | 3 | Guardrail e roteamento | 10 | 1 | EM ANDAMENTO |
 | 4 | Console LWC | 7 | 1 | PENDENTE |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **67** | **19** | |
+| **Total** | | **67** | **21** | |
 
 *Atualizado em 2026-10-17. Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -112,9 +112,9 @@ paradas no ponto indicado.
 
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
-| F1-01 | Probe: roll-up sobre fórmula | **F0-10** | `--dry-run` de 1 campo de roll-up na `Quote` somando campo de fórmula do `QuoteLineItem` — responde **Q1** da [`architecture.md`](architecture.md) §9 | IA | PENDENTE |
-| F1-02 | Probe: fórmula com referência ao preço/custo | **F0-10** | `--dry-run` de 1 fórmula em `QuoteLineItem` lendo `FixedCost__c`/`VariableCostPerUnit__c` do `PricebookEntry` — responde **Q2** | IA | PENDENTE |
-| F1-03 | Escolher a abordagem de cálculo | **F1-01**, **F1-02** | Definir: fórmula nativa + roll-up (preferida, sem Flow) ou plano B com Flow; registrar a decisão e o porquê em `MEMORY.md` §2 | IA | PENDENTE |
+| F1-01 | Probe: roll-up sobre fórmula | **F0-10** | `--dry-run` de 1 campo de roll-up na `Quote` somando campo de fórmula do `QuoteLineItem` — responde **Q1** da [`architecture.md`](architecture.md) §9 | IA | CONCLUÍDO (2026-10-17): **depende** — fórmula **determinística** é agregável (OK); fórmula com **referência cruzada** é recusada (`The summarized field in not deterministic.`). Ver A53 e PRB-002 |
+| F1-02 | Probe: fórmula com referência ao preço/custo | **F0-10** | `--dry-run` de 1 fórmula em `QuoteLineItem` lendo `FixedCost__c`/`VariableCostPerUnit__c` do `PricebookEntry` — responde **Q2** | IA | CONCLUÍDO (2026-10-17): **Succeeded** — referência cruzada aceita em Formula Currency. Ver PRB-001 |
+| F1-03 | Escolher a abordagem de cálculo | **F1-01**, **F1-02** | Definir: fórmula nativa + roll-up (preferida, sem Flow) ou plano B com Flow; registrar a decisão e o porquê em `MEMORY.md` §2 | IA | EM ANDAMENTO (2026-10-17): proposta híbrida — fórmula onde é determinística, **1 Flow** só para `DD_CostAmount__c`; aguarda confirmação do humano por causa do Flow (S6) |
 | F1-04 | Campos de margem na `QuoteLineItem` | **F1-03** | Criar `DD_CostPerUnit__c`, `DD_CostAmount__c`, `DD_MarginAmount__c`, `DD_MarginPct__c` (nomes a validar), com `--dry-run` antes (S7) | IA | PENDENTE |
 | F1-05 | Campos consolidados na `Quote` | **F1-04** | Criar `DD_Revenue__c`, `DD_Cost__c`, `DD_MarginPct__c`, `DD_WorstLineMarginPct__c`, `DD_GuardrailState__c` (este último alimenta o semáforo do console — D14) | IA | PENDENTE |
 | F1-06 | Plano B: Flow de cálculo | **F1-03** | Só se os probes falharem: Flow `RecordBeforeSave` recalculando custo/margem por linha; confirmação dupla (S6) e `--dry-run` | IA | PENDENTE |
@@ -208,3 +208,4 @@ paradas no ponto indicado.
 | 2026-10-17 | F0-12 (viabilidade de moeda) concluída: veredito "manter USD". Criadas **F0-13** (decisão humana) e **F0-14** (price book BRL, condicional). F0-08 passou a depender de F0-13. Total: 63 → 66 ações |
 | 2026-10-17 | **Fase 0 fechada:** F0-07 (tabela aprovada), F0-11 (opção A), F0-13 (USD), F0-08 (19 registros), F0-09 (validação), F0-10 (fechamento) e F0-01 (baseline) concluídos. F0-14 cancelada. Criada a **S12** (moeda comprovada). 18 de 66 ações concluídas |
 | 2026-10-17 | Criada **X-05** (D20/S13: FLS + layout na mesma operação de criação de campo) e atualizada a skill `validate-metadata`. Verificação de `FixedCost__c`/`VariableCostPerUnit__c`: já estavam com FLS e layout corretos. Total: 66 → 67 ações |
+| 2026-10-17 | **F1-01 e F1-02 concluídas** por dry-run: referência cruzada ao `PricebookEntry` é aceita; roll-up sobre fórmula determinística é aceito, mas sobre fórmula com referência cruzada é recusado (A53). F1-03 com proposta híbrida aguardando confirmação do humano |

@@ -57,6 +57,8 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | INV-001 | 2026-10-17 | F0-12 investigação de viabilidade de moeda USD × BRL (nenhuma escrita na org) | — | OK | — |
 | SED-001 | 2026-10-17 | F0-08 semeadura de custo em 19 `PricebookEntry` + validação F0-09 | PricebookEntry | OK | 19 Ids |
 | CHK-001 | 2026-10-17 | verificação de FLS e layout de `FixedCost__c`/`VariableCostPerUnit__c` + regra D20 (nenhuma escrita na org) | PricebookEntry | OK | — |
+| PRB-001 | 2026-10-17 | F1-02 probe: `--dry-run` de fórmula na `QuoteLineItem` com referência cruzada ao `PricebookEntry` (nenhuma escrita — dry-run) | QuoteLineItem | OK | — |
+| PRB-002 | 2026-10-17 | F1-01 probe: `--dry-run` de Roll-Up Summary na `Quote` sobre campo de fórmula + 2 isolamentos de causa (nenhuma escrita — dry-run) | Quote / QuoteLineItem | FALHA | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -211,6 +213,40 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | `git revert` do commit desta entrada |
 | Tokens (aprox.) | 15000 |
 | Observações | a hipótese de FLS/layout faltando **não se confirmou** nesta org; a lacuna era de **processo**, e foi fechada com D20 + S13 + convenção 12 + skill atualizada |
+
+### [2026-10-17 12:42 -03:00] PRB-001 — OK (F1-02: fórmula com referência cruzada ao PricebookEntry)
+
+| Campo | Valor |
+|---|---|
+| Operação | `sf project deploy start --dry-run` (mdapi) — **nenhuma escrita na org** |
+| Skill | validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `QuoteLineItem.DD_CostPerUnit__c` |
+| Ferramenta | `sf project deploy start --metadata-dir /tmp/dd-probes/f1-02 --dry-run` |
+| Parâmetros-chave | tipo `Formula (Currency)`; precisão 18, escala 2; API 68.0 |
+| Payload / SOQL | `PricebookEntry.FixedCost__c + PricebookEntry.VariableCostPerUnit__c` |
+| Confirmação humana | sim — autorização condicional do humano para os 2 probes (mensagem da sessão) |
+| Resultado | **`status: Succeeded`** · 2/2 componentes, 0 erros · ID do dry-run `0Afas00000605sICAQ` |
+| Reversão | não aplicável (dry-run não grava) |
+| Tokens (aprox.) | 3500 |
+| Observações | **Q2 respondida = SIM.** `QuoteLineItem.PricebookEntryId` é lookup (relação `PricebookEntry`, confirmada em `FieldDefinition`), então a fórmula alcança o custo sem Flow |
+
+### [2026-10-17 12:43 -03:00] PRB-002 — FALHA (F1-01: roll-up sobre campo de fórmula — com 2 isolamentos)
+
+| Campo | Valor |
+|---|---|
+| Operação | 3 × `sf project deploy start --dry-run` (mdapi) — **nenhuma escrita na org** |
+| Skill | validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `Quote.DD_Cost__c` (Summary SUM) + `QuoteLineItem.DD_CostAmount__c` (fórmula) |
+| Ferramenta | `sf project deploy start --metadata-dir … --dry-run` |
+| Parâmetros-chave | `summaryForeignKey = QuoteLineItem.QuoteId` (Master-Detail confirmado); API 68.0 |
+| Payload / SOQL | **(a)** SUM sobre fórmula que referencia a fórmula cruzada → **FALHA** · **(b)** SUM sobre fórmula só local (`UnitPrice * Quantity`) → **OK** · **(c)** SUM sobre fórmula única com referência cruzada direta → **FALHA** |
+| Confirmação humana | sim — autorização condicional do humano para os 2 probes (mensagem da sessão) |
+| Resultado | **(a)** `The summarized field in not deterministic.` + `Unable to use this formula containing derived values because the field is included in the following roll-up summary field(s)` (dry-run `0Afas00000606mpCAA`) · **(b)** `Succeeded`, 4/4 (`0Afas00000606tBCAQ`) · **(c)** `The summarized field in not deterministic.` (dry-run `0Afas00000606OYCAY`) |
+| Reversão | não aplicável (dry-run não grava) |
+| Tokens (aprox.) | 6000 |
+| Observações | **Q1 respondida = DEPENDE**, e a causa está isolada: o bloqueio **não** é multi-moeda nem "fórmula sobre fórmula" — é a **referência cruzada** (valor derivado). Fórmula determinística do filho é agregável; qualquer fórmula que leia outro objeto não é. Registrado como **A53** em [`MEMORY.md`](../MEMORY.md) §3 |
 
 ---
 

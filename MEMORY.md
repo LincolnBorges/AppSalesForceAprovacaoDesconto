@@ -195,6 +195,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | A46 | `sf_delete_metadata` de `Flow` remove só a versão mais recente; sobra `Obsolete` + `FlowDefinition`. | Limpeza de Flow confere `FlowDefinitionView` **e** Tooling `Flow`; desativar antes |
 | A50 | A46 refinado: o resíduo `Obsolete` só aparece quando houve **mais de um deploy** do mesmo Flow. | Corolário: cada redeploy de Flow para corrigir algo cria lixo que exige limpeza extra — validar bem antes de subir |
 | A51 | `diff` byte a byte após retrieve **não** é teste de integridade (a org preenche defaults e normaliza newlines). | O teste válido é "os arquivos esperados voltam e fazem parse" |
+| A53 | **Roll-Up Summary não agrega campo de fórmula com referência cruzada.** A fórmula do filho é criada (`Succeeded`), mas o roll-up falha: `The summarized field in not deterministic.` Fórmula **determinística** (só campos locais) é agregável — confirmado em dry-run, inclusive com multi-moeda ligado. | Consequência de projeto: o campo somado **não pode** depender de outro objeto. `QuoteLineItem.DD_CostAmount__c` (custo do `PricebookEntry`) tem de ser **Currency gravado por Flow**, não fórmula; `DD_MarginPct__c` pode ser fórmula. Provado em PRB-002 |
 
 ---
 
@@ -265,6 +266,18 @@ Preenchido na primeira descoberta de cada objeto; **nunca redescobrir na mesma s
 | `ProductSellingModel`, `ProductSellingModelOption` | existem mas **0 registros** |
 | DPE / CRM Analytics | **bloqueado nesta org** (A29) |
 | `Campaign`, `CampaignMember` | existem, **0 registros** |
+
+### 4.7 Fatos de plataforma confirmados por probe (Fase 1, 2026-10-17)
+
+Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-001/PRB-002.
+
+| Fato | Evidência |
+|---|---|
+| `QuoteLineItem.PricebookEntryId` é lookup para `PricebookEntry`, relação **`PricebookEntry`** | Tooling `FieldDefinition` |
+| Fórmula na `QuoteLineItem` com referência cruzada a `PricebookEntry.FixedCost__c` + `VariableCostPerUnit__c` é **aceita** (Formula Currency) | dry-run PRB-001 `Succeeded` (`0Afas00000605sICAQ`) |
+| Roll-Up Summary `SUM` sobre fórmula **determinística** do filho é **aceito** | dry-run PRB-002 `Succeeded` (`0Afas00000606tBCAQ`) |
+| Roll-Up Summary sobre fórmula com **referência cruzada** é **recusado** (`The summarized field in not deterministic.`) | dry-run PRB-002 `Failed` (`0Afas00000606mpCAA`, `0Afas00000606OYCAY`) — ver **A53** |
+| `Quote.TotalPrice` e `Quote.Subtotal` já são Roll-Up Summary (SUM `QuoteLineItem`) → master-detail `Quote → QuoteLineItem` confirmado | Tooling `FieldDefinition` |
 
 ---
 
