@@ -3,7 +3,9 @@
 Deliverable de **F0-06**: custo proposto por `PricebookEntry` para as famílias em escopo (D17), de forma
 que o guardrail tenha massa nas três faixas de margem (D12).
 
-**Status: aguardando aprovação (F0-07). Nada foi escrito na org.**
+**Status: APROVADA em 2026-10-17 (F0-07) e EXECUTADA em 2026-10-17 (F0-08)** — 19 registros gravados,
+validados por F0-09 (24 com custo · 10 verdes / 7 amarelos / 7 vermelhos · 0 não-`USD`).
+Rollback por registro em `execution-log` **SED-001**.
 
 - Famílias: **`Parts`** (14 produtos) e **`Medical Equipment`** (10 produtos).
 - Faixas (D12): **VERDE** ≥ 30% · **AMARELO** 20% ≤ m < 30% · **VERMELHO** < 20%.

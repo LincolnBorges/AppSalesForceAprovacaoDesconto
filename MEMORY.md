@@ -74,6 +74,11 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 - **Onde cada família vive:** `Parts` está em 4 price books, inclusive o **Fleet & Corporate** (14
   entradas). `Medical Equipment` (10 produtos) **só existe no `Standard Price Book`** — 13 entradas,
   sendo 3 em `BRL` a ignorar (A13). Por isso o price book dessa família é decisão pendente (F0-11).
+- **Semeadura F0-08 (2026-10-17):** 19 entradas de custo gravadas — 9 de `Parts` no Fleet & Corporate +
+  10 de `Medical Equipment` no Standard. Total com custo na org: **24** (10 verdes / 7 amarelos /
+  7 vermelhos), todas `USD`. Tabela completa em [`docs/cost-proposal.md`](docs/cost-proposal.md) §3.
+  **Rollback:** `FixedCost__c = null` e `VariableCostPerUnit__c = null` nos 19 Ids de `SED-001` em
+  [`docs/execution-log.md`](docs/execution-log.md) (valor anterior era `null` em ambos).
 - **Estado do resto da org:** as outras **236** `PricebookEntry` têm `FixedCost__c = null` — a
   semeadura de custo precisa ser estendida na Fase 0/1 para dar massa à demonstração.
 - **Rollback (se necessário):** `FixedCost__c = null` e `VariableCostPerUnit__c = null` nos 5 Ids
@@ -123,8 +128,12 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | `GenAiFunction` | **1** | `--metadata-type GenAiFunction --api-version 66.0` |
 | `GenAiPlugin` | **0** | `--metadata-type GenAiPlugin` |
 | `Bot` / `GenAiPlannerBundle` | **6 / 6** | `--api-version 66.0` |
-| `PricebookEntry` com `FixedCost__c` | **5** | `SELECT COUNT() FROM PricebookEntry WHERE FixedCost__c != null` |
+| `PricebookEntry` com `FixedCost__c` | **24** (5 originais + 19 semeadas em 2026-10-17) | `SELECT COUNT() FROM PricebookEntry WHERE FixedCost__c != null` |
 
+> **Reconferido em 2026-10-17 (F0-01):** todos os valores de metadado **idênticos** ao baseline de
+> 2026-10-16 — nenhum resíduo. Única mudança: `PricebookEntry` com custo passou de 5 para 24 (F0-08,
+> intencional).
+>
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
 > houve mais de um deploy do mesmo Flow. Flow ativo precisa ser **desativado antes**.
@@ -152,6 +161,8 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | D15 | **O agente Agentforce nunca aprova e nunca cita margem numérica** — resume o cenário e indica o próximo passo (enviar ou pedir aprovação). | Mantém a decisão no humano (objetivo do projeto) e impede vazamento de custo por linguagem natural; o agente pode ler os campos, mas não os verbaliza | 2026-10-17 |
 | D16 | **Semeadura de custo em lote autorizada** (exceção explícita e registrada à S4), restrita a `PricebookEntry.FixedCost__c` e `VariableCostPerUnit__c` das famílias `Parts` e `Medical Equipment`. | Sem isso seriam 19 confirmações uma a uma. Cada registro continua logado individualmente com o valor anterior (`null`) para rollback (S10) | 2026-10-17 |
 | D17 | **Famílias em escopo: `Parts` (14 produtos) e `Medical Equipment` (10).** Existe também a família **`Part`** (7 produtos sem relação) — **não** entra. | `Parts` está no Fleet & Corporate; `Medical Equipment` só existe no Standard Price Book → o price book dessa família é a decisão pendente F0-11 | 2026-10-17 |
+| D18 | **Moeda dos dados do app = `USD`.** A moeda corporativa **não** é alterada e **não** se cria price book BRL (ação F0-14 cancelada). | F0-12 provou que a troca corporativa não entrega BRL nos registros e que a margem é invariante à moeda; o usuário já vê BRL pela moeda pessoal dele | 2026-10-17 |
+| D19 | **Regra de Ouro de moeda na escrita:** todo registro criado/atualizado precisa ter moeda `USD` **comprovada**. Como `PricebookEntry.CurrencyIsoCode` é imutável (a org recusa o campo no update), a comprovação é feita por verificação **antes e depois** de cada escrita, abortando o lote se a moeda divergir de `USD`. | Pedido explícito do humano em 2026-10-17. Aplicado na F0-08: 19 registros, 0 não-USD, lote abortaria em moeda ≠ USD | 2026-10-17 |
 
 ---
 
@@ -263,7 +274,7 @@ Preenchido na primeira descoberta de cada objeto; **nunca redescobrir na mesma s
 
 | Fase | Entrega | Pré-requisito | Status |
 |---|---|---|---|
-| **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida (hoje só 5 das 241 `PricebookEntry` têm custo), confirmação de moeda `USD` | — | **EM ANDAMENTO** (2026-10-17: D12–D17 decididas; proposta em [`docs/cost-proposal.md`](docs/cost-proposal.md); aguarda F0-07 e F0-11) |
+| **0** | Fundação: prefixo `DD_`, estrutura do projeto, semeadura de custo estendida (hoje só 5 das 241 `PricebookEntry` têm custo), confirmação de moeda `USD` | — | **CONCLUÍDO** (2026-10-17: 24 entradas com custo · 2 price books · 2 famílias · todas `USD`) |
 | **1** | Cálculo de margem: campos `DD_*__c` na `Quote`/`QuoteLineItem` + Flow `DD_CalculateQuoteMargin` (**com `isInput`/`isOutput`** — D8) | Fase 0 | PENDENTE |
 | **2** | Política de desconto: objeto `DD_DiscountPolicy__c` + dados de política + skill `create-discount-policy` | Fase 1 | PENDENTE |
 | **3** | Guardrail e roteamento: `DD_DiscountRequest__c` + Flow `DD_RouteDiscountApproval` + notificação ao aprovador | Fase 2 | PENDENTE |

@@ -58,7 +58,7 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 
 | Fase | Nome | Ações | Concluídas | Status |
 |---|---|---|---|---|
-| 0 | Fundação e base de custo | 15 | 7 | EM ANDAMENTO |
+| 0 | Fundação e base de custo | 15 | 14 | CONCLUÍDO |
 | 1 | Cálculo de margem | 8 | 0 | PENDENTE |
 | 2 | Política de desconto | 7 | 0 | PENDENTE |
 | 3 | Guardrail e roteamento | 10 | 1 | EM ANDAMENTO |
@@ -66,7 +66,7 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 4 | 1 | EM ANDAMENTO |
-| **Total** | | **66** | **11** | |
+| **Total** | | **66** | **18** | |
 
 *Atualizado em 2026-10-17. Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -79,9 +79,7 @@ paradas no ponto indicado.
 
 | ID | Decisão | Bloqueia | Efeito se não houver resposta |
 |---|---|---|---|
-| F0-07 | Aprovar a Tabela de Custos Proposta ([`cost-proposal.md`](cost-proposal.md)) | F0-08 | Sem validação, custo entra na org com número não acordado |
-| F0-11 | Price book de `Medical Equipment` (opções A/B/C na §5 do `cost-proposal.md`) | F0-08 | 10 entradas de `Medical Equipment` ficam sem destino |
-| F0-13 | Moeda dos dados do app: manter USD ou adotar BRL nativo | F0-08 | Sem definição, a F0-08 pode gravar na moeda errada (A13) |
+| — | Nenhuma pendente — Fase 0 fechada em 2026-10-17 | — | — |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
 > F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15.
@@ -95,20 +93,20 @@ paradas no ponto indicado.
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
 | F0-00 | Estrutura e documentação do projeto | — | Projeto DX, `AGENTS.md`, `MEMORY.md`, 6 skills e `docs/` criados (INIT-001, sem escrita na org) | IA | CONCLUÍDO (2026-10-16) |
-| F0-01 | Baseline de metadados reconferido | — | Recontar `FlowDefinitionView` (total/ativos/locais), LWC, `FlexiPage`, `CustomTab`, `GenAiFunction`/`GenAiPlugin`, `Bot`/Planner e `PricebookEntry` com custo; regravar em `MEMORY.md` §1.6 com a data, porque o baseline de 2026-10-16 já pode ter mudado | IA | PENDENTE |
+| F0-01 | Baseline de metadados reconferido | — | Recontar `FlowDefinitionView` (total/ativos/locais), LWC, `FlexiPage`, `CustomTab`, `GenAiFunction`/`GenAiPlugin`, `Bot`/Planner e `PricebookEntry` com custo; regravar em `MEMORY.md` §1.6 com a data, porque o baseline de 2026-10-16 já pode ter mudado | IA | CONCLUÍDO (2026-10-17): reconferido, idêntico — sem resíduo |
 | F0-02 | Autorizar semeadura em lote | — | Decidir se os custos de demonstração podem ser tratados como **uma** escrita aprovada em lote, com exceção registrada à S4; sem isso são 15+ confirmações uma a uma | HUMANO | CONCLUÍDO (2026-10-17): autorizado, escopo em D16 |
 | F0-03 | Famílias de produto em escopo | — | Quais `ProductFamily` entram no piloto e em qual price book cada uma é semeada | HUMANO | CONCLUÍDO (2026-10-17): `Parts` e `Medical Equipment`, ver D17 |
 | F0-04 | Piso, alvo e teto por família | **F0-03** | Números de negócio: piso de margem (bloqueio), alvo (auto-aprovação) e teto de desconto permitido; insumo direto de `DD_DiscountPolicy__c` | HUMANO | CONCLUÍDO (2026-10-17): alvo 30%, piso 20%, ver D12 |
 | F0-05 | Levantar base de custo faltante | **F0-03** | Listar as `PricebookEntry` alvo com `Product2`, `UnitPrice`, família e custo atual nulo | IA | CONCLUÍDO (2026-10-17): 9 no Fleet & Corporate + 10 no Standard, ver `cost-proposal.md` |
 | F0-06 | Propor tabela de custos | **F0-04**, **F0-05** | Calcular `FixedCost__c` + `VariableCostPerUnit__c` por entrada para produzir margens coerentes com o piso aprovado, cobrindo faixa verde, amarela e vermelha | IA | CONCLUÍDO (2026-10-17): [`cost-proposal.md`](cost-proposal.md) — 19 entradas, 8 verdes / 5 amarelas / 6 vermelhas |
-| F0-07 | Aprovar a tabela de custos | **F0-06** | Validar os números antes de qualquer escrita; última barreira antes do seeding | HUMANO | PENDENTE (aguardando "OK") |
-| F0-08 | Semear custo no price book | **F0-02**, **F0-07**, **F0-11**, **F0-13** | Gravar `FixedCost__c` e `VariableCostPerUnit__c` com `CurrencyIsoCode = USD`, um registro por vez, registrando o valor anterior para rollback (S10) | IA | PENDENTE |
-| F0-09 | Validar a semeadura | **F0-08** | Conferir ≥20 entradas com custo, ≥2 price books, ≥2 famílias, todas `USD`; bater a margem de 3 amostras contra o cálculo manual | IA | PENDENTE |
-| F0-10 | Fechar a Fase 0 | **F0-09** | Atualizar `MEMORY.md` §1.3/§1.6, `execution-log`, este plano e o `roadmap`; commit e tag `fase-0` | IA | PENDENTE |
-| F0-11 | Price book de `Medical Equipment` | **F0-05** | Escolher entre semear no `Standard Price Book` (só updates) ou criar entradas no `Fleet & Corporate` (10 creates); ver §5 do `cost-proposal.md` | HUMANO | PENDENTE |
+| F0-07 | Aprovar a tabela de custos | **F0-06** | Validar os números antes de qualquer escrita; última barreira antes do seeding | HUMANO | CONCLUÍDO (2026-10-17): tabela aprovada |
+| F0-08 | Semear custo no price book | **F0-02**, **F0-07**, **F0-11**, **F0-13** | Gravar `FixedCost__c` e `VariableCostPerUnit__c` com `CurrencyIsoCode = USD`, um registro por vez, registrando o valor anterior para rollback (S10) | IA | CONCLUÍDO (2026-10-17): 19 registros em `SED-001` |
+| F0-09 | Validar a semeadura | **F0-08** | Conferir ≥20 entradas com custo, ≥2 price books, ≥2 famílias, todas `USD`; bater a margem de 3 amostras contra o cálculo manual | IA | CONCLUÍDO (2026-10-17): 24 com custo · 10/7/7 · 0 não-USD |
+| F0-10 | Fechar a Fase 0 | **F0-09** | Atualizar `MEMORY.md` §1.3/§1.6, `execution-log`, este plano e o `roadmap`; commit e tag `fase-0` | IA | CONCLUÍDO (2026-10-17) |
+| F0-11 | Price book de `Medical Equipment` | **F0-05** | Escolher entre semear no `Standard Price Book` (só updates) ou criar entradas no `Fleet & Corporate` (10 creates); ver §5 do `cost-proposal.md` | HUMANO | CONCLUÍDO (2026-10-17): opção A — `Standard Price Book` |
 | F0-12 | Viabilidade de moeda (USD × BRL) | — | Verificar moeda corporativa, ACM, moeda de price books/entradas/cotações, efeito em roll-ups e limites de org trial; emitir veredito | IA | CONCLUÍDO (2026-10-17): manter USD, não tocar na moeda corporativa — [`currency-feasibility.md`](currency-feasibility.md) |
-| F0-13 | Moeda dos dados do app | **F0-12** | Confirmar `USD` nos dados (BRL só na exibição, via moeda do usuário) ou optar por BRL nativo pelo caminho F0-14 | HUMANO | PENDENTE |
-| F0-14 | Price book BRL dedicado (condicional) | **F0-13** | **Só se F0-13 escolher BRL:** criar price book `DD Deal Desk BRL`, entradas em BRL para os 24 produtos e semear custo nelas — sem tocar na moeda corporativa nem nas entradas USD | IA | PENDENTE (condicional) |
+| F0-13 | Moeda dos dados do app | **F0-12** | Confirmar `USD` nos dados (BRL só na exibição, via moeda do usuário) ou optar por BRL nativo pelo caminho F0-14 | HUMANO | CONCLUÍDO (2026-10-17): manter `USD` — D18 |
+| F0-14 | Price book BRL dedicado (condicional) | **F0-13** | **Só se F0-13 escolher BRL:** criar price book `DD Deal Desk BRL`, entradas em BRL para os 24 produtos e semear custo nelas — sem tocar na moeda corporativa nem nas entradas USD | IA | CANCELADO (2026-10-17): F0-13 manteve `USD`; price book BRL não será criado |
 
 ### Fase 1 — Cálculo de margem
 
@@ -207,3 +205,4 @@ paradas no ponto indicado.
 | 2026-10-17 | F3-06 **cancelada** (D12: vermelho não bloqueia) e criada **F3-10** (aprovação via `User.ManagerId`). Criada **F0-11** (price book de `Medical Equipment`) após a descoberta de que a família não existe no Fleet & Corporate. Total: 61 → 63 ações |
 | 2026-10-17 | F0-05/F0-06 concluídas: [`cost-proposal.md`](cost-proposal.md) com 19 entradas propostas |
 | 2026-10-17 | F0-12 (viabilidade de moeda) concluída: veredito "manter USD". Criadas **F0-13** (decisão humana) e **F0-14** (price book BRL, condicional). F0-08 passou a depender de F0-13. Total: 63 → 66 ações |
+| 2026-10-17 | **Fase 0 fechada:** F0-07 (tabela aprovada), F0-11 (opção A), F0-13 (USD), F0-08 (19 registros), F0-09 (validação), F0-10 (fechamento) e F0-01 (baseline) concluídos. F0-14 cancelada. Criada a **S12** (moeda comprovada). 18 de 66 ações concluídas |
