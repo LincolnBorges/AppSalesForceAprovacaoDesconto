@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ProductFamily__c</fullName>
+    <description>Dimensao 1 da politica. Espelha Product2.Family (14 familias reais na org) mais o valor All, que representa todas as familias. O valor gravado tem de ser identico ao de Product2.Family.</description>
+    <label>Familia de Produto</label>
+    <required>true</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>AddOn</fullName><default>false</default><label>AddOn</label></value>
+            <value><fullName>All</fullName><default>false</default><label>All</label></value>
+            <value><fullName>Compressor</fullName><default>false</default><label>Compressor</label></value>
+            <value><fullName>Conveyor</fullName><default>false</default><label>Conveyor</label></value>
+            <value><fullName>Generator</fullName><default>false</default><label>Generator</label></value>
+            <value><fullName>Integrated Chips</fullName><default>false</default><label>Integrated Chips</label></value>
+            <value><fullName>Labor</fullName><default>false</default><label>Labor</label></value>
+            <value><fullName>Medical Equipment</fullName><default>false</default><label>Medical Equipment</label></value>
+            <value><fullName>Motor</fullName><default>false</default><label>Motor</label></value>
+            <value><fullName>None</fullName><default>false</default><label>None</label></value>
+            <value><fullName>Part</fullName><default>false</default><label>Part</label></value>
+            <value><fullName>Parts</fullName><default>false</default><label>Parts</label></value>
+            <value><fullName>Pump</fullName><default>false</default><label>Pump</label></value>
+            <value><fullName>Vehicles</fullName><default>false</default><label>Vehicles</label></value>
+            <value><fullName>Visits</fullName><default>false</default><label>Visits</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

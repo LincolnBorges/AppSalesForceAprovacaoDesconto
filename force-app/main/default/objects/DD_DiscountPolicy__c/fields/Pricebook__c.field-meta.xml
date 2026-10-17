@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pricebook__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Dimensao 2 da politica. Nulo significa genetica: aplica-se a qualquer price book da familia. O desejado era Restrict, mas a plataforma recusa Restrict e Cascade em lookup para Pricebook2 (A56), entao SetNull e a unica opcao: apagar um price book converte uma politica especifica em genetica sem erro. Controle compensatorio em D22.</description>
+    <label>Price Book</label>
+    <referenceTo>Pricebook2</referenceTo>
+    <relationshipLabel>Politicas de Desconto</relationshipLabel>
+    <relationshipName>DD_DiscountPolicies</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

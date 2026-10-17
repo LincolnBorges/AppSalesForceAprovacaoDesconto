@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Policy_Effective_Dates</fullName>
+    <active>true</active>
+    <description>A vigencia nao pode terminar antes de comecar. Fim nulo e permitido e significa sem data de termino.</description>
+    <errorConditionFormula>AND(NOT(ISBLANK(EffectiveTo__c)), EffectiveTo__c &lt; EffectiveFrom__c)</errorConditionFormula>
+    <errorDisplayField>EffectiveTo__c</errorDisplayField>
+    <errorMessage>O fim da vigencia nao pode ser anterior ao inicio.</errorMessage>
+</ValidationRule>

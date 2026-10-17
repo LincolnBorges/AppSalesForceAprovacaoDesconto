@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Policy_Margin_Bands</fullName>
+    <active>true</active>
+    <description>Percentual em formula e fracao: 1 equivale a 100 por cento. Impede piso, alvo ou teto fora de 0 a 100 e impede alvo menor que o piso.</description>
+    <errorConditionFormula>OR(FloorMarginPct__c &lt; 0, FloorMarginPct__c &gt; 1, TargetMarginPct__c &lt; 0, TargetMarginPct__c &gt; 1, MaxDiscountPct__c &lt; 0, MaxDiscountPct__c &gt; 1, TargetMarginPct__c &lt; FloorMarginPct__c)</errorConditionFormula>
+    <errorDisplayField>FloorMarginPct__c</errorDisplayField>
+    <errorMessage>Percentuais devem ficar entre 0 e 100 e a margem alvo nao pode ser menor que o piso.</errorMessage>
+</ValidationRule>

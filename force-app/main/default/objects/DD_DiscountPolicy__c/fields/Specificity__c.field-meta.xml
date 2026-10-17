@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Specificity__c</fullName>
+    <description>Chave de precedencia derivada, nunca digitada. 3 = familia mais price book; 2 = All mais price book; 1 = familia genetica (price book nulo); 0 = padrao global. A resolucao usa ORDER BY Specificity__c DESC, EffectiveFrom__c DESC LIMIT 1.</description>
+    <externalId>false</externalId>
+    <formula>IF(ISBLANK(Pricebook__c), 0, 2) + IF(ISPICKVAL(ProductFamily__c, "All"), 0, 1)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Especificidade (precedencia)</label>
+    <precision>2</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+</CustomField>

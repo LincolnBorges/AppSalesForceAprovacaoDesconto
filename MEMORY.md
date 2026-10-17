@@ -44,7 +44,7 @@ nomes reservados — serve para evitar retrabalho e colisão.
 | Prefixo / nome | Situação | Observação |
 |---|---|---|
 | `DD_` | **reservado, não usado** | Prefixo de todo metadado custom do projeto (§4.1 do `AGENTS.md`) |
-| `DD_DiscountPolicy__c` | planejado (Fase 2) | Política de desconto por família de produto × price book |
+| `DD_DiscountPolicy__c` | **criado (Fase 2, 2026-10-17)** | Política de desconto por família de produto × price book — deploy `0Afas00000606GVCAY`. Ver §4.9 |
 | `DD_DiscountRequest__c` | planejado (Fase 3) | Pedido de desconto: cotação, desconto pedido, margem calculada, justificativa, status |
 | `DD_*__c` em `Quote` / `QuoteLineItem` | **criado (Fase 1, 2026-10-17)** | 9 campos — ver §4.8 |
 | Flow `DD_CalculateLineCost` | **criado (Fase 1, 2026-10-17)** | `RecordBeforeSave` na `QuoteLineItem`, `Active` |
@@ -171,6 +171,7 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | D19 | **Regra de Ouro de moeda na escrita:** todo registro criado/atualizado precisa ter moeda `USD` **comprovada**. Como `PricebookEntry.CurrencyIsoCode` é imutável (a org recusa o campo no update), a comprovação é feita por verificação **antes e depois** de cada escrita, abortando o lote se a moeda divergir de `USD`. | Pedido explícito do humano em 2026-10-17. Aplicado na F0-08: 19 registros, 0 não-USD, lote abortaria em moeda ≠ USD | 2026-10-17 |
 | D20 | **Todo campo custom novo entrega, na MESMA operação: (a) FLS `Visible`+`Editable` no perfil System Administrator e (b) o campo no Page Layout padrão do objeto** com `<behavior>Edit</behavior>`. | Gap de processo identificado pelo humano em 2026-10-17: o campo pode ser deployado com sucesso e ficar invisível na tela, **sem erro nenhum**. Verificação: `FieldPermissions` por `ParentId` do PS do perfil + `sf project retrieve start --metadata "Layout:<Objeto>-<Label do Layout>"` e `grep` do campo. Guardrail **S13**, convenção 12 e skill `validate-metadata` §2/§4 | 2026-10-17 |
 | D21 | **Abordagem híbrida de cálculo (F1-03):** fórmula onde é determinística, **1 Flow** só onde a plataforma obriga. `DD_CostPerUnit__c` = fórmula com referência cruzada; `DD_CostAmount__c` = Currency **gravado** pelo Flow `DD_CalculateLineCost`; `DD_MarginPct__c` = fórmula local (para poder ser agregada). | Os probes provaram que roll-up não agrega fórmula com referência cruzada (A53) e que o before-save não lê esse tipo de fórmula (A55). Desenho 100% declarativo é impossível sem perder o consolidado da `Quote` | 2026-10-17 |
+| D22 | **Modelagem de `DD_DiscountPolicy__c` (F2-01):** (a) a precedência é um **campo de fórmula derivado** `Specificity__c` (3/2/1/0), nunca digitado, e a resolução é `ORDER BY Specificity__c DESC, EffectiveFrom__c DESC LIMIT 1`; (b) `ProductFamily__c` é picklist **não restrita** com as 14 famílias reais + `All`; (c) **sem campo-chave único/externalId** em (família, price book); (d) `Pricebook__c` aceita `SetNull` porque `Restrict` é proibido (A56); (e) `MaxDiscountPct__c` é **referência, não veto** (D12 revogou o bloqueio). | (a) derivar em vez de digitar elimina a possibilidade de política com precedência inconsistente e dispensa o Flow só para ordenar; (b) mantém paridade literal com `Product2.Family`, condição para o Flow comparar as strings, e o `All` cobre o fallback global que a skill já oferece na elicitação; (c) uma chave única impediria criar **nova vigência** para a mesma família+price book depois que a anterior expira — a idempotência fica na checagem por SOQL e o empate é desempatado por vigência; (d) controle compensatório: apagar um `Pricebook2` exige antes apagar todas as suas `PricebookEntry`, e a resolução sempre lê `Specificity__c` junto do piso, então a degradação de "específica" para "genérica" fica visível | 2026-10-17 |
 
 ---
 
@@ -205,6 +206,8 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 | A53 | **Roll-Up Summary não agrega campo de fórmula com referência cruzada.** A fórmula do filho é criada (`Succeeded`), mas o roll-up falha: `The summarized field in not deterministic.` Fórmula **determinística** (só campos locais) é agregável — confirmado em dry-run, inclusive com multi-moeda ligado. | Consequência de projeto: o campo somado **não pode** depender de outro objeto. `QuoteLineItem.DD_CostAmount__c` (custo do `PricebookEntry`) tem de ser **Currency gravado por Flow**, não fórmula; `DD_MarginPct__c` pode ser fórmula. Provado em PRB-002 |
 | A54 | **`QuoteLineItem.Subtotal` e `TotalPrice` existem, aparecem no layout e no `describe`, mas NÃO são referenciáveis em fórmula.** O erro é `Field Subtotal does not exist. Check spelling.`. `DiscountAmount` **é** referenciável (mas está nulo na org e não é mantido). | Receita líquida da linha tem de ser inlinada: `UnitPrice * Quantity * (1 - Discount / 100)`. Pegou no dry-run de FLD-001 |
 | A55 | **`RecordBeforeSave` não aceita campo de fórmula com referência cruzada.** `field integrity exception: unknown (When the TriggerType field is set to "RecordBeforeSave", the $Record.<campo> field isn't supported.)`. Fórmula local em before-save é aceita; o problema é a dependência de outro objeto. | O Flow antes de salvar obtém o custo por **`Get Records`** no `PricebookEntry`, não por `$Record.DD_CostPerUnit__c`. Pegou no dry-run de FLW-001 |
+| A56 | **`Restrict` e `Cascade` são proibidos em lookup para `Lead`, `User`, `Product2` e `Pricebook2`.** Erro literal: `custom cascade or restrict lookup relationship may not point to Lead, User, Product2, Pricebook2`. Só `SetNull` (ou omitir o `deleteConstraint`) é aceito. | Uma referência a `Pricebook2` **não** consegue ser protegida contra exclusão pela plataforma. Quando a integridade depender disso, o controle tem de ser compensatório (documentar + monitorar por SOQL). Pegou no dry-run de DPM-001 |
+| A57 | **Não se deploya `FieldPermissions` para campo `required`.** Erro literal: `You cannot deploy to a required field: <Objeto>.<Campo__c>`. A org **não cria** linha de `FieldPermissions` para esses campos, e a verificação de FLS por `FieldPermissions` volta vazia — o que parece falha de S13 e não é. | Para campo obrigatório, a prova de visibilidade é **funcional** (criar o registro e reler o valor), não por `FieldPermissions`. Pegou no dry-run de DPM-001 |
 
 ---
 
@@ -308,6 +311,51 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 - **Massa de validação:** `Quote` `0Q0as0000021hOLCAY` (`DEMO-Quote-Margin-Bands`) + 3 linhas.
 - **Percent(18,4) devolve 4 casas no número percentual** (17,7083), não na fração — o arredondamento
   para 2 casas fica na exibição.
+
+### 4.9 `DD_DiscountPolicy__c` — contrato de escrita (criado 2026-10-17)
+
+- **Objeto:** label `Politica de Desconto`, plural `Politicas de Desconto`, `sharingModel = ReadWrite`,
+  `nameField` **Text(80)** (gravavel → S11 se aplica). 12 campos custom + 22 campos no total.
+- **`CurrencyIsoCode` EXISTE** no objeto (`picklist`, 30 moedas) mesmo sem campo monetário próprio →
+  **toda escrita manda `USD` explícito** (D5/S12/depois conferir na releitura).
+- **Obrigatórios (`nillable=false`), 5:** `ProductFamily__c`, `FloorMarginPct__c`,
+  `TargetMarginPct__c`, `MaxDiscountPct__c`, `EffectiveFrom__c`. Todos os 5 extraídos do describe (A21).
+- **`Pricebook__c`:** lookup `Pricebook2`, `deleteConstraint = SetNull` (**`Restrict`/`Cascade` são
+  proibidos pela plataforma para `Pricebook2`** — A56), relação `Pricebook__r` →
+  `DD_DiscountPolicies`. **Nulo = política genérica da família.**
+- **`Specificity__c`:** Formula Number, `IF(ISBLANK(Pricebook__c),0,2) + IF(ISPICKVAL(ProductFamily__c,"All"),0,1)`
+  → 3 = família+price book · 2 = `All`+price book · 1 = família genérica · 0 = global.
+  O org normalizou a precisão para **18,0** (o metadata declarava 2,0) — sem efeito prático.
+- **`ProductFamily__c`:** picklist **não restrita**, 15 valores = as 14 famílias reais de `Product2.Family`
+  + `All`. O valor gravado tem de ser **idêntico** ao de `Product2.Family` (inclusive os que têm espaço,
+  como `Medical Equipment`), condição para o Flow da Fase 3 comparar as strings direto.
+- **Percent(5,2)** nos três percentuais. **Atenção:** em fórmula e em validation rule o percentual é
+  **fração** — `1` = 100% (por isso a regra valida `> 1`, não `> 100`).
+- **Validation rules (2, ambas `Active`):** `DD_Policy_Margin_Bands` (percentuais em 0..1 e
+  `Alvo >= Piso`) e `DD_Policy_Effective_Dates` (`Vigência Fim >= Início`, fim nulo permitido).
+- **FLS/visibilidade (S13/D20):**
+  - 7 campos **não obrigatórios** com `FieldPermissions` no PS do perfil (`0PSas000004GBdfGAG`):
+    `EffectiveTo__c`, `EscalationRole__c`, `IsActive__c`, `Pricebook__c`, `RequiresJustification__c`,
+    `SlaHours__c` → `read=true, edit=true`; `Specificity__c` → `read=true, edit=false` (fórmula).
+  - Os **5 obrigatórios não têm linha de `FieldPermissions`** — a plataforma **recusa deployar FLS para
+    campo `required`** (A57). Exceção estrutural ao D20: nesses campos a visibilidade é garantida pela
+    própria obrigatoriedade, e a prova é funcional (registro criado com os campos preenchidos e relidos).
+  - **Layout:** 1 só layout (`DD Discount Policy Layout`), 12/12 campos presentes; os 5 obrigatórios
+    voltaram com `<behavior>Required</behavior>` (o org troca `Edit` por `Required` em campo obrigatório).
+    `Specificity__c` é `Readonly` (fórmula — mesma exceção registrada em §4.8).
+- **Resolução de precedência (contrato para a Fase 3):**
+  ```sql
+  SELECT Id, Name, Specificity__c, FloorMarginPct__c, TargetMarginPct__c, MaxDiscountPct__c
+  FROM DD_DiscountPolicy__c
+  WHERE IsActive__c = true
+    AND EffectiveFrom__c <= TODAY
+    AND (EffectiveTo__c = null OR EffectiveTo__c >= TODAY)
+    AND (ProductFamily__c = :family OR ProductFamily__c = 'All')
+    AND (Pricebook__c = :pbId OR Pricebook__c = null)
+  ORDER BY Specificity__c DESC, EffectiveFrom__c DESC
+  LIMIT 1
+  ```
+  `EffectiveFrom__c DESC` é o desempate quando duas políticas têm a mesma especificidade.
 
 
 ---

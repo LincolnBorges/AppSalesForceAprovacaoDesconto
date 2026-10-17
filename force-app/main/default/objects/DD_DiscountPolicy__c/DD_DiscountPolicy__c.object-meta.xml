@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Politica de desconto do Deal Desk: piso, alvo e teto por familia de produto e price book. A precedencia e resolvida pela formula Specificity__c (familia mais price book especifico vence a genetica).</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableStreamingApi>true</enableStreamingApi>
+    <externalSharingModel>ReadWrite</externalSharingModel>
+    <label>Politica de Desconto</label>
+    <nameField>
+        <label>Nome da Politica</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Politicas de Desconto</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

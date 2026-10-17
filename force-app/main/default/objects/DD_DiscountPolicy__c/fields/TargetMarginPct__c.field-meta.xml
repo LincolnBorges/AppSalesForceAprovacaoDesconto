@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>TargetMarginPct__c</fullName>
+    <description>Margem alvo comercial: acima disto a cotacao e saudavel. Insumo da decisao D12 (30 por cento).</description>
+    <label>Margem Alvo (%)</label>
+    <precision>5</precision>
+    <required>true</required>
+    <scale>2</scale>
+    <type>Percent</type>
+</CustomField>

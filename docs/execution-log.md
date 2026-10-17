@@ -62,6 +62,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | FLD-001 | 2026-10-17 | F1-04/F1-05 criação de 9 campos de margem + FLS + layout | Quote / QuoteLineItem | OK | deploy `0Afas00000606y2CAA` |
 | FLW-001 | 2026-10-17 | F1-06 Flow `DD_CalculateLineCost` ativo | QuoteLineItem | OK | deploy `0Afas00000604zTCAQ` |
 | VAL-001 | 2026-10-17 | F1-07 validação das 3 faixas + massa DEMO- | Quote `0Q0as0000021hOLCAY` | OK | 3 linhas |
+| DPM-001 | 2026-10-17 | F2-02 criação do objeto `DD_DiscountPolicy__c` + 12 campos + 2 regras + FLS + layout | DD_DiscountPolicy__c | OK | deploy `0Afas00000606GVCAY` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -301,6 +302,23 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | 4 registros criados nesta operação: apagar `0Q0as0000021hOLCAY` (o cascade pode não remover as linhas — conferir) ou as 3 linhas + a Quote; valores anteriores: inexistentes |
 | Tokens (aprox.) | 6000 |
 | Observações | **A28 atendido:** o custo foi gravado na criação das linhas, o que prova que o Flow executou (nada mais escreve `DD_CostAmount__c`). Acento de `Saudável`/`Aprovação` confirmado por retrieve. A Quote serve à F5-02 |
+
+### [2026-10-17 14:17 -03:00] DPM-001 — OK (F2-02: objeto da política de desconto)
+
+| Campo | Valor |
+|---|---|
+| Operação | `deploy_metadata` (objeto custom + campos + regras + layout + perfil) |
+| Skill | `validate-metadata` §2/§3/§4 |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`, trial até 2026-11-15) |
+| Objeto / Metadado | `DD_DiscountPolicy__c` + 12 `CustomField` + 2 `ValidationRule` + 1 `Layout` + `Profile:Admin` |
+| Ferramenta | `sf project deploy start` (API 68.0, source format) |
+| Parâmetros-chave | `--dry-run` antes; `--metadata CustomObject:DD_DiscountPolicy__c`; `--metadata "Layout:DD_DiscountPolicy__c-DD Discount Policy Layout"`; `--metadata Profile:Admin`; `--test-level NoTestRun` |
+| Payload / SOQL | 17 componentes. Objeto: label `Politica de Desconto`, `sharingModel=ReadWrite`, `deploymentStatus=Deployed`, `nameField` Text(80). Campos: `ProductFamily__c` (Picklist 15 valores), `Pricebook__c` (Lookup `Pricebook2`, `SetNull`), `FloorMarginPct__c`/`TargetMarginPct__c`/`MaxDiscountPct__c` (Percent 5,2 required), `EscalationRole__c` Text(80), `SlaHours__c` Number(4,0), `RequiresJustification__c`/`IsActive__c` Checkbox, `EffectiveFrom__c` Date required, `EffectiveTo__c` Date, `Specificity__c` Formula Number = `IF(ISBLANK(Pricebook__c),0,2) + IF(ISPICKVAL(ProductFamily__c,"All"),0,1)` |
+| Confirmação humana | sim — "Confirmo — executar dry-run e deploy", payload apresentado às 14:05 |
+| Resultado | dry-run `0Afas00000607inCAA` **Succeeded** 17/17 · deploy `0Afas00000606GVCAY` **Succeeded** 17/17, 0 erros |
+| Reversão | `sf_delete_metadata` do `CustomObject:DD_DiscountPolicy__c` remove objeto e filhos; o layout e as 7 `fieldPermissions` saem junto com o objeto (o arquivo `Admin.profile-meta.xml` precisa perder os blocos `DD_DiscountPolicy__c.*` e o `layoutAssignments`) |
+| Tokens (aprox.) | 12000 |
+| Observações | **O dry-run pagou o custo 3x:** (1) `Restrict` é proibido em lookup para `Pricebook2` → virou `SetNull` (A56); (2) FLS não pode ser deployada para campo `required` → 5 blocos removidos (A57); (3) o erro do lookup derrubou `Specificity__c` em cascata. Pós-deploy: 2 regras `Active=true`; 1 layout só (sem resíduo de layout automático); 12/12 campos no layout; `CurrencyIsoCode` **existe** no objeto (30 moedas) |
 
 ---
 
