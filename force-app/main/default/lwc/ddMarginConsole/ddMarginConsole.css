@@ -14,3 +14,27 @@
 .console-body {
     min-height: 6rem;
 }
+
+/* F5-07: estado Pendente de Custo — cinza, distinto do amarelo e do vermelho. */
+.dd-badge-cost {
+    background-color: #706e6b;
+    color: #ffffff;
+}
+
+.cost-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background-color: #f3f3f3;
+    border-left: 4px solid #706e6b;
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.cost-alert__figure {
+    flex: 0 0 auto;
+}
+
+.cost-alert__body {
+    flex: 1 1 auto;
+}

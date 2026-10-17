@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>DD_GuardrailState__c</fullName>
-    <description>Estado do guardrail segundo D12: verde a partir de 30%, amarelo de 20% a 30%, vermelho abaixo de 20%. Limiares fixos nesta fase; passam a vir da politica na Fase 3.</description>
+    <description>Estado do guardrail. Custo ausente (nulo ou zero) devolve "Pendente de Custo" e nunca "Saudável" (F5-07/A74): dado incompleto nao pode parecer margem perfeita. Com custo presente, aplica D12: verde a partir de 30%, amarelo de 20% a 30%, vermelho abaixo de 20% (limiares fixos nesta camada; a politica vem do Flow).</description>
     <externalId>false</externalId>
-    <formula>IF(DD_MarginPct__c &gt;= 0.30, "Saudável", IF(DD_MarginPct__c &gt;= 0.20, "Requer Justificativa", "Requer Aprovação"))</formula>
+    <formula>IF(OR(ISBLANK(DD_Cost__c), DD_Cost__c = 0), "Pendente de Custo", IF(DD_MarginPct__c &gt;= 0.30, "Saudável", IF(DD_MarginPct__c &gt;= 0.20, "Requer Justificativa", "Requer Aprovação")))</formula>
     <label>DD Estado do Guardrail</label>
     <required>false</required>
     <trackTrending>false</trackTrending>

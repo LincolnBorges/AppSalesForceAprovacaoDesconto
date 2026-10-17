@@ -216,6 +216,22 @@
         </assignmentItems>
     </assignments>
     <assignments>
+        <name>Assign_MsgCostPending</name>
+        <label>Mensagem pendente de custo</label>
+        <locationX>100</locationX>
+        <locationY>100</locationY>
+        <assignmentItems>
+            <assignToReference>status</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>CostPending</stringValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>message</assignToReference>
+            <operator>Assign</operator>
+            <value><elementReference>F_MsgCostPending</elementReference></value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
         <name>Assign_Message</name>
         <label>Mensagem final</label>
         <locationX>100</locationX>
@@ -302,6 +318,19 @@
                 <targetReference>Assign_MsgNoPolicy</targetReference>
             </connector>
             <label>Sem politica</label>
+        </rules>
+        <rules>
+            <name>Rule_CostPending</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>decision</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue><stringValue>CostPending</stringValue></rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_MsgCostPending</targetReference>
+            </connector>
+            <label>Pendente de custo</label>
         </rules>
     </decisions>
     <decisions>
@@ -444,6 +473,11 @@
         <name>F_HasJustification</name>
         <dataType>Boolean</dataType>
         <expression>NOT(ISBLANK({!justification}))</expression>
+    </formulas>
+    <formulas>
+        <name>F_MsgCostPending</name>
+        <dataType>String</dataType>
+        <expression>"Cotacao " &amp; {!quoteName} &amp; ": o custo das linhas nao esta cadastrado no price book, entao o desconto nao pode ser avaliado. Estado: Pendente de Custo. Nenhum pedido foi criado. O Pricing precisa cadastrar o custo e a avaliacao deve ser repetida."</expression>
     </formulas>
     <formulas>
         <name>F_Subject</name>

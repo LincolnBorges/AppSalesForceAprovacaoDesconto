@@ -178,6 +178,30 @@
         </connector>
     </assignments>
     <assignments>
+        <name>Assign_CostPending</name>
+        <label>Pendente de custo</label>
+        <locationX>100</locationX>
+        <locationY>100</locationY>
+        <assignmentItems>
+            <assignToReference>guardrailState</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>Pendente de Custo</stringValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>decision</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>CostPending</stringValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>explanation</assignToReference>
+            <operator>Assign</operator>
+            <value><elementReference>F_Expl_CostPending</elementReference></value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Assign_Diag</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
         <name>Assign_Green</name>
         <label>Estado saudavel</label>
         <locationX>100</locationX>
@@ -386,7 +410,7 @@
         <locationX>100</locationX>
         <locationY>100</locationY>
         <defaultConnector>
-            <targetReference>Get_Product</targetReference>
+            <targetReference>Decision_Cost</targetReference>
         </defaultConnector>
         <defaultConnectorLabel>Padrao</defaultConnectorLabel>
         <rules>
@@ -496,6 +520,29 @@
         </rules>
     </decisions>
     <decisions>
+        <name>Decision_Cost</name>
+        <label>Custo cadastrado?</label>
+        <locationX>100</locationX>
+        <locationY>100</locationY>
+        <defaultConnector>
+            <targetReference>Get_Product</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Padrao</defaultConnectorLabel>
+        <rules>
+            <name>Rule_CostPending</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>F_CostPending</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue><booleanValue>true</booleanValue></rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_CostPending</targetReference>
+            </connector>
+            <label>Sem custo</label>
+        </rules>
+    </decisions>
+    <decisions>
         <name>Decision_Band</name>
         <label>Faixa de margem</label>
         <locationX>100</locationX>
@@ -597,9 +644,19 @@
         <expression>"Nao foi possivel avaliar a cotacao " &amp; {!quoteId} &amp; ": cotacao inexistente ou sem linhas. Nenhuma decisao foi tomada."</expression>
     </formulas>
     <formulas>
+        <name>F_CostPending</name>
+        <dataType>Boolean</dataType>
+        <expression>{!quote.DD_Cost__c} &lt;= 0</expression>
+    </formulas>
+    <formulas>
+        <name>F_Expl_CostPending</name>
+        <dataType>String</dataType>
+        <expression>"Cotacao " &amp; {!quoteName} &amp; ": o custo das linhas nao esta cadastrado no price book (custo total zero ou nulo). Estado: Pendente de Custo. O Pricing precisa cadastrar o custo antes de avaliar o desconto; nenhuma margem foi considerada e o pedido nao deve ser liberado."</expression>
+    </formulas>
+    <formulas>
         <name>F_Diag</name>
         <dataType>String</dataType>
-        <expression>"netPct=" &amp; TEXT({!netPct}) &amp; " | dIn=" &amp; TEXT(ROUND({!requestedDiscountPct}, 2)) &amp; " | marginBp=" &amp; TEXT({!F_Bp}) &amp; " | worstBpAdj=" &amp; TEXT({!F_WorstBpAdj}) &amp; " | worstBp=" &amp; TEXT({!F_WorstBp}) &amp; " | floorBp=" &amp; TEXT({!F_FloorBp}) &amp; " | targetBp=" &amp; TEXT({!F_TargetBp}) &amp; " | floorRaw=" &amp; TEXT({!F_FloorRaw}) &amp; " | rev=" &amp; TEXT(ROUND({!effRevenue}, 2)) &amp; " | cost=" &amp; TEXT(ROUND({!quote.DD_Cost__c}, 2)) &amp; " | spec=" &amp; TEXT(ROUND({!specificity}, 0))</expression>
+        <expression>"netPct=" &amp; TEXT({!netPct}) &amp; " | dIn=" &amp; TEXT(ROUND({!requestedDiscountPct}, 2)) &amp; " | marginBp=" &amp; TEXT({!F_Bp}) &amp; " | worstBpAdj=" &amp; TEXT({!F_WorstBpAdj}) &amp; " | worstBp=" &amp; TEXT({!F_WorstBp}) &amp; " | floorBp=" &amp; TEXT({!F_FloorBp}) &amp; " | targetBp=" &amp; TEXT({!F_TargetBp}) &amp; " | floorRaw=" &amp; TEXT({!F_FloorRaw}) &amp; " | rev=" &amp; TEXT(ROUND({!effRevenue}, 2)) &amp; " | cost=" &amp; TEXT(ROUND({!quote.DD_Cost__c}, 2)) &amp; " | spec=" &amp; TEXT(ROUND({!specificity}, 0)) &amp; " | costPending=" &amp; IF({!F_CostPending}, "1", "0")</expression>
     </formulas>
     <formulas>
         <name>F_FloorRaw</name>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>GuardrailState__c</fullName>
-    <description>Estado do semaforo no momento da decisao (D14). Os tres primeiros sao literais identicos aos da formula Quote.DD_GuardrailState__c.</description>
+    <description>Estado do semaforo no momento da decisao (D14). Os literais sao identicos aos da formula Quote.DD_GuardrailState__c. "Pendente de Custo" (F5-07) indica custo nao cadastrado nas linhas; nesse estado o Flow de roteamento nao cria pedido.</description>
     <label>Estado do Guardrail</label>
     <required>true</required>
     <type>Picklist</type>
@@ -12,6 +12,7 @@
             <value><fullName>Saudável</fullName><default>false</default><label>Saudável</label></value>
             <value><fullName>Requer Justificativa</fullName><default>false</default><label>Requer Justificativa</label></value>
             <value><fullName>Requer Aprovação</fullName><default>false</default><label>Requer Aprovação</label></value>
+            <value><fullName>Pendente de Custo</fullName><default>false</default><label>Pendente de Custo</label></value>
             <value><fullName>Pendente de Política</fullName><default>false</default><label>Pendente de Política</label></value>
         </valueSetDefinition>
     </valueSet>

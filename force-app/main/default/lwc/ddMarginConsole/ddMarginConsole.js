@@ -25,6 +25,12 @@ const STATE_META = {
         iconName: 'utility:error',
         guidance: 'A cotação está abaixo do piso da política. O pedido sobe para o aprovador da alçada.'
     },
+    'Pendente de Custo': {
+        badgeClass: 'slds-badge dd-badge-cost',
+        iconName: 'utility:warning',
+        guidance:
+            'O custo das linhas desta cotação não está cadastrado no price book. O Pricing precisa cadastrar o custo antes de liberar o desconto.'
+    },
     'Pendente de Política': {
         badgeClass: 'slds-badge slds-theme_info',
         iconName: 'utility:info',
@@ -47,9 +53,13 @@ const DECISION_LABEL = {
     AutoApproved: 'Dentro do alvo — nenhum pedido é necessário',
     ManagerApproval: 'Pedido de desconto encaminhado ao aprovador',
     NoPolicy: 'Sem política de desconto ativa',
+    CostPending: 'Pendente de Custo — o Pricing precisa cadastrar o custo',
     Blocked: 'Roteamento bloqueado: aprovador não resolvido',
     Fault: 'Falha operacional no roteamento'
 };
+
+// F5-07/A74: custo ausente nao pode parecer margem perfeita.
+const COST_PENDING_STATE = 'Pendente de Custo';
 
 export default class DdMarginConsole extends LightningElement {
     @api recordId;
@@ -118,6 +128,16 @@ export default class DdMarginConsole extends LightningElement {
         return this.stateInfo.guidance;
     }
 
+    get isCostPending() {
+        return this.quoteState === COST_PENDING_STATE;
+    }
+
+    // O alerta de custo vale tanto para o estado gravado quanto para o simulado.
+    get hasCostPendingAlert() {
+        const simulated = this.simResult && this.simResult.state;
+        return this.isCostPending || simulated === COST_PENDING_STATE;
+    }
+
     get simulateButtonLabel() {
         return this.simRunning ? 'Simulando...' : 'Simular';
     }
@@ -151,7 +171,8 @@ export default class DdMarginConsole extends LightningElement {
 
     get requiresJustification() {
         const state = (this.simResult && this.simResult.state) || this.quoteState;
-        return Boolean(state) && state !== 'Saudável';
+        // Pendente de Custo nao e um pedido: o bloqueio e anterior a justificativa.
+        return Boolean(state) && state !== 'Saudável' && state !== COST_PENDING_STATE;
     }
 
     get justificationLabel() {
@@ -159,7 +180,13 @@ export default class DdMarginConsole extends LightningElement {
     }
 
     get isRequestDisabled() {
-        return this.routeRunning || !this.hasRecordId;
+        return this.routeRunning || !this.hasRecordId || this.isCostPending;
+    }
+
+    get requestDisabledHint() {
+        return this.isCostPending
+            ? 'Envio bloqueado: sem custo cadastrado no price book não existe margem, e o pedido de desconto não pode ser avaliado.'
+            : '';
     }
 
     get requestButtonLabel() {

@@ -24,6 +24,26 @@
                     <p class="slds-text-body_regular slds-m-top_x-small">{stateGuidance}</p>
                 </template>
 
+                <template lwc:if={hasCostPendingAlert}>
+                    <div
+                        class="cost-alert slds-m-top_small"
+                        role="status"
+                        data-testid="cost-pending-alert"
+                    >
+                        <div class="cost-alert__figure">
+                            <lightning-icon icon-name="utility:warning" size="small" variant="warning"></lightning-icon>
+                        </div>
+                        <div class="cost-alert__body">
+                            <h2 class="slds-text-heading_small">Pendente de Custo</h2>
+                            <p class="slds-text-body_small">
+                                O custo das linhas desta cotação não está cadastrado no price book. O Pricing
+                                precisa cadastrar o custo antes de liberar o desconto: sem custo não existe
+                                margem e o guardrail não decide.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
                 <div class="section slds-m-top_medium slds-border_top slds-p-top_medium">
                     <h2 class="slds-text-heading_small">Simulador de desconto</h2>
                     <p class="slds-text-body_small slds-text-color_weak">
@@ -105,6 +125,11 @@
                         disabled={isRequestDisabled}
                         class="slds-m-top_small"
                     ></lightning-button>
+                    <template lwc:if={requestDisabledHint}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                            {requestDisabledHint}
+                        </p>
+                    </template>
 
                     <template lwc:if={routeRunning}>
                         <lightning-flow
