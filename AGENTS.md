@@ -114,6 +114,10 @@ instância `BRA44`, **Enterprise Edition trial** (`IsSandbox = false`,
     commitada = trabalho não registrado.** Antes do commit, conferir `git status` e nunca incluir
     segredo, `.env`, `node_modules/`, `.sf/` ou `.sfdx/` (já cobertos pelo `.gitignore`).
     Operações na org continuam exigindo entrada própria no [`docs/execution-log.md`](docs/execution-log.md).
+12. **Campo custom novo entrega FLS + layout na mesma operação (D20):** ao criar qualquer campo custom,
+    no **mesmo** trabalho: (a) conceder **leitura e edição** ao perfil **System Administrator**; e
+    (b) incluir o campo no **Page Layout padrão** do objeto, com `<behavior>Edit</behavior>`.
+    Um campo deployado sem isso existe no schema mas é **invisível na tela — e não gera erro nenhum**.
 
 ---
 
@@ -133,6 +137,7 @@ instância `BRA44`, **Enterprise Edition trial** (`IsSandbox = false`,
 | S10 | **Limite humano de reversão.** | Toda escrita é reversível manualmente: o log registra `Id`, horário, payload e o valor **anterior** para rollback |
 | S11 | **Todo registro criado pelo agente DEVE ter o prefixo `DEMO-` no `Name`, quando `Name` for gravável.** | Verificado na montagem do payload, **antes** da confirmação. Onde `Name` é autonumber/readonly, registrar a exceção (A14) em vez de forçar |
 | S12 | **Moeda `USD` comprovada em toda escrita.** | Desde 2026-10-17 (D18/D19) o usuário opera em `BRL`, então o default de `CurrencyIsoCode` tenderia a `BRL` (A13). `PricebookEntry.CurrencyIsoCode` é imutável (a org recusa o campo no update), portanto o guardrail é **verificação antes e depois** de cada escrita, abortando o lote se a moeda divergir de `USD` |
+| S13 | **Campo custom só existe quando aparece na tela.** | Criação de campo exige, na **mesma** operação: FLS `Visible`+`Editable` no perfil **System Administrator** **e** presença no **Page Layout padrão** (D20). Verificação obrigatória pós-deploy: `FieldPermissions` do PS do perfil **e** `grep` do campo no XML do layout retornado. Campo sem isso não dá erro — só desaparece |
 
 ---
 

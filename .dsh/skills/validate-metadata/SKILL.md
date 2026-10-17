@@ -33,6 +33,24 @@ Nenhuma escrita acontece sem passar por aqui. **Este checklist é a barreira (S3
       [`architecture`](../../../docs/architecture.md) §9 antes de modelar tudo).
 - [ ] Roll-up summary exige relação **master-detail** (`Quote → QuoteLineItem` é).
 - [ ] `Name` gravável? Se não, **S11 é inaplicável** — registrar a exceção (A14).
+- [ ] **FLS concedida ao perfil System Administrator (S13/D20)** — `Visible` **e** `Editable`, na
+      **mesma** operação do deploy do campo:
+
+      ```sql
+      SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions
+      WHERE ParentId = '<PS do perfil>' AND Field = '<Objeto>.<Campo__c>'
+      -- ParentId = PermissionSet do perfil (0PS...), NÃO o ProfileId
+      ```
+- [ ] **Campo no Page Layout padrão (S13/D20)** com `<behavior>Edit</behavior>`. O fullName do layout
+      usa o **label**, não o API name — e pode ter espaços:
+
+      ```bash
+      sf project retrieve start -o personal --metadata "Layout:PricebookEntry-Price Book Entry" \
+        --target-metadata-dir /tmp/lay --unzip
+      grep -c "<Campo__c>" "/tmp/lay/unpackaged/unpackaged/layouts/<Layout>.layout"   # esperado: >=1
+      ```
+- [ ] **Nenhum dos dois pode ficar para depois:** campo sem FLS/layout não dá erro — apenas desaparece
+      da tela (D20). Se o objeto tiver **record types**, confirmar a qual layout cada um está atribuído.
 
 ### Flow
 - [ ] Tipo correto: **`AutoLaunchedFlow`** se for virar ação de agente (agente **não** invoca Screen Flow).
@@ -82,6 +100,7 @@ sf project deploy start --metadata-dir mdapi --target-org personal --test-level 
 | Tipo | Como verificar |
 |---|---|
 | Campo | Reler o valor gravado — **não** confiar no que foi enviado |
+| Campo (visibilidade) | **FLS**: `FieldPermissions` do PS do perfil com `PermissionsRead/PermissionsEdit = true` · **Layout**: `grep` do campo no XML do layout retornado. Sem os dois, o campo é invisível na tela mesmo com deploy `Succeeded` (S13/D20) |
 | Flow | `SELECT ApiName, ProcessType, IsActive, TriggerType FROM FlowDefinitionView WHERE ApiName='<x>'` |
 | LWC / Tab | `sf org list metadata --metadata-type <tipo>` e conferir a contagem contra o baseline (`MEMORY.md` §1.6) |
 | **`GenAiFunction`** | **`sf project retrieve start --metadata "GenAiFunction:<nome>"`** — se voltarem os **3 arquivos**, está íntegro (A45/A49) |
@@ -118,3 +137,7 @@ tokens. Atualizar [`MEMORY.md`](../../../MEMORY.md) §1 e §4 quando aplicável.
 | `insufficient access rights on cross-reference id` | Resíduo/referência cruzada na remoção | Remover versão `Obsolete` via Tooling API |
 | `INVALID_TYPE` em objeto | Objeto não existe nesta org | Não é bug de ferramenta (A7) |
 | `not well-formed (invalid token)` | Comentário XML com dois hífens seguidos (`--dry-run`, `--metadata-dir`) | Remover os `--` de dentro do comentário (A52). **Validar o XML com um parser antes do deploy** |
+
+> **Silêncio não é sucesso.** Um campo deployado com `Succeeded` e **sem** FLS e layout não gera erro
+> nenhum — ele simplesmente não aparece para o usuário. É o único tipo de falha deste projeto que o
+> dry-run **não** pega: por isso a verificação de visibilidade da §4 é obrigatória (S13/D20).

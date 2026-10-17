@@ -56,6 +56,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | DEC-001 | 2026-10-17 | 6 decisões de negócio + descoberta F0-05 + proposta de custos (nenhuma escrita na org) | — | OK | — |
 | INV-001 | 2026-10-17 | F0-12 investigação de viabilidade de moeda USD × BRL (nenhuma escrita na org) | — | OK | — |
 | SED-001 | 2026-10-17 | F0-08 semeadura de custo em 19 `PricebookEntry` + validação F0-09 | PricebookEntry | OK | 19 Ids |
+| CHK-001 | 2026-10-17 | verificação de FLS e layout de `FixedCost__c`/`VariableCostPerUnit__c` + regra D20 (nenhuma escrita na org) | PricebookEntry | OK | — |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -194,6 +195,22 @@ moeda do pai. Registrado em `MEMORY.md` §3 (A13) e §1.1.
 (`Parts` 14, `Medical Equipment` 10) · 0 não-`USD` · faixas 10/7/7 conferidas. Amostras batidas à mão:
 Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 = 34,00%` · Drive Motor
 `(36−21,50−9,45)/36 = 14,03%`. As 5 entradas semeadas em T3 permanecem intactas.
+
+### [2026-10-17 12:40 -03:00] CHK-001 — OK (FLS + layout dos campos de custo + D20)
+
+| Campo | Valor |
+|---|---|
+| Operação | verificação (SOQL, retrieve de metadata, formulário no browser) + edição de arquivos — **nenhuma escrita na org** |
+| Skill | validate-metadata |
+| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `PricebookEntry.FixedCost__c`, `PricebookEntry.VariableCostPerUnit__c`, `Layout:PricebookEntry-Price Book Entry` |
+| Ferramenta | `sf data query` (`FieldPermissions`), `sf project retrieve start`, Chrome |
+| Parâmetros-chave | PS do perfil `0PSas000004GBdfGAG`; layout único `Price Book Entry`; 0 record types |
+| Resultado | **já estava configurado:** FLS `read=true`/`edit=true` nos dois campos; ambos no layout com `<behavior>Edit</behavior>`; o formulário de edição do registro `01uas000000RovCAAS` renderiza "Fixed Cost" e "Variable Cost Per Unit" |
+| Confirmação humana | não aplicável (sem escrita) |
+| Reversão | `git revert` do commit desta entrada |
+| Tokens (aprox.) | 15000 |
+| Observações | a hipótese de FLS/layout faltando **não se confirmou** nesta org; a lacuna era de **processo**, e foi fechada com D20 + S13 + convenção 12 + skill atualizada |
 
 ---
 

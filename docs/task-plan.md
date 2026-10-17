@@ -65,8 +65,8 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 4 | Console LWC | 7 | 1 | PENDENTE |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
-| — | Transversais (contínuas) | 4 | 1 | EM ANDAMENTO |
-| **Total** | | **66** | **18** | |
+| — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
+| **Total** | | **67** | **19** | |
 
 *Atualizado em 2026-10-17. Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -193,6 +193,7 @@ paradas no ponto indicado.
 | X-02 | Manter este plano vivo | — | Atualizar status ao fim de cada ação; novas ações entram com ID novo; progresso (§2) em sincronia com §4 | IA | EM ANDAMENTO (contínuo) |
 | X-03 | Rotação do `execution-log` | — | Ao passar de ~500 linhas, rotacionar para `execution-log-AAAA.md` mantendo o índice no arquivo atual | IA | PENDENTE |
 | X-04 | Tag `fase-N` ao fechar fase | F0-10 e equivalentes | Criar tag git `fase-N` no commit de fechamento, marcando o marco no histórico | IA | PENDENTE |
+| X-05 | FLS + layout obrigatórios ao criar campo | — | D20/S13: todo campo custom novo entrega, **na mesma operação**, `Visible`+`Editable` ao perfil System Administrator **e** entrada no Page Layout padrão; verificação pós-deploy obrigatória | IA | CONCLUÍDO (2026-10-17): convenção 12, guardrail S13, D20 e skill `validate-metadata` atualizada |
 
 ---
 
@@ -206,3 +207,4 @@ paradas no ponto indicado.
 | 2026-10-17 | F0-05/F0-06 concluídas: [`cost-proposal.md`](cost-proposal.md) com 19 entradas propostas |
 | 2026-10-17 | F0-12 (viabilidade de moeda) concluída: veredito "manter USD". Criadas **F0-13** (decisão humana) e **F0-14** (price book BRL, condicional). F0-08 passou a depender de F0-13. Total: 63 → 66 ações |
 | 2026-10-17 | **Fase 0 fechada:** F0-07 (tabela aprovada), F0-11 (opção A), F0-13 (USD), F0-08 (19 registros), F0-09 (validação), F0-10 (fechamento) e F0-01 (baseline) concluídos. F0-14 cancelada. Criada a **S12** (moeda comprovada). 18 de 66 ações concluídas |
+| 2026-10-17 | Criada **X-05** (D20/S13: FLS + layout na mesma operação de criação de campo) e atualizada a skill `validate-metadata`. Verificação de `FixedCost__c`/`VariableCostPerUnit__c`: já estavam com FLS e layout corretos. Total: 66 → 67 ações |
