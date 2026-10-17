@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>68.0</apiVersion>
+    <assignments>
+        <name>SetCostAmount</name>
+        <label>Define o custo total da linha</label>
+        <locationX>352</locationX>
+        <locationY>200</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.DD_CostAmount__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>varCostAmount</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <description>Grava o custo total da linha a partir do custo do PricebookEntry. Busca o PricebookEntry por Get Records porque before-save nao aceita formula com referencia cruzada (A53).</description>
+    <formulas>
+        <name>varCostAmount</name>
+        <dataType>Currency</dataType>
+        <expression>({!GetPricebookEntry.FixedCost__c} + {!GetPricebookEntry.VariableCostPerUnit__c}) * {!$Record.Quantity}</expression>
+        <scale>2</scale>
+    </formulas>
+    <label>DD Calcula Custo da Linha</label>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>GetPricebookEntry</name>
+        <label>Obtem a entrada de preco</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <assignNullValuesIfNoRecordsFound>true</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>SetCostAmount</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.PricebookEntryId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>PricebookEntry</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>GetPricebookEntry</targetReference>
+        </connector>
+        <filterFormula>ISNEW() || ISCHANGED({!$Record.Quantity}) || ISCHANGED({!$Record.PricebookEntryId})</filterFormula>
+        <object>QuoteLineItem</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
