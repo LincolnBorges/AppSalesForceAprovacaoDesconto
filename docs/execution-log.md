@@ -69,6 +69,8 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | FLW-002 | 2026-10-17 | F3-04 Flow de cálculo: deployado e **NÃO funcional** (falha em tempo de execução) | DD_CalculateQuoteMargin | FALHA | deploy `0Afas00000608ADCAY` |
 | FLW-003 | 2026-10-17 | F3-04 reescrita do Flow de cálculo — funcional, 5 cenários validados | DD_CalculateQuoteMargin | OK | deploy `0Afas00000608oXCAQ`+ |
 | QTE-001 | 2026-10-17 | F3-08 massa de teste: 2 cotações + 2 linhas DEMO- | Quote | OK | ver FLW-003 |
+| RTE-001 | 2026-10-17 | F3-05/F3-07/F3-08 Flow de roteamento + 3 cenarios ponta a ponta (pedido DR-00000) | DD_DiscountRequest__c | OK | deploy `0Afas00000609HZCAY` |
+| CLN-001 | 2026-10-17 | F3-09 limpeza das versoes Obsolete — **bloqueada** (Flow Interview retida) | Flow | FALHA | 24 versoes antigas permanecem |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -428,6 +430,48 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 **Massa criada (QTE-001):** `Quote` `0Q0as0000021j1xCAA` (`DEMO-Quote-Guardrail-Green`, PB `01sas000001nOBJAA2`, USD) + `QuoteLineItem` `0QLas0000028ydlGAA` (PBE `01uas000000RovXAAS`, qtd 1, preço 120, custo 70 → 41,6667%) · `Quote` `0Q0as0000021j3ZCAQ` (`DEMO-Quote-Guardrail-Generic`, PB `01sas000001nOBHAA2`, USD) + `QuoteLineItem` `0QLas0000028yc9GAA` (PBE `01uas000000RovGAAS`, qtd 1, preço 180, **sem custo semeado** → 100%). Reversão: apagar as 2 cotações (as linhas caem junto).
 
 **Ressalvas (A19):** no cenário 4 a margem é 100% porque o Retail não tem custo semeado (F0-08 semeou só no Fleet) — o que ele prova é a **resolução de política (`spec=1`)**, não a margem. No cenário 5 a família é `Part` (não `Parts`), o que também confirma a armadilha do D17.
+
+---
+
+### [2026-10-17 18:20 -03:00] RTE-001 — OK (F3-05/F3-07/F3-08: roteamento + 3 cenários ponta a ponta)
+
+| Campo | Valor |
+|---|---|
+| Operação | deploy de Flow + 4 invocações do roteamento + 1 pedido criado/atualizado |
+| Skill | `validate-metadata` §2/§3 · `route-approval` |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `DD_RouteDiscountApproval` (`AutoLaunchedFlow`, `Active`, 28 elementos) + `DD_DiscountRequest__c` |
+| Ferramenta | `sf project deploy start` + `sf api request rest` (POST `/actions/custom/flow/...`) |
+| Confirmação humana | sim — confirmação dupla S6 ("Confirmo o deploy do DD_RouteDiscountApproval") |
+| Resultado | deploy `0Afas00000609HZCAY` + 2 redeploys corretivos · **3/3 cenários OK** · pedido `a0Nas00000TgQTdEAN` (`DR-00000`) |
+| Reversão | apagar o pedido `a0Nas00000TgQTdEAN` e desativar/remover o Flow |
+| Tokens (aprox.) | 18000 |
+| Observações | 2 defeitos pegos em execução: (1) `IsNull` sobre **campo de lookup** (`owner.ManagerId`) não é avaliado — o Flow caiu no `Get_Manager` com Id nulo e estourou `columnName: null__NotFound` (A65); (2) filtro em **campo de objeto relacionado** (`Profile.Name`) no `Get Records` não resolve — mesmo erro (A65). Saídas de subflow exigem `assignToReference` + `name`, não `value` (A66) |
+
+| # | Cenário | Entrada | Resultado |
+|---|---|---|---|
+| 1 | **Verde** | `DEMO-Quote-Guardrail-Green`, `d=0` | `AutoApproved` · Saudável · **nenhum pedido criado** (contagem seguiu 0) |
+| 2 | **Amarelo** | `DEMO-Quote-Margin-Bands`, `d=0`, com justificativa | `ManagerApproval` · Requer Justificativa · pedido **`DR-00000`** criado `Submitted` · aprovador `Alan FieldTech` (`FallbackAdmin`) · política `Parts-Fleet` `spec=3` · piso 20 / alvo 30 · `USD` |
+| 3 | **Vermelho** | mesma cotação, `d=25` | `ManagerApproval` · Requer Aprovação · **mesmo pedido atualizado** (`DR-00000`, `d=25`) — contagem total permaneceu **1**, provando a idempotência |
+
+**Ressalva (A19):** o aprovador saiu como `FallbackAdmin` → `Alan FieldTech` porque (a) o dono da cotação não tem gestor, (b) o dono da política é o próprio solicitante, e (c) o filtro `Profile.Name` não funciona em `Get Records`. O degrau escolhe o **primeiro usuário ativo ≠ solicitante** ordenado por `Name` — não necessariamente um administrador. Registrado como limitação em D26.
+
+---
+
+### [2026-10-17 18:35 -03:00] CLN-001 — FALHA (F3-09: limpeza das versões Obsolete)
+
+| Campo | Valor |
+|---|---|
+| Operação | remoção de versões antigas de Flow (24 versões: 22 do cálculo + 2 do roteamento) |
+| Skill | `validate-metadata` §5 |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Flow` (`DD_CalculateQuoteMargin` v1–v22, `DD_RouteDiscountApproval` v1–v2) |
+| Ferramenta | `DELETE /tooling/sobjects/Flow/<id>` · `sf data delete record --use-tooling-api -s Flow` · deploy destrutivo |
+| Confirmação humana | sim — "autorizo a limpeza (S5)" |
+| Resultado | **não removidas.** `DELETE` via Tooling devolve corpo vazio (204) mas a versão permanece; `sf data delete record` retorna `DEPENDENCY_EXISTS: This flow version is referenced in a flow interview`; o deploy destrutivo retorna `insufficient access rights on cross-reference id`; desativar por metadata não existe (`<status>` aceita só `Active`/`Draft`) e o `PATCH` no Tooling devolve 400 |
+| Reversão | não aplicável (nada foi alterado) |
+| Tokens (aprox.) | 6000 |
+| Observações | O bloqueio é a **`FlowInterview` retida** por cada invocação que falhou (`0Foas…`). `FlowInterview` não é consultável por SOQL nem por Tooling nesta org, então não há como apagá-las por script. As versões antigas **não afetam operação** (só a ativa executa) e a contagem de **definições** está no baseline esperado: `FlowDefinitionView` **256** / ativos **219** / locais **32** (254/217/30 + os 2 Flows entregues). Limpeza possível depois que as entrevistas expirarem, pela UI (Setup → Flows → versões) |
 
 ---
 

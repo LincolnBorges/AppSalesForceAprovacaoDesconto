@@ -61,12 +61,12 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 0 | Fundação e base de custo | 15 | 14 | CONCLUÍDO |
 | 1 | Cálculo de margem | 8 | 8 | CONCLUÍDO |
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
-| 3 | Guardrail e roteamento | 10 | 4 | EM ANDAMENTO |
+| 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 1 | PENDENTE |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **67** | **34** | |
+| **Total** | | **67** | **42** | |
 
 *Atualizado em 2026-10-17 (Fase 2 fechada). Decisões antecipadas fora da ordem das fases estão na §5.*
 
@@ -141,12 +141,12 @@ paradas no ponto indicado.
 | F3-02 | Modelar `DD_DiscountRequest__c` | **F3-01** | Campos do pedido: cotação, desconto pedido, **estado do guardrail** (não a margem), snapshot da política aplicada, decisão, status, aprovador, justificativa | IA | CONCLUÍDO (2026-10-17): 18 campos + 3 validações; 8 campos `Policy*__c` de snapshot gravado e **zero** margem/custo/receita. Decisões **D23** (sem número) e **D24** (`Blocked` = falha de roteamento) |
 | F3-03 | Criar `DD_DiscountRequest__c` | **F3-02** | Deploy do objeto + campos + numeração; `--dry-run` antes (S7) | IA | CONCLUÍDO (2026-10-17): `Name` AutoNumber `DR-{00000}`; 18 campos + 3 regras + FLS + layout, deploy `0Afas00000606d4CAA` (24/24). **Dry-run pegou 1 erro** de ordem de elemento no Profile. Ver DRE-001 |
 | F3-04 | Flow invocável de cálculo | **F1-08** | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, **Active**, com `isInput`/`isOutput` explícitos) — é a base da ação de agente da Fase 6 (D8) | IA | CONCLUÍDO (2026-10-17): reescrito com 29 elementos e **5/5 cenários validados** (verde, amarelo, vermelho, precedência nível 1, sem política). Saídas em pontos-base (D27/A62). Ver FLW-003 |
-| F3-05 | Flow de roteamento | **F3-01**, **F3-03**, **F3-04** | `DD_RouteDiscountApproval`: cria o pedido, define `Decision__c`/`Status__c`/`Approver__c` e notifica a alçada | IA | PENDENTE |
+| F3-05 | Flow de roteamento | **F3-01**, **F3-03**, **F3-04** | `DD_RouteDiscountApproval`: cria o pedido, define `Decision__c`/`Status__c`/`Approver__c` e notifica a alçada | IA | CONCLUÍDO (2026-10-17): 28 elementos, subflow do cálculo, cria **ou atualiza** o pedido aberto. Ver RTE-001 |
 | F3-06 | Regra de bloqueio sem pedido | **F3-05** | Abaixo do piso **não** cria pedido: devolve o motivo | IA | CANCELADO (2026-10-17): D12 definiu vermelho = **pede aprovação**, não bloqueia; a lógica equivalente é F3-05/F3-10 |
-| F3-07 | Canal de notificação do aprovador | **F3-01** | Definir como o aprovador é avisado (template de e-mail ou notificação in-app) sem depender de licença ausente na org | IA | PENDENTE |
-| F3-08 | Testar 3 cenários ponta a ponta | **F3-05** a **F3-07**, **F3-10** | Verde (auto-aprovado), amarelo (justificativa) e vermelho (aprovação do gestor); evidência com timestamps distintos, contadores e correlação com os dados produzidos (A28) | IA | PENDENTE |
-| F3-09 | Fechar a Fase 3 | **F3-08** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-3` | IA | PENDENTE |
-| F3-10 | Aprovação pelo gerente imediato | **F3-01** | Resolver o aprovador por `User.ManagerId` do dono da cotação e definir o comportamento quando for nulo (hoje **20 de 23** usuários ativos não têm gestor): bloquear o envio ou escalar para fila — D13 | IA | PENDENTE |
+| F3-07 | Canal de notificação do aprovador | **F3-01** | Definir como o aprovador é avisado (template de e-mail ou notificação in-app) sem depender de licença ausente na org | IA | CONCLUÍDO (2026-10-17): ação padrão `emailSimple` (texto plano, sem template, sem ID de org). Falha de envio **não desfaz o pedido** e a mensagem admite a falha |
+| F3-08 | Testar 3 cenários ponta a ponta | **F3-05** a **F3-07**, **F3-10** | Verde (auto-aprovado), amarelo (justificativa) e vermelho (aprovação do gestor); evidência com timestamps distintos, contadores e correlação com os dados produzidos (A28) | IA | CONCLUÍDO (2026-10-17): 3/3 OK — verde sem pedido; amarelo criou `DR-00000`; vermelho **atualizou o mesmo pedido** (contagem 1). Ver RTE-001 |
+| F3-09 | Fechar a Fase 3 | **F3-08** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-3` | IA | CONCLUÍDO (2026-10-17) — **com ressalva:** a limpeza das 24 versões `Obsolete` ficou bloqueada (CLN-001); a operação não é afetada e as definições estão no baseline |
+| F3-10 | Aprovação pelo gerente imediato | **F3-01** | Resolver o aprovador por `User.ManagerId` do dono da cotação e definir o comportamento quando for nulo (hoje **20 de 23** usuários ativos não têm gestor): bloquear o envio ou escalar para fila — D13 | IA | CONCLUÍDO (2026-10-17): escada gerente → dono da política → 1º ativo ≠ solicitante → `Blocked`. **Limitação:** `Profile.Name` não é filtrável (A65), então o 3º degrau não garante admin |
 
 ### Fase 4 — Console LWC
 

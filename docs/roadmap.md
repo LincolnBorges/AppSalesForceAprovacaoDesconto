@@ -120,7 +120,7 @@ provada nas duas famílias.**
 **Objetivo:** a decisão existe e o pedido abaixo do piso sobe com contexto.
 
 **Entregáveis**
-1. Objeto `DD_DiscountRequest__c` (§3.2) — com **snapshot** de política e margem.
+1. Objeto `DD_DiscountRequest__c` (§3.2) — com **snapshot** de política e **estado** do guardrail (D23: sem margem, custo ou receita).
 2. Flow `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, **Active**, com `isInput`/`isOutput` — D8).
 3. Flow `DD_RouteDiscountApproval` (`AutoLaunchedFlow`, **Active**) — cria o pedido, define
    `Decision__c` / `Status__c` / `Approver__c`, notifica a alçada.
@@ -138,6 +138,27 @@ provada nas duas famílias.**
 
 **Pronto quando:** os 3 cenários produzem o resultado esperado, o pedido registra a política aplicada
 e o `--dry-run` dos dois Flow passou antes do deploy (S6/S7).
+
+**Executado em 2026-10-17 — Fase 3 CONCLUÍDA (ver FLW-003 e RTE-001 no `execution-log`):**
+
+| Entrega | Estado |
+|---|---|
+| `DD_DiscountRequest__c` | 18 campos + 3 regras + FLS + layout; snapshot de política e **estado** (D23) |
+| `DD_CalculateQuoteMargin` | `Active`; 29 elementos; saídas em **pontos-base** (D27/A62) |
+| `DD_RouteDiscountApproval` | `Active`; 28 elementos; subflow do cálculo; escada D26; cria **ou atualiza** o pedido aberto |
+| 3 cenários | **3/3 OK** — verde sem pedido · amarelo criou `DR-00000` · vermelho atualizou o mesmo pedido |
+| Notificação (F3-07) | `emailSimple`, sem template; falha de envio não desfaz o pedido |
+
+**Desvios em relação ao planejado, registrados em vez de escondidos:**
+
+1. **Não houve `Blocked` por margem** (D12) — `Blocked` passou a significar falha de roteamento (D24).
+2. **A precedência não usa `ORDER BY` no Flow** — `Get Records` ordena por um campo só e não ordena fórmula;
+   virou cascata estrutural de 4 níveis (`spec` 3 → 2 → 1 → 0), validada nos cenários 4 e 5 do FLW-003.
+3. **O aprovador do 3º degrau não é necessariamente administrador** — `Profile.Name` não é filtrável em
+   `Get Records` (A65); hoje é o primeiro usuário ativo ≠ solicitante, por `Name`.
+4. **Versões `Obsolete` dos dois Flows não foram removidas** — bloqueio por `FlowInterview` retida (CLN-001).
+
+---
 
 ---
 
