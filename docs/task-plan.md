@@ -61,7 +61,7 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 0 | Fundação e base de custo | 15 | 14 | CONCLUÍDO |
 | 1 | Cálculo de margem | 8 | 8 | CONCLUÍDO |
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
-| 3 | Guardrail e roteamento | 10 | 3 | EM ANDAMENTO |
+| 3 | Guardrail e roteamento | 10 | 4 | EM ANDAMENTO |
 | 4 | Console LWC | 7 | 1 | PENDENTE |
 | 5 | Acesso, dados e demo | 6 | 0 | PENDENTE |
 | 6 | Camada Agentforce | 9 | 1 | PENDENTE |
@@ -140,7 +140,7 @@ paradas no ponto indicado.
 | F3-01 | Regras de decisão e alçadas | **F0-04** | Definir quem aprova a faixa intermediária, o que conta como bloqueio e se existe exceção acima do teto | HUMANO | CONCLUÍDO (2026-10-17): vermelho sobe ao gerente imediato via `User.ManagerId`, ver D13 |
 | F3-02 | Modelar `DD_DiscountRequest__c` | **F3-01** | Campos do pedido: cotação, desconto pedido, **estado do guardrail** (não a margem), snapshot da política aplicada, decisão, status, aprovador, justificativa | IA | CONCLUÍDO (2026-10-17): 18 campos + 3 validações; 8 campos `Policy*__c` de snapshot gravado e **zero** margem/custo/receita. Decisões **D23** (sem número) e **D24** (`Blocked` = falha de roteamento) |
 | F3-03 | Criar `DD_DiscountRequest__c` | **F3-02** | Deploy do objeto + campos + numeração; `--dry-run` antes (S7) | IA | CONCLUÍDO (2026-10-17): `Name` AutoNumber `DR-{00000}`; 18 campos + 3 regras + FLS + layout, deploy `0Afas00000606d4CAA` (24/24). **Dry-run pegou 1 erro** de ordem de elemento no Profile. Ver DRE-001 |
-| F3-04 | Flow invocável de cálculo | **F1-08** | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, **Active**, com `isInput`/`isOutput` explícitos) — é a base da ação de agente da Fase 6 (D8) | IA | **BLOQUEADO** (2026-10-17): deployado (`0Afas00000608ADCAY`) mas **falha em execução**. 3 defeitos estruturais corrigidos (A58/A59), 1 aberto. Ver FLW-002 — exige reescrita, não patch |
+| F3-04 | Flow invocável de cálculo | **F1-08** | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, **Active**, com `isInput`/`isOutput` explícitos) — é a base da ação de agente da Fase 6 (D8) | IA | CONCLUÍDO (2026-10-17): reescrito com 29 elementos e **5/5 cenários validados** (verde, amarelo, vermelho, precedência nível 1, sem política). Saídas em pontos-base (D27/A62). Ver FLW-003 |
 | F3-05 | Flow de roteamento | **F3-01**, **F3-03**, **F3-04** | `DD_RouteDiscountApproval`: cria o pedido, define `Decision__c`/`Status__c`/`Approver__c` e notifica a alçada | IA | PENDENTE |
 | F3-06 | Regra de bloqueio sem pedido | **F3-05** | Abaixo do piso **não** cria pedido: devolve o motivo | IA | CANCELADO (2026-10-17): D12 definiu vermelho = **pede aprovação**, não bloqueia; a lógica equivalente é F3-05/F3-10 |
 | F3-07 | Canal de notificação do aprovador | **F3-01** | Definir como o aprovador é avisado (template de e-mail ou notificação in-app) sem depender de licença ausente na org | IA | PENDENTE |

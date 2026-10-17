@@ -67,6 +67,8 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | PRE-001 | 2026-10-17 | F2-06 teste da precedência genérica × específica por price book (nenhuma escrita) | DD_DiscountPolicy__c | OK | 4 cenários |
 | DRE-001 | 2026-10-17 | F3-03 criação do objeto `DD_DiscountRequest__c` + 18 campos + 3 regras + FLS + layout | DD_DiscountRequest__c | OK | deploy `0Afas00000606d4CAA` |
 | FLW-002 | 2026-10-17 | F3-04 Flow de cálculo: deployado e **NÃO funcional** (falha em tempo de execução) | DD_CalculateQuoteMargin | FALHA | deploy `0Afas00000608ADCAY` |
+| FLW-003 | 2026-10-17 | F3-04 reescrita do Flow de cálculo — funcional, 5 cenários validados | DD_CalculateQuoteMargin | OK | deploy `0Afas00000608oXCAQ`+ |
+| QTE-001 | 2026-10-17 | F3-08 massa de teste: 2 cotações + 2 linhas DEMO- | Quote | OK | ver FLW-003 |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -396,6 +398,36 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | desativar o Flow e remover versões via Tooling; conferir `FlowDefinitionView` **e** Tooling `Flow` (A46/A50). Já existem **4 versões** → 3 `Obsolete` a limpar |
 | Tokens (aprox.) | 22000 |
 | Observações | **3 defeitos reais encontrados e corrigidos, 1 aberto.** (1) Os 7 `Get Records` usavam `storeOutputAutomatically=true` e as variáveis de registro declaradas (`quote`, `policyL3`…) **nunca eram populadas** → "cotação não encontrada"; corrigido com `outputReference` (A58). (2) **21 `Assignments` sem `<connector>`**: o Flow deploya e simplesmente termina no meio — o deploy **não valida travessia** (A59). (3) `TEXT()` sobre `Id` é inválido: o Flow já trata `Id` como Text. (4) **Defeito aberto:** após as correções o Flow atravessa a cadeia e estoura num elemento que não foi possível localizar — `FlowInterview`, `FlowInterviewLogEntry` e `Assign_Fault` não ajudaram: `FlowAssignment` e `FlowLoop` **recusam `faultConnector`** na posição tentada (só `Get Records` aceita, e o erro parou antes) |
+
+---
+
+### [2026-10-17 17:40 -03:00] FLW-003 — OK (F3-04: Flow de cálculo reescrito e validado em 5 cenários)
+
+| Campo | Valor |
+|---|---|
+| Operação | reescrita + 12 deploys iterativos + 9 invocações via actions API |
+| Skill | `validate-metadata` §2/§3/§4 · `calculate-margin` (conferência manual) |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, `Active`, 29 elementos, 34 variáveis, 25 fórmulas) |
+| Ferramenta | `sf project deploy start` + `sf api request rest` (POST `/actions/custom/flow/...`) |
+| Parâmetros-chave | entrada `quoteId` + `requestedDiscountPct`; saída `marginBp`/`worstLineBp` em **pontos-base** |
+| Confirmação humana | sim — confirmação dupla S6 ("Confirmo o deploy do novo DD_CalculateQuoteMargin") |
+| Resultado | **5/5 cenários com dados reais** (tabela abaixo) |
+| Reversão | desativar + remover versões via Tooling; conferir `FlowDefinitionView` e Tooling `Flow` (A46/A50). Há **12 versões** (11 `Obsolete`) a limpar |
+| Tokens (aprox.) | 30000 |
+| Observações | **3 causas raiz novas** (A61/A62/A63) + a dúvida do percentual resolvida (A64). O `diagnostics` foi decisivo: provou cada hipótese antes de corrigir |
+
+| # | Cenário | Cotação | d | `marginBp` | `decision` | `guardrailState` | Política | `spec` |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **Verde** | `DEMO-Quote-Guardrail-Green` (`0Q0as0000021j1xCAA`, Fleet) | 0 | 4167 (41,67%) | `AutoApproved` | Saudável | Parts-Fleet | 3 |
+| 2 | **Amarelo** | `DEMO-Quote-Margin-Bands` (`0Q0as0000021hOLCAY`, Fleet) | 0 | 2957 (29,57%) | `ManagerApproval` | Requer Justificativa | Parts-Fleet | 3 |
+| 3 | **Vermelho** | idem | 25 | 609 (6,09%) | `ManagerApproval` | Requer Aprovação | Parts-Fleet | 3 |
+| 4 | **Precedência nível 1** | `DEMO-Quote-Guardrail-Generic` (`0Q0as0000021j3ZCAQ`, Retail) | 0 | 10000 | `AutoApproved` | Saudável | **Parts-AllPB** | **1** |
+| 5 | **Sem política** | `0Q0as00000216zyCAA` (família `Part`) | 0 | — | `NoPolicy` | Pendente de Política | nenhuma | — |
+
+**Massa criada (QTE-001):** `Quote` `0Q0as0000021j1xCAA` (`DEMO-Quote-Guardrail-Green`, PB `01sas000001nOBJAA2`, USD) + `QuoteLineItem` `0QLas0000028ydlGAA` (PBE `01uas000000RovXAAS`, qtd 1, preço 120, custo 70 → 41,6667%) · `Quote` `0Q0as0000021j3ZCAQ` (`DEMO-Quote-Guardrail-Generic`, PB `01sas000001nOBHAA2`, USD) + `QuoteLineItem` `0QLas0000028yc9GAA` (PBE `01uas000000RovGAAS`, qtd 1, preço 180, **sem custo semeado** → 100%). Reversão: apagar as 2 cotações (as linhas caem junto).
+
+**Ressalvas (A19):** no cenário 4 a margem é 100% porque o Retail não tem custo semeado (F0-08 semeou só no Fleet) — o que ele prova é a **resolução de política (`spec=1`)**, não a margem. No cenário 5 a família é `Part` (não `Parts`), o que também confirma a armadilha do D17.
 
 ---
 
