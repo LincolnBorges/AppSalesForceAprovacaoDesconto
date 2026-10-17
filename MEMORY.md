@@ -140,9 +140,40 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 > 216 → **217**, locais 29 → **30** — exatamente +1 em cada, correspondente ao `DD_CalculateLineCost`
 > (FLD-001/FLW-001). Nenhum outro metadado mudou; sem resíduo.
 >
+> **Reconferido em 2026-10-17 (fechamento da Fase 2):** +1 `CustomObject` (`DD_DiscountPolicy__c`),
+> **1 layout** para ele, 2 `ValidationRule` ativas — nenhum layout automático duplicado. Os metadados da
+> Fase 1 e os baselines de Flow/LWC/Tab/FlexiPage **não** foram tocados: o pacote de deploy foi restrito
+> a `CustomObject:DD_DiscountPolicy__c`, `Layout:…` e `Profile:Admin`, de propósito, para **não**
+> redeployar o `DD_CalculateLineCost` e gerar versão `Obsolete` (A50). Baseline novo a conferir daqui
+> para frente: **objetos `DD_` = 1**.
+>
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
 > houve mais de um deploy do mesmo Flow. Flow ativo precisa ser **desativado antes**.
+
+### 1.7 Políticas de desconto `DEMO-` (criadas 2026-10-17, F2-04)
+
+Todas `USD`, `IsActive__c = true`, `EffectiveFrom__c = 2026-10-17`, `EffectiveTo__c = null`,
+`EscalationRole__c = Gerente Comercial`, `SlaHours__c = 24`, `RequiresJustification__c = true`.
+Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de específica.
+
+| # | Id | Nome | Família | Price Book | Piso | Alvo | Teto | `Specificity__c` |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `a0Mas000000PR53EAG` | `DEMO-Policy-Parts-AllPB` | Parts | `null` (genérica) | 20 | 30 | 15 | 1 |
+| 2 | `a0Mas000000PR6fEAG` | `DEMO-Policy-Parts-Fleet` | Parts | `01sas000001nOBJAA2` Fleet & Corporate | 20 | 30 | 10 | 3 |
+| 3 | `a0Mas000000PR8HEAW` | `DEMO-Policy-MedicalEquip-AllPB` | Medical Equipment | `null` (genérica) | 20 | 30 | 15 | 1 |
+| 4 | `a0Mas000000PR9tEAG` | `DEMO-Policy-MedicalEquip-Standard` | Medical Equipment | `01sas000001nOBCAA2` Standard | 20 | 30 | 10 | 3 |
+
+- **Precedência validada em 2026-10-17 (PRE-001):** pareamento família+price book específico devolve a
+  política `Specificity__c = 3` à frente da genérica `= 1`; quando não há específica, a genérica resolve
+  sozinha; família sem nenhuma política (ex.: `Generator`) devolve **0 linhas** — nesse caso o guardrail
+  **não** decide e a pendência é reportada (não se inventa piso).
+- **Rollback:** apagar os 4 Ids (S5 — exige autorização nominal). São registros novos, sem valor anterior.
+- `Parts` (14 produtos) existe em **4 price books**, 14 entradas em cada: **Fleet & Corporate**
+  (`01sas000001nOBJAA2`) · **Retail** (`01sas000001nOBHAA2`) · **Standard** (`01sas000001nOBCAA2`) ·
+  **Warranty & Goodwill** (`01sas000001nOBIAA2`). Verificado por SOQL em 2026-10-17.
+  **Surpresa:** o `Parts Price Book` (`01sas000001nOBBAA2`) **não** contém a família `Parts`.
+  Hoje só a Fleet & Corporate tem política específica; as outras 3 caem na genérica.
 
 ---
 

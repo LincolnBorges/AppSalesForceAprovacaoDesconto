@@ -63,6 +63,8 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | FLW-001 | 2026-10-17 | F1-06 Flow `DD_CalculateLineCost` ativo | QuoteLineItem | OK | deploy `0Afas00000604zTCAQ` |
 | VAL-001 | 2026-10-17 | F1-07 validação das 3 faixas + massa DEMO- | Quote `0Q0as0000021hOLCAY` | OK | 3 linhas |
 | DPM-001 | 2026-10-17 | F2-02 criação do objeto `DD_DiscountPolicy__c` + 12 campos + 2 regras + FLS + layout | DD_DiscountPolicy__c | OK | deploy `0Afas00000606GVCAY` |
+| POL-001 | 2026-10-17 | F2-04 criação de 4 políticas `DEMO-` (Parts e Medical Equipment, genérica + específica) | DD_DiscountPolicy__c | OK | 4 Ids |
+| PRE-001 | 2026-10-17 | F2-06 teste da precedência genérica × específica por price book (nenhuma escrita) | DD_DiscountPolicy__c | OK | 4 cenários |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -319,6 +321,42 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | Reversão | `sf_delete_metadata` do `CustomObject:DD_DiscountPolicy__c` remove objeto e filhos; o layout e as 7 `fieldPermissions` saem junto com o objeto (o arquivo `Admin.profile-meta.xml` precisa perder os blocos `DD_DiscountPolicy__c.*` e o `layoutAssignments`) |
 | Tokens (aprox.) | 12000 |
 | Observações | **O dry-run pagou o custo 3x:** (1) `Restrict` é proibido em lookup para `Pricebook2` → virou `SetNull` (A56); (2) FLS não pode ser deployada para campo `required` → 5 blocos removidos (A57); (3) o erro do lookup derrubou `Specificity__c` em cascata. Pós-deploy: 2 regras `Active=true`; 1 layout só (sem resíduo de layout automático); 12/12 campos no layout; `CurrencyIsoCode` **existe** no objeto (30 moedas) |
+
+### [2026-10-17 14:21 -03:00] POL-001 — OK (F2-04: 4 políticas DEMO-)
+
+| Campo | Valor |
+|---|---|
+| Operação | `create_record` ×4 (uma por vez, S4) |
+| Skill | `create-discount-policy` §1 a §5 |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`) |
+| Objeto / Metadado | `DD_DiscountPolicy__c` |
+| Ferramenta | `sf_create_record`, `sf_query_records` |
+| Parâmetros-chave | `CurrencyIsoCode=USD` em todas (D5/S12); piso 20 e alvo 30 (D12); teto 15 genérica / 10 específica; `EffectiveFrom__c=2026-10-17`; `EffectiveTo__c=null`; `EscalationRole__c=Gerente Comercial`; `SlaHours__c=24`; `RequiresJustification__c=true` |
+| Payload / SOQL | 1 `DEMO-Policy-Parts-AllPB` (`a0Mas000000PR53EAG`, `Pricebook__c=null`, `Specificity__c=1`) · 2 `DEMO-Policy-Parts-Fleet` (`a0Mas000000PR6fEAG`, `Pricebook__c=01sas000001nOBJAA2`, `Specificity__c=3`) · 3 `DEMO-Policy-MedicalEquip-AllPB` (`a0Mas000000PR8HEAW`, `Pricebook__c=null`, `Specificity__c=1`) · 4 `DEMO-Policy-MedicalEquip-Standard` (`a0Mas000000PR9tEAG`, `Pricebook__c=01sas000001nOBCAA2`, `Specificity__c=3`) |
+| Confirmação humana | sim — "Confirmo as 4" às 14:20, após a tabela de payload |
+| Resultado | 4/4 criados; releitura confere **4/4 `CurrencyIsoCode=USD`**, **4/4 prefixo `DEMO-`**, percentuais 20/30/15 nas genéricas e 20/30/10 nas específicas, `Specificity__c` 1 e 3 como previsto |
+| Reversão | apagar os 4 Ids acima (S5: exige autorização nominal). Nenhum valor anterior — registros novos |
+| Tokens (aprox.) | 5000 |
+| Observações | Idempotência conferida antes (`SELECT ... FROM DD_DiscountPolicy__c` = 0). **Percent por API é unidade percentual**: enviar `20` grava `20%` (não `0,2`) — a fração só vale em fórmula e validation rule. Desvio de processo: o registro 4 foi criado antes da releitura do 3; ambos foram verificados em seguida, sem efeito |
+
+---
+
+### [2026-10-17 14:21 -03:00] PRE-001 — OK (F2-06: precedência genérica × específica)
+
+| Campo | Valor |
+|---|---|
+| Operação | `query` (nenhuma escrita) |
+| Skill | `create-discount-policy` §3 |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`) |
+| Objeto / Metadado | `DD_DiscountPolicy__c` |
+| Ferramenta | `sf_query_records` |
+| Parâmetros-chave | `ORDER BY Specificity__c DESC, EffectiveFrom__c DESC` — **ordenação por campo de fórmula funciona em SOQL** |
+| Payload / SOQL | `WHERE IsActive__c = true AND EffectiveFrom__c <= TODAY AND (EffectiveTo__c = null OR EffectiveTo__c >= TODAY) AND (ProductFamily__c = :fam OR ProductFamily__c = 'All') AND (Pricebook__c = :pb OR Pricebook__c = null) ORDER BY Specificity__c DESC, EffectiveFrom__c DESC` |
+| Confirmação humana | não aplicável (leitura) |
+| Resultado | **1.** `Parts` + Fleet & Corporate → 2 candidatas ordenadas: `Parts-Fleet` (`Specificity__c=3`, teto 10) **antes** de `Parts-AllPB` (`=1`, teto 15). **2.** `Parts` + Retail → só `Parts-AllPB` (`=1`, teto 15) — fallback correto. **3.** `Medical Equipment` + Standard → `MedicalEquip-Standard` (`=3`) antes de `MedicalEquip-AllPB` (`=1`). **4.** Controle negativo: `Generator` + Fleet → **0 linhas** (nenhuma política inventada) |
+| Reversão | não aplicável (leitura) |
+| Tokens (aprox.) | 3000 |
+| Observações | A específica vence a genérica em ambas as famílias, e a genérica só aparece sozinha quando não há específica — que é exatamente a regra de §3 da skill. **O que este teste NÃO prova (A19):** que um Flow real consiga aplicar a ordenação — o `Get Records` com `ORDER BY` em campo de fórmula é justamente o que a Fase 3 tem de validar |
 
 ---
 

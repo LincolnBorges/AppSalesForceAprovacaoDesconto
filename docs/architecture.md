@@ -53,25 +53,58 @@ Documento de decisões de arquitetura do app. Complementa [`AGENTS.md`](../AGENT
 
 ## 3. Camada de dados
 
-### 3.1 `DD_DiscountPolicy__c` — a política (Fase 2)
+### 3.1 `DD_DiscountPolicy__c` — a política (Fase 2, **implementado 2026-10-17**)
+
+Deploy `0Afas00000606GVCAY`. Contrato de escrita completo em [`MEMORY.md`](../MEMORY.md) §4.9.
 
 | Campo | Tipo | Papel |
 |---|---|---|
-| `Name` | Text | `DEMO-Policy-<Família>-<Pricebook>` (S11) |
-| `ProductFamily__c` | Picklist (espelha `Product2.Family`) | Dimensão 1 da política — 14 valores na org |
-| `Pricebook__c` | Lookup(`Pricebook2`) | Dimensão 2 — proxy de segmento/canal. 9 price books ativos |
-| `FloorMarginPct__c` | Percent | **Piso**: abaixo disto, não passa sem aprovação |
-| `TargetMarginPct__c` | Percent | Alvo comercial — base da recomendação do agente |
-| `MaxDiscountPct__c` | Percent | Teto absoluto: acima disto, **bloqueia** em vez de escalar |
-| `EscalationRole__c` | Text | Alçada a acionar (ex.: `Gerente Comercial`) |
-| `SlaHours__c` | Number | Prazo de resposta antes de escalar |
+| `Name` | Text(80) | `DEMO-Policy-<Família>-<Pricebook ou AllPB>` (S11) |
+| `ProductFamily__c` | Picklist **não restrita** — 14 famílias reais + `All` | Dimensão 1. O valor tem de ser idêntico a `Product2.Family`, inclusive os que têm espaço (`Medical Equipment`) |
+| `Pricebook__c` | Lookup(`Pricebook2`), `SetNull` | Dimensão 2 — proxy de segmento/canal. **Nulo = genérica**. `Restrict` é proibido pela plataforma (A56) |
+| `FloorMarginPct__c` | Percent(5,2), obrigatório | **Piso**: abaixo disto, não passa sem aprovação (D12 = 20) |
+| `TargetMarginPct__c` | Percent(5,2), obrigatório | Alvo comercial (D12 = 30) |
+| `MaxDiscountPct__c` | Percent(5,2), obrigatório | Teto de desconto — **referência para prioridade de escalonamento, não veto** (D12 revogou o bloqueio) |
+| `EscalationRole__c` | Text(80) | Alçada a acionar (o aprovador nominal sai de `User.ManagerId`, D13) |
+| `SlaHours__c` | Number(4,0) | Prazo de resposta antes de escalar |
 | `RequiresJustification__c` | Checkbox | Exige texto do vendedor para submeter |
 | `IsActive__c` | Checkbox | Política vigente |
-| `EffectiveFrom__c` / `EffectiveTo__c` | Date | Vigência |
-| `CurrencyIsoCode` | Picklist | **Sempre `USD`** (D5) |
+| `EffectiveFrom__c` / `EffectiveTo__c` | Date (início obrigatório; fim nulo = sem fim) | Vigência |
+| `Specificity__c` | Formula Number | **Chave de precedência derivada** (abaixo) |
+| `CurrencyIsoCode` | Picklist | **Sempre `USD`** (D5) — o campo existe no objeto mesmo sem valor monetário |
 
-**Regra de precedência (resolver na Fase 2):** família + price book específico vence família genérica
-(`Pricebook__c` nulo). Documentar a regra na skill `create-discount-policy`.
+**Regra de precedência (implementada e testada na F2-06).** Não é dado digitado: é derivado, para que
+não exista política com precedência inconsistente.
+
+```
+Specificity__c = IF(ISBLANK(Pricebook__c), 0, 2) + IF(ISPICKVAL(ProductFamily__c, "All"), 0, 1)
+```
+
+| Nível | Família | Price book | Situação |
+|---|---|---|---|
+| **3** | específica | específico | vence — a mais específica |
+| 2 | `All` | específico | canal/segmento para todas as famílias |
+| 1 | específica | nulo | genérica da família (qualquer price book) |
+| 0 | `All` | nulo | padrão global |
+
+```sql
+SELECT Id, Name, Specificity__c, FloorMarginPct__c, TargetMarginPct__c, MaxDiscountPct__c
+FROM DD_DiscountPolicy__c
+WHERE IsActive__c = true
+  AND EffectiveFrom__c <= TODAY
+  AND (EffectiveTo__c = null OR EffectiveTo__c >= TODAY)
+  AND (ProductFamily__c = :family OR ProductFamily__c = 'All')
+  AND (Pricebook__c = :pbId OR Pricebook__c = null)
+ORDER BY Specificity__c DESC, EffectiveFrom__c DESC
+LIMIT 1
+```
+
+- `EffectiveFrom__c DESC` desempata duas políticas de mesma especificidade (a mais recente vence).
+- **Sem política = o guardrail não decide.** Família sem nenhuma política devolve 0 linhas e a pendência
+  é reportada; não se inventa piso (skill `create-discount-policy` §3).
+- **Não existe chave única** em (família, price book) — de propósito: impediria criar nova vigência para
+  o mesmo par depois que a anterior expira (D22). A idempotência fica na checagem por SOQL.
+
 
 ### 3.2 `DD_DiscountRequest__c` — o pedido (Fase 3)
 
