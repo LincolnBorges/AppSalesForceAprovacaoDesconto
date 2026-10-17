@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_WorstLineMarginPct__c</fullName>
+    <description>Menor margem entre as linhas da cotacao: aponta a linha que puxa o negocio para baixo.</description>
+    <label>DD Pior Margem de Linha</label>
+    <summarizedField>QuoteLineItem.DD_MarginPct__c</summarizedField>
+    <summaryForeignKey>QuoteLineItem.QuoteId</summaryForeignKey>
+    <summaryOperation>min</summaryOperation>
+    <type>Summary</type>
+</CustomField>

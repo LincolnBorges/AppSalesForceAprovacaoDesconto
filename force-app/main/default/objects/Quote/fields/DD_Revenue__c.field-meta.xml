@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Revenue__c</fullName>
+    <description>Receita consolidada da cotacao: soma do TotalPrice das linhas.</description>
+    <label>DD Receita</label>
+    <summarizedField>QuoteLineItem.TotalPrice</summarizedField>
+    <summaryForeignKey>QuoteLineItem.QuoteId</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <type>Summary</type>
+</CustomField>

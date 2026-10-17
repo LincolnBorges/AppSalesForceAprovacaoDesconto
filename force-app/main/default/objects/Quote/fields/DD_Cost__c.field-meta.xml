@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Cost__c</fullName>
+    <description>Custo consolidado da cotacao: soma do custo gravado das linhas.</description>
+    <label>DD Custo Total</label>
+    <summarizedField>QuoteLineItem.DD_CostAmount__c</summarizedField>
+    <summaryForeignKey>QuoteLineItem.QuoteId</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <type>Summary</type>
+</CustomField>
