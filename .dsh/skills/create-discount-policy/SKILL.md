@@ -169,3 +169,4 @@ Não redescobrir. Evidência nas entradas `DPM-001`, `POL-001` e `PRE-001` do
 | `CurrencyIsoCode` existe neste objeto e aceita `USD` | 4/4 registros criados em `USD` |
 | `Pricebook__c` só aceita `SetNull` — `Restrict`/`Cascade` são proibidos em lookup para `Pricebook2` (A56) | DPM-001: recusado no dry-run |
 | Percentual pela API é unidade percentual | POL-001: enviei `20`/`30`/`15` e voltou `20`/`30`/`15` |
+| `ORDER BY` em campo de fórmula **funciona**, mas `GROUP BY` **não** — `field 'Specificity__c' can not be grouped in a query call` | PRE-001 usa `ORDER BY`; um relatório por especificidade tem de agregar por `ProductFamily__c`/`Pricebook__c` e agrupar a especificidade fora do SOQL |
