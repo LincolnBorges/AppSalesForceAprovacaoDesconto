@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Bundle mdapi da acao de agente DD_CalculateMargin (F6-03).
+  ATENCAO: <version> DEVE ser 66.0. Tipos de Agentforce falham na 68.0 nesta org.
+  NUNCA misturar tipos de Agentforce com tipos comuns no mesmo package.xml.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>DD_CalculateMargin</members>
+        <name>GenAiFunction</name>
+    </types>
+    <version>66.0</version>
+</Package>

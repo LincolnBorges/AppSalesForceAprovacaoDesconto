@@ -1,0 +1,22 @@
+{
+  "required" : [ "quoteId" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "quoteId" : {
+      "title" : "Quote Id",
+      "description" : "Id da cotacao a avaliar.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    },
+    "requestedDiscountPct" : {
+      "title" : "Requested Discount Pct",
+      "description" : "Desconto pretendido pelo vendedor, em porcentagem. Opcional.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

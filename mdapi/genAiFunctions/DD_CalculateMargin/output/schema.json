@@ -1,0 +1,160 @@
+{
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "decision" : {
+      "title" : "Decision",
+      "description" : "Decisao do guardrail: AutoApproved, ManagerApproval, Blocked, NoPolicy, CostPending ou Fault. O agente recomenda; o humano decide. Nunca aprova.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "guardrailState" : {
+      "title" : "Guardrail State",
+      "description" : "Estado do guardrail: Saudável, Requer Justificativa, Requer Aprovação, Pendente de Política, Pendente de Custo ou Bloqueado. Pendente de Custo significa que o custo das linhas nao esta cadastrado: avise que o Pricing precisa cadastrar o custo e nunca trate a cotacao como saudavel.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "explanation" : {
+      "title" : "Explanation",
+      "description" : "Explicacao em uma frase sobre a decisao e a politica aplicada, pronta para exibir ao vendedor.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "policyFound" : {
+      "title" : "Policy Found",
+      "description" : "Verdadeiro quando existe politica de desconto vigente para a familia e o price book da cotacao.",
+      "lightning:type" : "lightning__booleanType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "requiresJustification" : {
+      "title" : "Requires Justification",
+      "description" : "Verdadeiro quando a politica exige que o vendedor justifique o desconto antes de submeter o pedido.",
+      "lightning:type" : "lightning__booleanType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "policyName" : {
+      "title" : "Policy Name",
+      "description" : "Nome da politica de desconto aplicada a esta cotacao.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "floorMarginPct" : {
+      "title" : "Floor Margin Pct",
+      "description" : "Piso de margem da politica aplicada, em porcentagem. E parametro da politica, nao a margem da cotacao.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "targetMarginPct" : {
+      "title" : "Target Margin Pct",
+      "description" : "Alvo de margem da politica aplicada, em porcentagem. E parametro da politica, nao a margem da cotacao.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "maxDiscountPct" : {
+      "title" : "Max Discount Pct",
+      "description" : "Teto de desconto de referencia da politica aplicada, em porcentagem.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "specificity" : {
+      "title" : "Specificity",
+      "description" : "Nivel de especificidade da politica aplicada: 3 familia mais price book, 2 todas as familias com price book, 1 familia generica, 0 padrao global.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "productFamily" : {
+      "title" : "Product Family",
+      "description" : "Familia de produto da pior linha da cotacao, que define a politica aplicada.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "quoteName" : {
+      "title" : "Quote Name",
+      "description" : "Nome da cotacao avaliada.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : true,
+      "copilotAction:isUsedByPlanner" : true,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "marginBp" : {
+      "title" : "Margin Bp",
+      "description" : "Margem da cotacao em pontos-base. Dado interno: nao exibir nem citar ao usuario.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : false,
+      "copilotAction:isUsedByPlanner" : false,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "worstLineBp" : {
+      "title" : "Worst Line Bp",
+      "description" : "Margem da pior linha da cotacao em pontos-base. Dado interno: nao exibir nem citar ao usuario.",
+      "lightning:type" : "lightning__numberType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : false,
+      "copilotAction:isUsedByPlanner" : false,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "diagnostics" : {
+      "title" : "Diagnostics",
+      "description" : "Texto de diagnostico tecnico com receita, custo e margem crus. Dado interno: nao exibir nem citar ao usuario.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : false,
+      "copilotAction:isUsedByPlanner" : false,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "policyId" : {
+      "title" : "Policy Id",
+      "description" : "Id da politica de desconto aplicada.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : false,
+      "copilotAction:isUsedByPlanner" : false,
+      "copilotAction:useHydratedPrompt" : false
+    },
+    "ownerId" : {
+      "title" : "Owner Id",
+      "description" : "Id do proprietario da cotacao.",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isDisplayable" : false,
+      "copilotAction:isUsedByPlanner" : false,
+      "copilotAction:useHydratedPrompt" : false
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

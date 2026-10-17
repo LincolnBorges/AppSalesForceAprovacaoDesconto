@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Acao de agente Agentforce (GenAiFunction) que aponta para o AutoLaunchedFlow
+  DD_CalculateQuoteMargin (Active, v25, com isInput/isOutput explicitos).
+
+  Regras validadas em T7 (deploy + retrieve OK), API 66.0:
+    - invocationTargetType = "flow" (o valor da referencia padrao e "standardInvocableAction")
+    - invocationTarget = API name do Flow, que precisa estar ACTIVE
+    - developerName / localDeveloperName = API name da acao (casa com o nome da pasta)
+    - Os dois schema.json precisam existir, senao a org recusa o retrieve (A43)
+-->
+<GenAiFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Calcula a margem de uma cotacao, identifica a politica de desconto aplicavel e devolve o estado do guardrail e a decisao: AutoApproved, ManagerApproval, Blocked, NoPolicy ou CostPending (custo ainda nao cadastrado). Nunca aprova e nunca cita margem ou custo em numero.</description>
+    <developerName>DD_CalculateMargin</developerName>
+    <invocationTarget>DD_CalculateQuoteMargin</invocationTarget>
+    <invocationTargetType>flow</invocationTargetType>
+    <isConfirmationRequired>false</isConfirmationRequired>
+    <localDeveloperName>DD_CalculateMargin</localDeveloperName>
+    <masterLabel>DD Calculate Margin</masterLabel>
+</GenAiFunction>
