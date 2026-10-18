@@ -134,6 +134,7 @@ tokens. Atualizar [`MEMORY.md`](../../../MEMORY.md) §1 e §4 quando aplicável.
 | `Unknown type:<tipo>` | Tipo realmente inexistente | Confirmar no `describeMetadata` |
 | `RESOURCE_NOT_FOUND … schema is missing` | `GenAiFunction` sem os `schema.json` | Deployar o bundle de 3 arquivos (A43) |
 | `You cannot delete this flow version because it is active` | Flow ativo | Desativar antes (A46) |
+| `You cannot deploy to a required field: <Objeto>.<Campo>` | Campo custom `required` **não aceita** `fieldPermissions` no deploy (nem `editable=true`); a mensagem aponta um campo por vez | Tornar o campo opcional, criar `ValidationRule` equivalente e então conceder FLS read-only (A88) |
 | `insufficient access rights on cross-reference id` | Resíduo/referência cruzada na remoção | Remover versão `Obsolete` via Tooling API |
 | `INVALID_TYPE` em objeto | Objeto não existe nesta org | Não é bug de ferramenta (A7) |
 | `not well-formed (invalid token)` | Comentário XML com dois hífens seguidos (`--dry-run`, `--metadata-dir`) | Remover os `--` de dentro do comentário (A52). **Validar o XML com um parser antes do deploy** |

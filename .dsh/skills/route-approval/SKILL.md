@@ -26,6 +26,14 @@ Executa a decisão do guardrail. É a **skill que escreve** — toda cautela se 
 Quem decide é o **Flow**, a partir da política. O agente **não** recalcula a regra de negócio por
 conta própria (R9 em [`risks.md`](../../../docs/risks.md)).
 
+**Tela do aprovador (F5-12, 2026-10-18).** O pedido criado pelo Flow é submetido ao `ApprovalProcess`
+`DD_DiscountRequest__c.DD_Manager_Approval` pelo `DD_MarginConsoleController` (chamada
+`Approval.process`). O gerente decide em **"Itens para Aprovar"**; aprovar/rejeitar grava `Status__c` e
+`DecidedAt__c` por `WorkflowFieldUpdate`. Consequências para esta skill: (a) **não** criar submissão
+manual nem botão próprio de aprovação; (b) pedido já submetido fica **travado** (`recordEditability =
+AdminOnly`) — uma segunda tentativa do vendedor na mesma cotação falha no `Update_Request` do Flow;
+(c) o agente continua proibido de gravar `Approved`. Detalhe em `docs/execution-log.md` APR-001.
+
 ## 2. Snapshot, não referência viva (obrigatório)
 
 O pedido grava a política e a margem **do momento da decisão**:

@@ -79,6 +79,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | MASSA-002 | 2026-10-18 | hierarquia não-admin: 2 usuários PT-BR (vendedor + gerente) + 3 cenários com o vendedor como proprietário + roteamento das 2 cotações que exigem aprovação | User / PermissionSetAssignment / Opportunity / Quote / DD_DiscountRequest__c | OK | 2 users · 2 PS · 3 opps · 3 quotes · 7 linhas · 2 pedidos |
 | FLW-005 | 2026-10-18 | investigação do console para usuário não-admin: `FLOW_ACCESS_RESTRICTED` reproduzido; 6 sondas de permissão; deploy e reversão de `runInMode`; ambiente restaurado | Flow / PermissionSet / User | FALHA | causa **não** identificada |
 | FLW-006 | 2026-10-18 | teste do Perfil `Standard` concedendo acesso aos 2 Flows (+ sonda de FLS, 7ª combinação) | Profile / PermissionSet | FALHA | mesmo erro — Perfil não é o gate |
+| APR-001 | 2026-10-18 | F5-12 tela nativa de aprovação: `ApprovalProcess` no pedido, submissão pelo controller, `Status__c` opcional + regra, FLS de leitura | ApprovalProcess / Workflow / CustomField / PermissionSet / ApexClass | OK | processo ativo `04aas000000atijAAA` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -1047,6 +1048,58 @@ teste que prova o caminho não-admin sem depender da massa `DEMO-`.
   não org-wide — `ApexOrgWideCoverage` = 0% não bloqueou. **A68 refutado.**
 - **A64 (reforço):** percentual gravado por Apex é número percentual (`20` = 20%); `0.20` = 0,2% — foi o
   que derrubou a 1ª versão do teste (4 falhas no dry-run).
+
+### [2026-10-18 08:47 -03:00] APR-001 — OK (F5-12: gerente aprova na tela nativa "Itens para Aprovar")
+
+| Campo | Valor |
+|---|---|
+| Operação | Criação de `ApprovalProcess` + 3 `WorkflowFieldUpdate`, submissão no `DD_MarginConsoleController`, `Status__c` de required para opcional + `ValidationRule`, FLS de leitura no PS, novo teste; `--dry-run` e deploy real |
+| Skill | validate-metadata · route-approval · sf-apex · sf-test |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false; trial até 2026-11-15) |
+| Objeto / Metadado | `ApprovalProcess DD_DiscountRequest__c.DD_Manager_Approval` · `Workflow DD_DiscountRequest__c` (3 field updates) · `CustomField Status__c` · `ValidationRule DD_Request_Status_Required` · `PermissionSet DD_DealDesk_User` · `ApexClass DD_MarginConsoleController` + teste · `ApexClass DD_ManagerApprovalTest` |
+| Ferramenta | `sf project deploy start` (dry-run + real) · `sf sobject describe` · `sf_query_records` |
+| Parâmetros-chave | 1 etapa `Gerente_Comercial`; aprovador `relatedUserField` = `Approver__c`; entrada `DD_DiscountRequest__c.Status__c = Submitted`; ações finais `DD_Request_Status_Approved`/`Rejected` + `DD_Request_Decided_At` (`NOW()`); `recordEditability = AdminOnly` |
+| Payload / SOQL | 11 componentes / 14 arquivos; `Approval.process` chamado no controller **depois** do Flow, só quando `decision = ManagerApproval` |
+| Confirmação humana | **sim** — "Confirmo o deploy" às 08:46 (incluindo a mudança de schema do `Status__c`) |
+| Resultado | dry-run `Succeeded` (12/12 testes, 11/11 componentes) → deploy real `Succeeded` `0Afas0000060Fr...` (12/12); processo **Active** (`04aas000000atijAAA`); `Status__c` `nillable = true`, `defaultedOnCreate = true`; FLS `Status__c` read/`not edit` no PS |
+| Reversão | `sf_delete_metadata` do `ApprovalProcess`; remover os 3 field updates do `Workflow`; devolver `Status__c` a `<required>true</required>` e apagar a regra `DD_Request_Status_Required`; reverter o controller e o PS |
+| Tokens (aprox.) | 26000 |
+| Observações | A decisão de margem continua 100% no Flow; o Approval Process é só a interface humana (D32) |
+
+**Por que o pedido não aparecia para a gerente**
+
+`ProcessDefinition` da org só tinha os 2 workflows de Knowledge: **não existia Approval Process nenhum**, então
+`ProcessInstanceWorkitem` nunca era criado e a tela "Itens para Aprovar" ficava vazia por construção. O app
+roteava para um registro `DD_DiscountRequest__c` e mandava e-mail — não havia superfície de decisão.
+
+**O que foi entregue**
+
+- `ApprovalProcess DD_Manager_Approval` no `DD_DiscountRequest__c`: entra com `Status = Submitted`, etapa única
+  com aprovador = campo `Approver__c` (o mesmo que o Flow resolve na escada D26), aprovação final grava
+  `Status__c = Approved` + `DecidedAt__c = NOW()`; rejeição grava `Rejected` + `DecidedAt__c`.
+- `DD_MarginConsoleController.requestDiscount` submete o pedido via `Approval.process` **depois** que o Flow
+  devolve `ManagerApproval`; falha de submissão não desfaz o pedido e avisa na tela.
+- `Status__c` deixou de ser `required` porque a plataforma **recusa FLS somente-leitura em campo required**
+  (A88); a obrigatoriedade foi para a regra `DD_Request_Status_Required` (`ISBLANK(TEXT(Status__c))`) e o
+  campo já tem `Draft` como default.
+- `DD_DealDesk_User` passa a ler `Status__c`; `Decision__c`, `Quote__c` e `GuardrailState__c` são required e
+  não aceitam FLS explícita — o acesso vem com a leitura do objeto.
+
+**Verificação**
+
+`ProcessDefinition` = `Approvação do Pedido de Desconto` / `Active` / `DD_DiscountRequest__c`;
+`Status__c` nillable; `FieldPermissions` do PS com `Status__c` read-only. Testes: 12/12, incluindo
+`requestDiscount_worksForNonAdminSeller` (workitem criado por Standard User) e os 2 de aprovar/rejeitar.
+
+**Aprendizados**
+
+- **A88:** `You cannot deploy to a required field: <campo>` — campo custom `required` não aceita **nenhuma**
+  entrada de `fieldPermissions` no deploy (nem `editable=true`). Para dar leitura sem edição: tornar o campo
+  opcional, criar `ValidationRule` equivalente e então conceder FLS read-only.
+- **A89:** lista de filtro de `ApprovalProcess` exige `ObjectName.FieldApiName` (`DD_DiscountRequest__c.Status__c`),
+  não só `Status__c`.
+- **A90:** `System.runAs` **não** existe em Apex anônimo ("can only be used within a test method") — validar
+  comportamento por usuário exige teste ou "Login as" no browser.
 
 ## Registro de Bloqueios
 
