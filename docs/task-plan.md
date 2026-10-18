@@ -63,12 +63,12 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
-| 5 | Acesso, dados e demo | 11 | 8 | EM ANDAMENTO |
+| 5 | Acesso, dados e demo | 11 | 9 | EM ANDAMENTO (F5-11 concluída em 2026-10-18) |
 | 6 | Camada Agentforce | 11 | 10 | CONCLUÍDO (2026-10-17) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **74** | **65** | |
+| **Total** | | **74** | **66** | |
 
-*Atualizado em 2026-10-18 (F5-09 e F5-10 concluídas; **F5-11 aberta e bloqueada**: o console não roda para usuário não-admin).*
+*Atualizado em 2026-10-18 (F5-09, F5-10 e **F5-11 concluídas**: o console chama os Flows por Apex e roda para usuário não-admin).*
 
 ---
 
@@ -190,7 +190,7 @@ paradas no ponto indicado.
 | F6-09 | Fechar a Fase 6 | **F6-08** | Atualizar `MEMORY.md`, `execution-log`, este plano, `roadmap` e `README`; commit e tag `fase-6` | IA | CONCLUÍDO (2026-10-17): `MEMORY.md` §1.2/§1.5/§1.6/§2 (D30)/§3 (A79/A80), `execution-log` (AF-003/AF-004), este plano, `roadmap` e `README`; tag `fase-6` |
 | F6-10 | Destravar a criação do agente | — | Decidir entre: (a) habilitar/provisionar o template de Service Agent no Setup e repetir F6-07; (b) aceitar a Fase 6 só com a ação de agente; (c) autorizar probe de `Bot` tipo `Employee` via bundle mdapi (a ferramenta MCP não expõe esse tipo) | HUMANO | CONCLUÍDO (2026-10-17): humano autorizou a opção (c); probe executado em AF-003 com sucesso — decisão **D30** |
 | F6-11 | Agente deve citar a política e o piso na resposta | **F6-08** | Nas respostas 1 e 2 o agente não citou o nome da política nem o piso no texto (instrução 3 do tópico), embora o trace os exiba. Reforçar a instrução e revalidar as 3 perguntas | IA | PENDENTE — **dívida conhecida, não bloqueia a v1.0** (cosmético: decisão, estado e D15 corretos) |
-| F5-11 | Console não roda para usuário não-admin | F5-10 | O `lightning-flow` recusa a execução para não-admin com `FLOW_ACCESS_RESTRICTED` (`currentFlowVersionId` nulo), mesmo com acesso ao Flow, FLS nos campos lidos, `ApiEnabled` e modo sistema. Sem isso a demo "vendedor pede desconto" **não funciona** — F5-03 validou só a tela, nunca o simulador. Investigar o gate (Process Automation Settings / *Restrict User Access to Run Flows* / literal de Flow na tela) ou decidir arquitetura alternativa | IA+H | **BLOQUEADO** (2026-10-18): causa não identificada em FLW-005/FLW-006 — **7 combinações** descartadas (FLS ×2, acesso por 2 PS, acesso por **Perfil**, `ApiEnabled`, `runInMode` ×2, permissão de objeto). Ambiente restaurado. **Decisão do humano: demo pelo Admin** |
+| F5-11 | Console não roda para usuário não-admin | F5-10 | O `lightning-flow` recusa a execução para não-admin com `FLOW_ACCESS_RESTRICTED` (`currentFlowVersionId` nulo), mesmo com acesso ao Flow, FLS nos campos lidos, `ApiEnabled` e modo sistema. Sem isso a demo "vendedor pede desconto" **não funciona** — F5-03 validou só a tela, nunca o simulador. Resolver por arquitetura: o LWC chama os Flows por Apex | IA+H | **CONCLUÍDO (2026-10-18):** `DD_MarginConsoleController` (`with sharing`, `WITH USER_MODE`, DTOs com whitelist) chama `DD_CalculateQuoteMargin`/`DD_RouteDiscountApproval` por `Flow.Interview`; LWC republicado sem `lightning-flow`; `classAccesses` no `DD_DealDesk_User`. Dry-run e deploy `0Afas0000060FWgCAM`: **10/10 testes**, **73/77 linhas (≈95%)**. `System.runAs` de Standard User no teste prova o caminho não-admin. Nenhum Flow alterado. A causa raiz do gate do componente segue não identificada (A84) — o Apex a contorna. Ver APX-002, D31, A86/A87 |
 
 ### Transversais (contínuas)
 
@@ -229,3 +229,4 @@ paradas no ponto indicado.
 | 2026-10-18 | **F5-10 criada e concluída:** hierarquia não-admin (vendedor Standard User → gerente Key Account Manager) e 3 cenários com o vendedor como dono; roteamento provou o 1º degrau da escada (`ApproverSource__c = Manager`). Total: 72 → 73 ações |
 | 2026-10-18 | **F5-11 bloqueada após FLW-006:** acesso aos 2 Flows também concedido no Perfil `Standard` (payload aprovado e dry-run `Succeeded`) — mesmo `FLOW_ACCESS_RESTRICTED`. Nenhuma alavanca de metadata move o gate; **demo será feita pelo Admin**. Aprendizado **A85** (nome de metadata do perfil é `Standard`). |
 | 2026-10-18 | **F5-11 aberta e BLOQUEADA:** o console não executa o Flow para usuário não-admin (`FLOW_ACCESS_RESTRICTED`); hipóteses de FLS, acesso ao Flow, `ApiEnabled` e `runInMode` foram descartadas com evidência (FLW-005). Novos aprendizados **A82/A83/A84**. Fase 5 volta a EM ANDAMENTO. Total: 73 → 74 ações |
+| 2026-10-18 | **F5-11 CONCLUÍDA (arquitetura Apex):** `DD_MarginConsoleController` + teste cobrem 73/77 linhas (≈95%); LWC migrado de `lightning-flow` para `@salesforce/apex`; `classAccesses` no `DD_DealDesk_User`; deploy `0Afas0000060FWgCAM` com 10/10 testes. Nenhum Flow tocado (`SystemModeWithSharing` vem do `with sharing` da classe — A86). A68 refutado (A87). Ver APX-002 |

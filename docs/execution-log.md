@@ -1002,6 +1002,52 @@ Nenhuma alavanca de metadata move o gate. **Recomendação registrada em F5-11: 
 Admin** (que executa normalmente) e tratar o caminho do vendedor como pendência técnica.
 
 
+### [2026-10-18 08:03 -03:00] APX-002 — OK (F5-11: console chama os Flows por Apex; deploy com teste)
+
+| Campo | Valor |
+|---|---|
+| Operação | Criação de `ApexClass` controller + teste, migração do LWC de `lightning-flow` para `@salesforce/apex`, `classAccesses` no permission set, `--dry-run` e deploy real |
+| Skill | validate-metadata · sf-apex · sf-test · sf-security |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false; trial até 2026-11-15) |
+| Objeto / Metadado | `ApexClass DD_MarginConsoleController` `01pas000002BogHAAS` · `ApexClass DD_MarginConsoleControllerTest` `01pas000002BogIAAS` · `LightningComponentBundle ddMarginConsole` · `PermissionSet DD_DealDesk_User` `0PSas000004H6puGAC` |
+| Ferramenta | `sf project deploy start` (dry-run + real) · `sf apex run` · `sf project retrieve start` |
+| Parâmetros-chave | `--test-level RunSpecifiedTests --tests DD_MarginConsoleControllerTest`; classe `public with sharing`; cotação validada com `WITH USER_MODE`; DTO com whitelist D14 |
+| Payload / SOQL | 4 componentes / 14 arquivos; `<classAccesses>` para o controller no `DD_DealDesk_User` |
+| Confirmação humana | **sim** — tarefa F5-11 pedida explicitamente pelo humano (arquitetura Apex aprovada) |
+| Resultado | dry-run `Succeeded` (10/10 testes) → deploy real `Succeeded` `0Afas0000060FWgCAM`; cobertura **73/77 linhas (≈95%)**; 4/4 componentes; smoke test nos 3 cenários de §1.10 |
+| Reversão | `sf_delete_metadata` das 2 classes; redeploy da versão anterior do LWC (`0Afas0000060C49CAE`); remover o `<classAccesses>` do PS e redeployar |
+| Tokens (aprox.) | 18000 |
+| Observações | Nenhum Flow foi alterado; `SystemModeWithSharing` vem do `with sharing` da classe (A86) |
+
+**Contrato entregue**
+
+| Método `@AuraEnabled` | Flow chamado | Saída (whitelist) |
+|---|---|---|
+| `simulate(quoteId, requestedDiscountPct)` | `DD_CalculateQuoteMargin` | `guardrailState`, `policyName`, `decision` |
+| `requestDiscount(quoteId, requestedDiscountPct, justification)` | `DD_RouteDiscountApproval` | `decision`, `status`, `requestId`, `approverName`, `message` |
+
+- `marginBp`, `worstLineBp`, `diagnostics`, `approverEmail` e os percentuais da política **não** cruzam o
+  Apex (D14) — provado por `JSON.serialize` nos testes e no smoke test.
+- `justification` vazia vira `''`; acima de 32000 caracteres é recusada antes do Flow.
+- Falha do Flow vira `AuraHandledException` genérica; só o tipo da falha vai para o log (`System.debug`).
+
+**Testes (10/10)**
+
+Caminho feliz e de decisão (`Saudável`/`Requer Aprovação`, `AutoApproved`/`ManagerApproval`, justificativa
+ausente = `Rejected`), entradas inválidas (cotação nula/malformada/inexistente, desconto fora de 0..100,
+justificativa longa), D14 por serialização e **2 métodos com `System.runAs` de Standard User + PS** — o
+teste que prova o caminho não-admin sem depender da massa `DEMO-`.
+
+**Aprendizados**
+
+- **A86:** Flow iniciado por Apex roda em contexto de sistema e herda o sharing da classe chamadora;
+  `public with sharing` = `SystemModeWithSharing`. O gate `FLOW_ACCESS_RESTRICTED` do `lightning-flow`
+  não se aplica — nenhum `<runInMode>` foi necessário.
+- **A87:** deploy em org não-sandbox com `RunSpecifiedTests` exige 75% do **código do deploy** (73/77),
+  não org-wide — `ApexOrgWideCoverage` = 0% não bloqueou. **A68 refutado.**
+- **A64 (reforço):** percentual gravado por Apex é número percentual (`20` = 20%); `0.20` = 0,2% — foi o
+  que derrubou a 1ª versão do teste (4 falhas no dry-run).
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

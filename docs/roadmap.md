@@ -193,11 +193,13 @@ dispara o Flow da Fase 3.
 | Semáforo | 3 estados validados com dados reais (`Saudável`, `Requer Justificativa`, `Requer Aprovação`) |
 | Simulador | `d=25` no verde projeta âmbar sem DML (contagens e `LastModifiedDate` idênticos) |
 
-**Como o console conversa com os flows:** por `lightning-flow` (declarativo), não por Apex — a org
-trial recusa deploy de Apex (cobertura org-wide 0%, A68). O handler precisa tratar
-`status = FINISHED_SCREEN` e `outputVariables` em **array** de `{name, value}` (A67). O componente lê
-somente a whitelist `guardrailState`, `policyName`, `decision`, `message`, `requestId` e
-`approverName`; margem, custo e `diagnostics` nunca chegam ao cliente (D14/D28).
+**Como o console conversa com os flows (atualizado em 2026-10-18 — F5-11):** por **Apex**, não por
+`lightning-flow`. O componente importa `DD_MarginConsoleController.simulate/requestDiscount`; a classe
+`public with sharing` valida a cotação com `WITH USER_MODE` e chama os Flows por `Flow.Interview`
+(contexto de sistema com sharing — A86/D31). O retorno é um DTO com whitelist `guardrailState`,
+`policyName`, `decision`, `status`, `requestId`, `approverName` e `message`; margem, custo,
+`diagnostics` e e-mail do aprovador nunca chegam ao cliente (D14). O caminho resolve o
+`FLOW_ACCESS_RESTRICTED` que o componente nativo dava para não-admin (A84/FLW-005/FLW-006).
 
 **Fica para a Fase 5:** o painel de detalhes da `Quote` (layout padrão) ainda exibe `DD Receita`,
 `DD Custo Total` e `DD Margem % da Cotacao` para o **admin**. O fechamento para o vendedor é negar

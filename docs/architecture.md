@@ -26,7 +26,12 @@ Documento de decisões de arquitetura do app. Complementa [`AGENTS.md`](../AGENT
 │  Margem por linha · semáforo vs. política · simulador de desconto   │
 │  · botão "pedir desconto"                                           │
 └───────────────┬─────────────────────────────────────────────────────┘
-                │ (lê campos calculados; escreve só o pedido)
+                │ (@AuraEnabled: simula e pede desconto)
+┌───────────────▼─────────────────────────────────────────────────────┐
+│  APEX  ·  DD_MarginConsoleController  (public with sharing)        │
+│  valida a cotação (WITH USER_MODE) · chama os Flows · whitelist D14 │
+└───────────────┬─────────────────────────────────────────────────────┘
+                │ (Flow.Interview — SystemModeWithSharing, A86)
 ┌───────────────▼─────────────────────────────────────────────────────┐
 │  LÓGICA  ·  Flow                                                    │
 │  DD_CalculateQuoteMargin  (AutoLaunched, isInput/isOutput)          │
@@ -205,11 +210,16 @@ Isso é o **`DD_RouteDiscountApproval`**.
 
 | Componente | Onde vive | O que faz |
 |---|---|---|
-| `ddMarginConsole` | `FlexiPage` na `Quote` (target `lightning__RecordPage`) | Tabela de linhas com margem e semáforo; campo de desconto pretendido; simulador ("e se 15%?"); botão *Pedir desconto*; histórico dos pedidos da cotação |
+| `ddMarginConsole` | `FlexiPage` na `Quote` (target `lightning__RecordPage`) | Estado do guardrail por linha e semáforo (**sem exibir margem nem custo** — D14); campo de desconto pretendido; simulador ("e se 15%?"); botão *Pedir desconto*; histórico dos pedidos da cotação |
 | `ddMarginBadge` | List views / header | Pílula compacta com a margem e o estado do guardrail |
 
 - **Somente leitura sobre os números:** o LWC lê campos calculados. Escrever só o pedido.
 - **Sem lógica de negócio no componente:** a decisão vem do Flow. O LWC não recalcula margem.
+- **Chamada dos Flows por Apex (F5-11, 2026-10-18):** o componente **não** usa `lightning-flow`; importa
+  `DD_MarginConsoleController.simulate`/`requestDiscount` por `@salesforce/apex`. A classe é
+  `public with sharing`, valida a cotação com `WITH USER_MODE` e devolve DTOs com whitelist. Flow iniciado
+  por Apex roda em contexto de sistema herdando o sharing da classe chamadora — `SystemModeWithSharing`
+  sem alterar o Flow (D31/A86). Margem, custo, diagnóstico e e-mail do aprovador não cruzam o Apex (D14).
 - **Deploy:** `force-app/main/default/lwc/<nome>/` (3 arquivos: `.js`, `.html`, `.js-meta.xml`).
   `CustomTab` **exige `<motif>`** (A39/A47) ou o deploy falha.
 
@@ -276,6 +286,7 @@ em T7, em [`artifacts/`](artifacts). `sf_create_agent_action` do MCP **não** se
 | Roll-up na `Quote` | Somar as linhas na mão e comparar com `DD_Revenue__c` / `DD_Cost__c` |
 | Flow de decisão | Rodar com 3 cenários: margem acima do alvo, entre piso e alvo, abaixo do piso |
 | LWC | Abrir a `Quote` na FlexiPage e conferir os 3 cenários visualmente |
+| Controller Apex | `sf apex run test --tests DD_MarginConsoleControllerTest` — 73/77 linhas (≈95%); inclui `System.runAs` de Standard User (F5-11) |
 | Ação do agente | **Retrieve do bundle**: se voltarem os 3 arquivos, está íntegro (A45/A49) |
 | Tópico | Rodar o agente no Agentforce Builder com uma pergunta real e conferir se ele cita a política |
 
