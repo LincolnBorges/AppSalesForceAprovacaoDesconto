@@ -77,6 +77,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | AF-004 | 2026-10-17 | F6-08 4 perguntas reais no Agentforce Builder (3 desfechos + adversaria de margem/custo) | Agente `DDDealDeskAgent` | OK | 4/4 |
 | MASSA-001 | 2026-10-18 | massa de demonstração realista: 5 cenários Oportunidade → Cotação → Itens, PT-BR, USD, sem prefixo `DEMO-` | Opportunity / Quote / QuoteLineItem | OK | 5 opps · 5 quotes · 17 linhas |
 | MASSA-002 | 2026-10-18 | hierarquia não-admin: 2 usuários PT-BR (vendedor + gerente) + 3 cenários com o vendedor como proprietário + roteamento das 2 cotações que exigem aprovação | User / PermissionSetAssignment / Opportunity / Quote / DD_DiscountRequest__c | OK | 2 users · 2 PS · 3 opps · 3 quotes · 7 linhas · 2 pedidos |
+| FLW-005 | 2026-10-18 | investigação do console para usuário não-admin: `FLOW_ACCESS_RESTRICTED` reproduzido; 6 sondas de permissão; deploy e reversão de `runInMode`; ambiente restaurado | Flow / PermissionSet / User | FALHA | causa **não** identificada |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -888,6 +889,72 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
    `Approver__c` continua **Renata** e o `ApproverSource__c` continua `Manager` — a escada não muda.
 9. **Licenças:** `Salesforce` 20 total · 14 usadas (**6 livres**) depois dos 2 usuários novos.
    `Service Cloud` 10/0 e as demais intocadas.
+
+### [2026-10-18 07:31 -03:00] FLW-005 — FALHA (console do vendedor: `FLOW_ACCESS_RESTRICTED`, causa não identificada)
+
+| Campo | Valor |
+|---|---|
+| Operação | Reprodução do defeito em navegador (login como Bruno Tavares e como Renata Almeida); captura do corpo/erro de `aura.FlowRuntimeConnect.startFlow`; 6 permission sets de sonda; deploy de `runInMode = SystemModeWithSharing` nos 2 Flows e **reversão**; exclusão das 6 sondas |
+| Skill | query-salesforce · validate-metadata |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`) |
+| Objeto / Metadado | `Quote` `0Q0as0000021vJFCAY` · Flows `DD_CalculateQuoteMargin` / `DD_RouteDiscountApproval` · `PermissionSet` (6 sondas, todas removidas) |
+| Ferramenta | Chrome (sessão do humano, com *login as* e retorno ao admin) · `sf_execute_anonymous_apex` · `sf project deploy start` · `sf_create_permission_set` · `sf_delete_metadata` |
+| Confirmação humana | sim — o humano autorizou aplicar `runInMode`; a reversão foi decidida por mim porque a mudança **não** corrigiu o defeito e ampliava o contexto de execução dos Flows |
+| Resultado | **Defeito reproduzido e delimitado; causa raiz não encontrada.** Ambiente devolvido ao estado do v1.0.0 |
+| Reversão | Flows redeployados sem `runInMode` (ativos v26→**v29** e v5→**v8**); as 6 sondas de `PermissionSet` e as 2 atribuições foram **excluídas**; sessão do navegador devolvida ao admin |
+| Tokens (aprox.) | 60000 |
+| Observações | Ver evidências abaixo |
+
+**Sintoma (reproduzido)**
+
+| Usuário | Perfil | Ação | Resultado |
+|---|---|---|---|
+| Lincoln Borges | System Administrator | Simular 10% e 50% | **OK** (3 de 3 tentativas): `Saudável` / `Requer Aprovação` |
+| Bruno Tavares | Standard User | Simular | **`Falha ao simular o desconto.`** |
+| Renata Almeida | Key Account Manager | Simular | **`Falha ao simular o desconto.`** |
+
+Erro exato capturado no corpo da resposta de `aura?r=..&aura.FlowRuntimeConnect.startFlow`:
+
+```json
+{"interviewStatus":"ERROR","currentFlowVersionId":null,"flowLabel":null,
+ "errors":[{"errorCode":"FLOW_ACCESS_RESTRICTED",
+            "message":"You do not have the level of access necessary to perform the operation you requested."}]}
+```
+
+Requisição confirmada com `flowDevName = DD_CalculateQuoteMargin` e argumentos `quoteId` + `requestedDiscountPct`.
+`currentFlowVersionId = null` ⇒ a recusa acontece **antes** de o interview começar.
+
+**Hipóteses testadas e DESCARTADAS**
+
+| # | Hipótese | Como foi testado | Resultado |
+|---|---|---|---|
+| 1 | FLS: o Flow lê `Quote.DD_Cost__c`, `DD_Revenue__c`, `DD_WorstLineMarginPct__c`, `QuoteLineItem.DD_MarginPct__c` | PS de sonda com leitura nos 5 campos, atribuído a Renata, sessão renovada | **descartada** — mesmo erro |
+| 2 | Acesso ao Flow ausente no permission set | `SetupEntityAccess` do `DD_DealDesk_User` **e** de uma sonda nova apontam para os `DurableId` corretos (`300as00000Gf1i5AAB`, `300as00000GezDHAAZ`); ambos `IsActive = true` | **descartada** — grant existe |
+| 3 | `runInMode` (contexto do Flow) | `SystemModeWithSharing` deployado e ativo (v26/v5) em duas rodadas, com e sem as demais concessões | **descartada** — mesmo erro; depois revertido |
+| 4 | `ApiEnabled` (Bruno/Renata recebiam 401 no REST) | PS de sonda com `ApiEnabled` | **descartada** — mesmo erro |
+| 5 | Permissão de objeto em `QuoteLineItem` / `PricebookEntry` | 4 sondas (read; read+CRUD; com `Pricebook2`/`Product2`/`Quote`/`Opportunity`) | **inconclusivo / descartada como caminho** — ver A82 |
+
+**Achados de plataforma (novos, verificados)**
+
+- **A82 — o org descarta em silêncio `objectPermissions` de `QuoteLineItem` e `PricebookEntry` em permission set.**
+  Sondas com esses dois objetos devolveram **0 linhas** em `ObjectPermissions`, enquanto `Opportunity`,
+  `Quote`, `Product2` e `Pricebook2` do **mesmo** PS foram gravados. Repetido com `allowCreate`/`allowEdit`
+  e com todas as dependências presentes (`Pricebook2`, `Product2`, `Quote`, `Opportunity`). Não é erro
+  reportado: o deploy responde `Succeeded`.
+- **A83 — dependência silenciosa de permissão de objeto.** O org **só reporta** a dependência quando falha
+  por outro motivo: `Permission Read Quote depends on permission(s): Read Opportunity` (reforça A77).
+  Nos casos de `QuoteLineItem`/`PricebookEntry` **não há erro nenhum** — a linha simplesmente não nasce.
+- **A84 — `FLOW_ACCESS_RESTRICTED` não é diagnosticável pelas concessões.** Mesmo com acesso ao Flow,
+  FLS nos campos lidos, `ApiEnabled` e modo sistema, o launch por `lightning-flow` continua recusado para
+  não-admin. O gate fica em um nível que nenhuma das concessões testadas alcança.
+
+**Observação sobre o travamento do admin**
+
+Não reproduzi o "flow trava" em **3 tentativas** (10% e 50%, após recarregar a página): a simulação voltou
+com resultado em todas. A tela travada que o humano viu (capturada em 06:56) permaneceu montada com o
+banner `YOUR FLOW FINISHED` e o botão em `Simulando...`, o que sugere perda do evento `onstatuschange` —
+**sem** evidência suficiente para corrigir. Hipótese em aberto (não confirmada): corrida entre dois cliques
+e a remontagem de `lightning-flow`.
 
 
 
