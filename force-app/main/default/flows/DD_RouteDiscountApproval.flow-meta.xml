@@ -534,6 +534,18 @@
         <dataType>Boolean</dataType>
         <expression>NOT(ISBLANK({!admin.Id}))</expression>
     </formulas>
+    <formulas>
+        <name>F_DiscountAmount</name>
+        <dataType>Currency</dataType>
+        <expression>{!quoteRecord.TotalPrice} * {!requestedDiscountPct} / 100</expression>
+        <scale>2</scale>
+    </formulas>
+    <formulas>
+        <name>F_FinalAmount</name>
+        <dataType>Currency</dataType>
+        <expression>{!quoteRecord.TotalPrice} - {!F_DiscountAmount}</expression>
+        <scale>2</scale>
+    </formulas>
     <label>DD Route Discount Approval</label>
     <processType>AutoLaunchedFlow</processType>
     <recordCreates>
@@ -560,6 +572,9 @@
         <inputAssignments><field>Approver__c</field><value><elementReference>approverId</elementReference></value></inputAssignments>
         <inputAssignments><field>ApproverSource__c</field><value><elementReference>approverSource</elementReference></value></inputAssignments>
         <inputAssignments><field>CurrencyIsoCode</field><value><stringValue>USD</stringValue></value></inputAssignments>
+        <inputAssignments><field>OriginalAmount__c</field><value><elementReference>quoteRecord.TotalPrice</elementReference></value></inputAssignments>
+        <inputAssignments><field>DiscountAmount__c</field><value><elementReference>F_DiscountAmount</elementReference></value></inputAssignments>
+        <inputAssignments><field>FinalAmount__c</field><value><elementReference>F_FinalAmount</elementReference></value></inputAssignments>
         <object>DD_DiscountRequest__c</object>
     </recordCreates>
     <recordLookups>
@@ -654,7 +669,7 @@
         <locationX>100</locationX>
         <locationY>100</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
-        <connector><targetReference>Decision_Open</targetReference></connector>
+        <connector><targetReference>Get_Quote</targetReference></connector>
         <faultConnector><targetReference>Fault_Handler</targetReference></faultConnector>
         <filterLogic>and</filterLogic>
         <filters><field>Quote__c</field><operator>EqualTo</operator><value><elementReference>quoteId</elementReference></value></filters>
@@ -666,6 +681,23 @@
         <outputReference>openRequest</outputReference>
         <queriedFields>Id</queriedFields><queriedFields>Name</queriedFields>
         
+        <storeOutputAutomatically>false</storeOutputAutomatically>
+    </recordLookups>
+
+    <recordLookups>
+        <name>Get_Quote</name>
+        <label>Total da cotacao</label>
+        <locationX>100</locationX>
+        <locationY>100</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector><targetReference>Decision_Open</targetReference></connector>
+        <faultConnector><targetReference>Fault_Handler</targetReference></faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters><field>Id</field><operator>EqualTo</operator><value><elementReference>quoteId</elementReference></value></filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Quote</object>
+        <outputReference>quoteRecord</outputReference>
+        <queriedFields>Id</queriedFields><queriedFields>TotalPrice</queriedFields>
         <storeOutputAutomatically>false</storeOutputAutomatically>
     </recordLookups>
     <recordUpdates>
@@ -692,6 +724,9 @@
         <inputAssignments><field>Approver__c</field><value><elementReference>approverId</elementReference></value></inputAssignments>
         <inputAssignments><field>ApproverSource__c</field><value><elementReference>approverSource</elementReference></value></inputAssignments>
         <inputAssignments><field>CurrencyIsoCode</field><value><stringValue>USD</stringValue></value></inputAssignments>
+        <inputAssignments><field>OriginalAmount__c</field><value><elementReference>quoteRecord.TotalPrice</elementReference></value></inputAssignments>
+        <inputAssignments><field>DiscountAmount__c</field><value><elementReference>F_DiscountAmount</elementReference></value></inputAssignments>
+        <inputAssignments><field>FinalAmount__c</field><value><elementReference>F_FinalAmount</elementReference></value></inputAssignments>
         <object>DD_DiscountRequest__c</object>
     </recordUpdates>
     <start>
@@ -899,5 +934,12 @@
         <dataType>Boolean</dataType>
         <isInput>false</isInput>
         <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>quoteRecord</name>
+        <dataType>SObject</dataType>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Quote</objectType>
     </variables>
 </Flow>

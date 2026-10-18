@@ -337,6 +337,60 @@ private class DD_MarginConsoleControllerTest {
         }
     }
 
+    /**
+     * F5-15: o Flow grava os valores financeiros com centavos (Currency 18,2).
+     * A cotacao de 100,55 existe para provar que a engine nao arredonda o valor
+     * para inteiro na atribuicao ao campo (A62).
+     */
+    @IsTest
+    static void requestDiscount_storesAmountsWithCents() {
+        Id standardPricebookId = Test.getStandardPricebookId();
+        Product2 product = [SELECT Id FROM Product2 WHERE Name = :BELOW_PRODUCT LIMIT 1];
+        PricebookEntry entry = [
+            SELECT Id
+            FROM PricebookEntry
+            WHERE Pricebook2Id = :standardPricebookId AND Product2Id = :product.Id
+            LIMIT 1
+        ];
+
+        Quote quote = new Quote(
+            Name = 'TEST-Quote-Amounts',
+            Pricebook2Id = standardPricebookId,
+            CurrencyIsoCode = 'USD',
+            Status = 'Draft',
+            ExpirationDate = Date.today().addDays(30)
+        );
+        insert quote;
+        insert new QuoteLineItem(
+            QuoteId = quote.Id,
+            PricebookEntryId = entry.Id,
+            Product2Id = product.Id,
+            Quantity = 1,
+            UnitPrice = 100.55,
+            Discount = 0
+        );
+
+        Test.startTest();
+        DD_MarginConsoleController.RoutingResult result = DD_MarginConsoleController.requestDiscount(
+            quote.Id,
+            33.33,
+            'Desconto com centavos para provar o snapshot financeiro.'
+        );
+        Test.stopTest();
+
+        System.assertEquals('ManagerApproval', result.decision, 'Abaixo do piso o pedido sobe.');
+
+        DD_DiscountRequest__c request = [
+            SELECT OriginalAmount__c, DiscountAmount__c, FinalAmount__c
+            FROM DD_DiscountRequest__c
+            WHERE Quote__c = :quote.Id
+            LIMIT 1
+        ];
+        System.assertEquals(100.55, request.OriginalAmount__c, 'Valor original = TotalPrice da cotacao.');
+        System.assertEquals(33.51, request.DiscountAmount__c, 'Desconto = 100,55 x 33,33% com 2 casas.');
+        System.assertEquals(67.04, request.FinalAmount__c, 'Valor final = original - desconto.');
+    }
+
     // ---------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------

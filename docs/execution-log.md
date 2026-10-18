@@ -83,6 +83,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | APR-002 | 2026-10-18 | submissão dos 3 pedidos que já existiam à fila da gerente (DR-00001/2/3) | DD_DiscountRequest__c | OK | 3 `ProcessInstanceWorkitem` para Renata |
 | LAY-001 | 2026-10-18 | layout do pedido orientado à decisão do gerente: 4 seções, 2 colunas, justificativa em largura total | Layout `DD_DiscountRequest__c` | OK | `09Sas000000QZuzEAG` |
 | APR-003 | 2026-10-18 | `approvalPageFields` do processo: 9 campos na tela de aprovação (antes só Nome e Owner) | ApprovalProcess | OK | `04aas000000atijAAA` |
+| FIN-001 | 2026-10-18 | F5-15: valores financeiros do pedido (original, desconto, final) no Flow, layout e página de aprovação | DD_DiscountRequest__c / Flow | OK | 3 campos `Currency 18,2` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -1191,6 +1192,47 @@ O nome sugerido `<approvalLayout>` não existe no tipo; `approvalPageFields` é 
 - **A92:** a tela de aprovação usa `ApprovalProcess.approvalPageFields`, **não** o Page Layout do objeto nem
   `<approvalLayout>`. O default são só `Name` + `Owner`; `describe/approvalLayouts` é a fonte de verdade do
   que o aprovador vê.
+
+### [2026-10-18 09:20 -03:00] FIN-001 — OK (F5-15: snapshot financeiro do pedido)
+
+| Campo | Valor |
+|---|---|
+| Operação | 3 campos `Currency(18,2)` + gravação no `DD_RouteDiscountApproval` + FLS + layout + `approvalPageFields`; dry-run, deploy e backfill dos 3 pendentes |
+| Skill | validate-metadata · sf-flow · sf-schema |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `DD_DiscountRequest__c.OriginalAmount__c` / `DiscountAmount__c` / `FinalAmount__c` · `Flow DD_RouteDiscountApproval` (**v9 ativa**) · `PermissionSet DD_DealDesk_User` · `Profile Admin` · `Layout` · `ApprovalProcess` |
+| Ferramenta | `sf project deploy start` (dry-run + real) · `sf apex run` · `sf sobject describe` · `sf api request rest` |
+| Parâmetros-chave | `OriginalAmount__c = quoteRecord.TotalPrice`; `DiscountAmount__c = TotalPrice * pct / 100` (fórmula `Currency`); `FinalAmount__c = TotalPrice - F_DiscountAmount`; novo lookup `Get_Quote` (`Id`, `TotalPrice`) entre `Get_OpenRequest` e `Decision_Open` |
+| Payload / SOQL | 10 componentes / 12 arquivos; FLS read-only no PS, read+edit no perfil Admin (D20/S13) |
+| Confirmação humana | **sim** — pedido explícito (F5-15) e "Sim, preencher os 3 agora" às 09:22 |
+| Resultado | dry-run `Succeeded` `0Afas0000060FbWCAU` (11/11 testes) → deploy real `Succeeded` (11/11); `Currency 18,2` com labels PT-BR; página de aprovação com 12 campos; backfill 2.464,00/3.432,80/4.531,20 todos `USD` |
+| Reversão | zerar os 3 campos (valores anteriores eram `null`); remover do layout/aprovação e redeployar; reverter o Flow para a v8 |
+| Tokens (aprox.) | 22000 |
+| Observações | Só receita: `Quote.TotalPrice` é o valor atual da cotação; custo e margem continuam fora da tela (D14) |
+
+**Decisão de cálculo (D33)**
+
+`OriginalAmount__c` = `Quote.TotalPrice` (o que o cliente paga hoje), **não** `Subtotal` — o desconto pedido
+incide sobre o preço atual, que já considera descontos de linha. `DiscountAmount__c` e `FinalAmount__c` são
+gravados pelo Flow como snapshot; não são fórmula viva (D23).
+
+**Prova de decimais**
+
+Teste `requestDiscount_storesAmountsWithCents`: cotação de **100,55**, desconto de **33,33%** →
+`OriginalAmount__c = 100,55`, `DiscountAmount__c = 33,51`, `FinalAmount__c = 67,04`. Passou — a engine **não**
+arredonda o valor para inteiro ao gravar campo `Currency` (o arredondamento do **A62** é da atribuição a
+variável `Number`).
+
+**Backfill (pedidos criados antes do Flow novo)**
+
+`DR-00001` 2.464,00 / 0,00 / 2.464,00 · `DR-00002` 3.432,80 / 0,00 / 3.432,80 · `DR-00003`
+4.531,20 / 747,65 / 3.783,55 — todos `USD`, feitos por Apex com o total real de cada cotação (pedidos
+travados por aprovação; `recordEditability = AdminOnly` permite ao admin).
+
+**Aprendizado**
+
+- **A93:** atribuição de fórmula `Currency` a **campo** de registro preserva as 2 casas; o arredondamento
+  para inteiro documentado em **A62** vale para atribuição a **variável `Number`** do Flow.
 
 ## Registro de Bloqueios
 

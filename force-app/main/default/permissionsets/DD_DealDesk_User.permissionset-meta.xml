@@ -47,6 +47,21 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>DD_DiscountRequest__c.OriginalAmount__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>DD_DiscountRequest__c.DiscountAmount__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>DD_DiscountRequest__c.FinalAmount__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>DD_DiscountRequest__c.Approver__c</field>
         <readable>true</readable>
     </fieldPermissions>

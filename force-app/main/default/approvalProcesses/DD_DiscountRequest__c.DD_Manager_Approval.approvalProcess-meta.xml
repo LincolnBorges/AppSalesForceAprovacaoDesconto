@@ -17,6 +17,9 @@
         <field>Name</field>
         <field>Quote__c</field>
         <field>RequestedDiscountPct__c</field>
+        <field>OriginalAmount__c</field>
+        <field>DiscountAmount__c</field>
+        <field>FinalAmount__c</field>
         <field>GuardrailState__c</field>
         <field>PolicyName__c</field>
         <field>PolicyFloorMarginPct__c</field>
