@@ -78,6 +78,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | MASSA-001 | 2026-10-18 | massa de demonstração realista: 5 cenários Oportunidade → Cotação → Itens, PT-BR, USD, sem prefixo `DEMO-` | Opportunity / Quote / QuoteLineItem | OK | 5 opps · 5 quotes · 17 linhas |
 | MASSA-002 | 2026-10-18 | hierarquia não-admin: 2 usuários PT-BR (vendedor + gerente) + 3 cenários com o vendedor como proprietário + roteamento das 2 cotações que exigem aprovação | User / PermissionSetAssignment / Opportunity / Quote / DD_DiscountRequest__c | OK | 2 users · 2 PS · 3 opps · 3 quotes · 7 linhas · 2 pedidos |
 | FLW-005 | 2026-10-18 | investigação do console para usuário não-admin: `FLOW_ACCESS_RESTRICTED` reproduzido; 6 sondas de permissão; deploy e reversão de `runInMode`; ambiente restaurado | Flow / PermissionSet / User | FALHA | causa **não** identificada |
+| FLW-006 | 2026-10-18 | teste do Perfil `Standard` concedendo acesso aos 2 Flows (+ sonda de FLS, 7ª combinação) | Profile / PermissionSet | FALHA | mesmo erro — Perfil não é o gate |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -956,6 +957,49 @@ banner `YOUR FLOW FINISHED` e o botão em `Simulando...`, o que sugere perda do 
 **sem** evidência suficiente para corrigir. Hipótese em aberto (não confirmada): corrida entre dois cliques
 e a remontagem de `lightning-flow`.
 
+
+
+
+### [2026-10-18 07:38 -03:00] FLW-006 — FALHA (Perfil `Standard` com acesso aos 2 Flows: mesmíssimo erro)
+
+| Campo | Valor |
+|---|---|
+| Operação | Retrieve do Perfil **`Standard`** (= "Standard User"), inserção de 2 `<flowAccesses>`, `--dry-run` e deploy real; 7ª sonda de FLS; teste em navegador logado como Bruno; limpeza |
+| Skill | validate-metadata · query-salesforce |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Profile:Standard` · `PermissionSet` `DD_Probe_FLS2` (criada e **excluída**) |
+| Ferramenta | `sf project retrieve start` · `sf project deploy start --dry-run` · `sf project deploy start` · `sf_create_permission_set` · `sf_delete_metadata` · Chrome |
+| Confirmação humana | **sim** — o humano autorizou o teste no Perfil e viu o payload antes do deploy |
+| Resultado | Perfil gravado com os 2 `flowAccesses` (provado por `SetupEntityAccess` no PS do perfil), FLS concedida na 7ª sonda, sessão renovada — **o vendedor continua recebendo `FLOW_ACCESS_RESTRICTED`** |
+| Reversão | o Perfil **permanece** com os 2 `flowAccesses` (inertes: não desbloqueiam nada sozinhos); sonda de FLS excluída |
+| Tokens (aprox.) | 12000 |
+
+**O que foi provado nesta rodada**
+
+1. **Nome de metadata do perfil:** "Standard User" na UI é **`Standard`** na API. `Profile:Standard User` devolve
+   `Entity of type 'Profile' named 'Standard User' cannot be found`. O retrieve correto é `Profile:Standard`.
+2. **O Perfil exporta pouco:** 233 linhas, só `custom`, `loginIpRanges`, `userLicense` e 56 `userPermissions`.
+   FLS de perfil nesta org vive nos *permission sets owned by profile*, não no XML do Perfil.
+3. **Grant gravado:** `SetupEntityAccess` do PS do perfil (`X00ex00000018ozV_...`) passou a ter os dois
+   `FlowDefinition` (`300as00000Gf1i5AAB`, `300as00000GezDHAAZ`).
+4. **Acesso ao Flow pelo Perfil não muda o resultado** — 7ª combinação testada:
+   acesso por Perfil **+** FLS nos 7 campos **+** sessão nova ⇒ `FLOW_ACCESS_RESTRICTED`.
+5. **`QuoteLineItem` não é o problema:** logado como Bruno, a related list "Quote Line Items (3)" renderiza
+   com produto, quantidade e subtotal — leitura de linha confirmada na tela.
+
+**Conclusão do ciclo**
+
+| Hipótese | Vezes testada | Veredito |
+|---|---|---|
+| FLS nos campos lidos | 2 (acesso por PS e por Perfil) | descartada |
+| Acesso ao Flow por **permission set** | 2 PS distintos | descartada |
+| Acesso ao Flow por **Perfil** | 1 | descartada |
+| `ApiEnabled` | 1 | descartada |
+| `runInMode` (padrão e `SystemModeWithSharing`) | 2 rodadas | descartada |
+| Permissão de objeto (`QuoteLineItem`/`PricebookEntry`) | 1 (UI prova leitura) | descartada |
+
+Nenhuma alavanca de metadata move o gate. **Recomendação registrada em F5-11: fazer a demonstração pelo
+Admin** (que executa normalmente) e tratar o caminho do vendedor como pendência técnica.
 
 
 ## Registro de Bloqueios
