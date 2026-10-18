@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Request_Status_Required</fullName>
+    <active>true</active>
+    <description>Substitui o required do campo Status__c (F5-12): o campo precisou virar opcional para o aprovador poder le-lo sem editar. Todo pedido continua obrigado a ter um estado.</description>
+    <errorConditionFormula>ISBLANK(TEXT(Status__c))</errorConditionFormula>
+    <errorDisplayField>Status__c</errorDisplayField>
+    <errorMessage>O pedido de desconto precisa de um status.</errorMessage>
+</ValidationRule>

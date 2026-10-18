@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Acoes das etapas finais do Approval Process DD_Manager_Approval (F5-12).
+     A decisao e sempre humana: nenhum Flow grava Approved/Rejected. -->
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldUpdates>
+        <fullName>DD_Request_Decided_At</fullName>
+        <description>Data/hora da decisao humana (aprovacao ou rejeicao).</description>
+        <field>DecidedAt__c</field>
+        <formula>NOW()</formula>
+        <name>DD_Request_Decided_At</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Formula</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>DD_Request_Status_Approved</fullName>
+        <description>Marca o pedido como aprovado pelo gerente.</description>
+        <field>Status__c</field>
+        <literalValue>Approved</literalValue>
+        <name>DD_Request_Status_Approved</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>DD_Request_Status_Rejected</fullName>
+        <description>Marca o pedido como rejeitado pelo gerente.</description>
+        <field>Status__c</field>
+        <literalValue>Rejected</literalValue>
+        <name>DD_Request_Status_Rejected</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+    </fieldUpdates>
+</Workflow>

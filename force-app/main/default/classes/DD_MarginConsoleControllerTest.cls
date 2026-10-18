@@ -220,6 +220,14 @@ private class DD_MarginConsoleControllerTest {
         System.assertEquals('ManagerApproval', requests[0].Decision__c, 'Decisao gravada pelo Flow.');
         System.assertEquals('Submitted', requests[0].Status__c, 'Status gravado pelo Flow.');
 
+        // F5-12: o pedido tem de chegar na tela nativa do aprovador.
+        List<ProcessInstanceWorkitem> workitems = [
+            SELECT Id
+            FROM ProcessInstanceWorkitem
+            WHERE ProcessInstance.TargetObjectId = :requests[0].Id
+        ];
+        System.assertEquals(1, workitems.size(), 'O pedido deve aparecer em "Itens para Aprovar".');
+
         String payload = JSON.serialize(result);
         System.assert(!payload.contains('approverEmail'), 'D14: e-mail do aprovador nao vai para a tela.');
         System.assert(!payload.contains('diagnostics'), 'D14: diagnostico nao vai para a tela.');
@@ -277,6 +285,7 @@ private class DD_MarginConsoleControllerTest {
     static void requestDiscount_worksForNonAdminSeller() {
         User seller = sellerUser();
         Quote quote = createQuoteOwnedBy(seller.Id, BELOW_PRODUCT, 'TEST-Quote-Seller-Below');
+        Id approvedRequestId;
 
         System.runAs(seller) {
             Test.startTest();
@@ -290,7 +299,16 @@ private class DD_MarginConsoleControllerTest {
             System.assertEquals('ManagerApproval', result.decision, 'O vendedor nao-admin deve rotear.');
             System.assertEquals('Submitted', result.status, 'O pedido deve ficar submetido.');
             System.assertNotEquals(null, result.requestId, 'O pedido deve ser criado para o vendedor.');
+            approvedRequestId = (Id) result.requestId;
         }
+
+        // F5-12: a submissao ao Approval Process tem de funcionar tambem para o vendedor.
+        List<ProcessInstanceWorkitem> workitems = [
+            SELECT Id
+            FROM ProcessInstanceWorkitem
+            WHERE ProcessInstance.TargetObjectId = :approvedRequestId
+        ];
+        System.assertEquals(1, workitems.size(), 'O vendedor nao-admin deve alimentar a fila do aprovador.');
     }
 
     @IsTest

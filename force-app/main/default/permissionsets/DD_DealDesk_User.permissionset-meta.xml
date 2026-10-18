@@ -65,6 +65,14 @@
         <field>DD_DiscountRequest__c.DecisionNote__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <!-- F5-12: sem leitura do Status o aprovador abriria o item com a tela em branco.
+         Decision__c, Quote__c e GuardrailState__c sao required e a plataforma recusa FLS
+         explicita para eles: o acesso ja vem com a leitura do objeto. -->
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>DD_DiscountRequest__c.Status__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
         <field>DD_DiscountRequest__c.Justification__c</field>

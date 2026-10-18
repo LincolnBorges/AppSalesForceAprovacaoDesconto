@@ -18,10 +18,18 @@
  * D14: a fronteira devolve apenas um DTO com whitelist de campos. Margem, custo,
  * diagnostico, piso/alvo/teto e e-mail do aprovador nunca cruzam o Apex — nem no payload
  * de retorno, nem em log.
+ *
+ * F5-12: depois que o Flow grava o pedido, esta classe o submete ao Approval Process nativo
+ * DD_Manager_Approval. O Approval Process NAO decide margem (isso continua no Flow): ele
+ * entrega ao gerente a tela "Itens para Aprovar" e grava Status__c/DecidedAt__c nas acoes
+ * finais. Quem aprova e sempre o humano.
  */
 public with sharing class DD_MarginConsoleController {
     private static final String FLOW_MARGIN = 'DD_CalculateQuoteMargin';
     private static final String FLOW_ROUTE = 'DD_RouteDiscountApproval';
+
+    // F5-12: unico Approval Process ativo do objeto do pedido.
+    private static final String APPROVAL_PROCESS = 'DD_Manager_Approval';
 
     // Limite do campo DD_DiscountRequest__c.Justification__c (LongTextArea).
     private static final Integer MAX_JUSTIFICATION_LENGTH = 32000;
@@ -102,7 +110,52 @@ public with sharing class DD_MarginConsoleController {
         result.message = result.decision == 'Fault'
             ? 'Falha operacional no roteamento. Nenhum pedido deve ser considerado enviado.'
             : asText(output.get('message'));
+
+        // F5-12: o pedido tem de aparecer na tela nativa de aprovacoes do gerente.
+        if ('ManagerApproval'.equals(result.decision) && String.isNotBlank(result.requestId)) {
+            result.message = submitForManagerApproval(result.requestId, result.message);
+        }
         return result;
+    }
+
+    /**
+     * Submete o pedido recem-gravado ao Approval Process nativo (F5-12).
+     *
+     * O Flow continua sendo a unica fonte de decisao: aqui so se entrega o registro ja criado
+     * ao unico processo ativo do objeto, para que o aprovador resolvido no campo Approver__c
+     * receba o item em "Itens para Aprovar". Nenhuma decisao e tomada neste metodo.
+     *
+     * Se a submissao falhar, o pedido continua existindo e a tela avisa o vendedor: e melhor
+     * um pedido visivel sem item de aprovacao do que um erro que faca o vendedor repetir o envio.
+     *
+     * @return a mensagem do Flow, acrescida do aviso quando a submissao nao conclui
+     */
+    private static String submitForManagerApproval(String requestId, String message) {
+        try {
+            Approval.ProcessSubmitRequest submission = new Approval.ProcessSubmitRequest();
+            submission.setObjectId(Id.valueOf(requestId));
+            submission.setProcessDefinitionNameOrId(APPROVAL_PROCESS);
+            submission.setComments('Pedido encaminhado pelo console do Deal Desk.');
+
+            Approval.ProcessResult outcome = Approval.process(submission);
+            if (outcome.isSuccess()) {
+                return message;
+            }
+            System.debug(
+                LoggingLevel.ERROR,
+                'DD_MarginConsoleController: submissao para aprovacao recusada.'
+            );
+        } catch (Exception submissionFailure) {
+            // D14: so o tipo da falha vai para o log.
+            System.debug(
+                LoggingLevel.ERROR,
+                'DD_MarginConsoleController: falha ao submeter para aprovacao (' +
+                    submissionFailure.getTypeName() +
+                    ')'
+            );
+        }
+        return message +
+            ' O pedido foi registrado, mas nao chegou a tela de aprovacoes: avise o aprovador.';
     }
 
     /**
