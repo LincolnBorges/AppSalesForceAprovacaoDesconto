@@ -80,6 +80,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | FLW-005 | 2026-10-18 | investigação do console para usuário não-admin: `FLOW_ACCESS_RESTRICTED` reproduzido; 6 sondas de permissão; deploy e reversão de `runInMode`; ambiente restaurado | Flow / PermissionSet / User | FALHA | causa **não** identificada |
 | FLW-006 | 2026-10-18 | teste do Perfil `Standard` concedendo acesso aos 2 Flows (+ sonda de FLS, 7ª combinação) | Profile / PermissionSet | FALHA | mesmo erro — Perfil não é o gate |
 | APR-001 | 2026-10-18 | F5-12 tela nativa de aprovação: `ApprovalProcess` no pedido, submissão pelo controller, `Status__c` opcional + regra, FLS de leitura | ApprovalProcess / Workflow / CustomField / PermissionSet / ApexClass | OK | processo ativo `04aas000000atijAAA` |
+| APR-002 | 2026-10-18 | submissão dos 3 pedidos que já existiam à fila da gerente (DR-00001/2/3) | DD_DiscountRequest__c | OK | 3 `ProcessInstanceWorkitem` para Renata |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -1100,6 +1101,23 @@ roteava para um registro `DD_DiscountRequest__c` e mandava e-mail — não havia
   não só `Status__c`.
 - **A90:** `System.runAs` **não** existe em Apex anônimo ("can only be used within a test method") — validar
   comportamento por usuário exige teste ou "Login as" no browser.
+
+### [2026-10-18 08:51 -03:00] APR-002 — OK (3 pedidos existentes entram na fila da gerente)
+
+| Campo | Valor |
+|---|---|
+| Operação | `Approval.process` nos pedidos DR-00001, DR-00002 e DR-00003 (criados antes do processo existir) |
+| Skill | route-approval · validate-metadata |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `DD_DiscountRequest__c` `a0Nas00000TiGJhEAN` · `a0Nas00000TiGLJEA3` · `a0Nas00000TiGQ9EAN` |
+| Ferramenta | `sf apex run` (`Approval.ProcessSubmitRequest` + `Approval.process`) |
+| Parâmetros-chave | `processDefinitionNameOrId = DD_Manager_Approval`; comentário "Pedido encaminhado a partir da fila do Deal Desk." |
+| Payload / SOQL | 3 submissões, 1 transação; `success=true` nas 3 |
+| Confirmação humana | **sim** — "Submeter os 3 agora" às 08:50 |
+| Resultado | 3 `ProcessInstanceWorkitem` `Pending` com `Actor = Renata Almeida` (`04ias000000ASMPAA4`, `...ASMQAA4`, `...ASMRAA4`); pedidos seguem `Status__c = Submitted`, `DecidedAt__c = null` |
+| Reversão | "Recall" pela tela de aprovação (submissor ou admin) ou `Approval.ProcessWorkitemRequest`; o pedido volta a `Submitted` sem item — nenhum campo do pedido muda na submissão |
+| Tokens (aprox.) | 3000 |
+| Observações | O `Submitted By` do histórico fica Lincoln (o script roda como ele); pedidos novos criados pelo console saem como o vendedor |
 
 ## Registro de Bloqueios
 
