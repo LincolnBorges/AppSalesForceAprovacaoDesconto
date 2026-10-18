@@ -214,6 +214,33 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | PS `DD_DealDesk_User` | `0PSas000004H6puGAC`; atribuído ao Standard User `005as000003pCpEAAU` (Alan FieldTech) via `PermissionSetAssignment` `0Paas00000BpdrHCAR` |
 | Aprovador resolvido hoje (D26) | dono Lincoln sem gestor → dono da política é o próprio solicitante → 3º degrau = **Alan FieldTech** (1º ativo por nome). Para a demo, a opção é mudar o dono da cotação B para `005as000003pCovAAE` (Mehmood Zac, gestora Lincoln) — ver `docs/demo-script.md` §1.5 |
 
+### 1.9 Massa de demonstração realista — 5 cenários (2026-10-18, MASSA-001)
+
+Massa **sem prefixo `DEMO-`** e com nomes em PT-BR, criada por **instrução direta do humano** para uma
+demonstração de vendas (exceção registrada a S11 e a S3/S4 na entrada `MASSA-001`). Contas e produtos são
+**reais da org**; todas as 5 `Opportunity`, 5 `Quote` e 17 `QuoteLineItem` são `USD`.
+
+| # | Oportunidade (Id) | Conta | Cotação (Id) | Linhas | Receita | Custo | Margem | Estado |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Renovação de Frota Elétrica - Tech Labs `006as0000094kIPAAY` | Tech Labs `001as00000HCKvoAAH` | `0Q0as0000021v4jCAA` | 4 | 3.749,60 | 2.474,40 | **34,0090%** | Saudável |
+| 2 | Programa de Manutenção Preventiva - Global Medical Partners `006as0000094dbuAAA` | Global Medical Partners `001as00000HCLzcAAH` | `0Q0as0000021swUCAQ` | 4 | 4.143,24 | 2.796,50 | **32,5045%** | Saudável |
+| 3 | Contrato Anual de Peças - Acme Partners `006as0000094ftqAAA` | Acme Partners `001as00000HCKvnAAH` | `0Q0as0000021shyCAA` | 4 | 6.908,80 | 5.497,00 | **20,4348%** | Requer Justificativa |
+| 4 | Expansão do Kit de Diagnóstico - Metro Medical Distributors `006as0000094ebCAAQ` | Metro Medical Distributors `001as00000HCLzbAAH` | `0Q0as0000021v7xCAA` | 2 | 2.516,80 | 1.965,60 | **21,9008%** | Requer Justificativa |
+| 5 | Piloto de Calibração Automotiva - Integrity Systems `006as0000094eBPAAY` | Integrity Systems `001as00000HCKvyAAH` | `0Q0as0000021v9ZCAQ` | 3 | 3.896,40 | 3.479,75 | **10,6932%** | Requer Aprovação |
+
+- Todas as cotações: `Pricebook2Id = 01sas000001nOBJAA2` (Fleet & Corporate), `Status = Draft`,
+  `CurrencyIsoCode = USD`, `ExpirationDate` futuro (2026-11-15 a 2027-01-15), endereços de cobrança e
+  entrega preenchidos a partir do endereço da conta, `Description` comercial em PT-BR.
+- Oportunidades: `Pricebook2Id` explícito, `Amount` = receita da cotação, `Type`/`LeadSource`/`NextStep`/
+  `Description` preenchidos. `StageName`: Negotiation/Review, Proposal/Price Quote (2), Needs Analysis,
+  Value Proposition.
+- **Custo não foi enviado no payload**: `DD_CostPerUnit__c`/`DD_CostAmount__c` vieram do before-save
+  `DD_CalculateLineCost`. `DD_Revenue__c` = `TotalPrice` nativo nas 5 (0 divergência).
+- **Cenário 3 é o caso de fronteira deliberado**: consolidado 20,43% (amarelo) com pior linha 17,68%
+  (abaixo do piso). O campo e a `Decision_Band` do Flow usam a mesma base (margem consolidada) — coerente.
+- **Rollback:** apagar os 5 `Opportunity` Ids (a cascata leva `Quote` e `QuoteLineItem`) — exige
+  autorização nominal (S5).
+
 ---
 
 ## 2. Decisões de Arquitetura
@@ -308,6 +335,7 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | A78 | **`sf_create_agent` (MCP) cria `Bot` do tipo `EinsteinServiceAgent` e a org trial recusa por falta de acesso aos *agent templates* desse tipo.** Erro literal: `Looks like you don't have access to agent templates associated with the EinsteinServiceAgent agent type. Make sure that you have the required permissions for the type and try again.` A falha acontece no deploy do `.bot` — **não** é o probe de `GenAiFunction`, então `skipActionCapabilityCheck` não muda nada. Os 6 `BotDefinition` da org são todos `AgentforceEmployeeAgent`/`InternalCopilot`; a licença `Agentforce (Default)` (`EinsteinGPTCopilotPsl`) está ativa (2/10) e o usuário está entre os 2; **não** existe licença de Service Agent; `AgentTemplate` não é objeto consultável na API. | **Não** tentar variações às cegas (S8): o que resolve é habilitar/provisionar o template de Service Agent no Setup (ação humana) ou aceitar que esta org só cria agente do tipo `Employee` — caminho que a ferramenta MCP **não** expõe. Nenhum resíduo foi deixado (o shell não chegou a ser criado). **Contornado em 2026-10-17 (AF-003/D30):** bundle mdapi de `Bot`+`BotVersion`+`GenAiPlannerBundle` com `agentType = AgentforceEmployeeAgent` (molde `Copilot_for_Salesforce`) criou o agente e o tópico foi ligado; a ativação fica no Builder (**A80**). Ver AF-002/AF-003 |
 | A79 | **`sf org list metadata --metadata-type GenAiPlugin` devolve 0 mesmo quando o plugin existe.** Com o `DD_DealDesk_Guardrail` criado (retrieve devolveu o `.genAiPlugin`, o Builder lista o subagent e o planner o referencia), a listagem seguiu vazia. | Reforça o A45: para `GenAiPlugin` a prova é o **retrieve** do componente, nunca a listagem. O baseline de §1.6 registra 1 por retrieve, não por listagem. Pegou na F6-05 | 2026-10-17 |
 | A80 | **`BotVersion.Status` não é gravável.** `Status` tem `createable=false` e `updateable=false`; `<status>Active</status>` no bundle é **descartado** (a retrieve não devolve o elemento) e a versão nasce `Inactive`. A ativação é pela UI do Agentforce Builder: *Activate* → "Configuration Issues Detected" → *Ignore & Activate*. Os 6 bots originais são `Active` sem trazer `<status>` no XML. | Um agente deployado por mdapi **não** fica ativo sozinho: é preciso um passo humano/Builder depois do deploy. Não perder tempo tentando ativar por metadata ou REST. Ver AF-003 | 2026-10-17 |
+| A81 | **`QuoteLineItem.CurrencyIsoCode` não é gravável no insert.** `sf_create_record` com o campo no payload falha com `INVALID_FIELD_FOR_INSERT_UPDATE: Unable to create/update fields: CurrencyIsoCode. Please check the security settings of this field` — e **nenhum** registro parcial é criado. A moeda da linha **herda da `Quote`** (17 linhas criadas sem o campo voltaram `USD`). Mesmo padrão já registrado para `PricebookEntry` (D19: campo imutável no update). | **S12 na `QuoteLineItem` é verificação, não envio:** omitir o campo e comprovar a moeda por SOQL **depois** da escrita. Sem isso o lote trava inteiro e o erro sugere (falsamente) FLS. Provado em MASSA-001 | 2026-10-18 |
 
 
 ---
@@ -327,6 +355,14 @@ Preenchido na primeira descoberta de cada objeto; **nunca redescobrir na mesma s
   em **0** → o app vai **calcular e gravar** esses campos (não há motor fazendo isso).
 - **Atenção:** `UnitCost`/`Margin`/`MarginAmount` são campos existentes mas **inertes** — não há
   motor de pricing provisionado (D4). O app escreve neles o resultado do **seu próprio** cálculo.
+- **`CurrencyIsoCode` NÃO é gravável no insert (2026-10-18, MASSA-001):** `sf_create_record` com o campo
+  no payload devolve `INVALID_FIELD_FOR_INSERT_UPDATE: Unable to create/update fields: CurrencyIsoCode`
+  (nenhum registro parcial é criado). A moeda da linha **herda da `Quote`**; para atender **S12**, omitir
+  o campo e **comprovar por SOQL depois** da escrita. Provado em 17 linhas, todas `USD`.
+- **Obrigatórios (`nillable=false`), 4:** `QuoteId`, `PricebookEntryId`, `Product2Id`, `Quantity`.
+  **Não existe campo `Name`** em `QuoteLineItem` (SOQL com `Name` devolve `INVALID_FIELD`).
+- **`Discount` aceita `0` explícito** — omitir deixa `null` (as fórmulas de margem tratam igual, mas a
+  massa de demonstração grava `0` para o campo não ficar vazio na tela).
 
 ### 4.2 `Quote` — contrato de escrita
 

@@ -75,6 +75,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | AF-002 | 2026-10-17 | F6-07 `sf_create_agent` recusa o tipo `EinsteinServiceAgent` (sem template acessível) — nenhum resíduo | Bot | FALHA | — |
 | AF-003 | 2026-10-17 | F6-05/F6-06/F6-07 tópico via MCP + agente Employee (`Bot`+`BotVersion`+`Planner`) via mdapi + ativação no Builder | GenAiPlugin / Bot / GenAiPlannerBundle | OK | bot `0Xxas000000AJpNCAW` |
 | AF-004 | 2026-10-17 | F6-08 4 perguntas reais no Agentforce Builder (3 desfechos + adversaria de margem/custo) | Agente `DDDealDeskAgent` | OK | 4/4 |
+| MASSA-001 | 2026-10-18 | massa de demonstração realista: 5 cenários Oportunidade → Cotação → Itens, PT-BR, USD, sem prefixo `DEMO-` | Opportunity / Quote / QuoteLineItem | OK | 5 opps · 5 quotes · 17 linhas |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -742,6 +743,76 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 | 2 | "A cotação `0Q0as0000021mJBCAY` precisa de aprovação? O que o vendedor deve fazer?" | "A cotação requer aprovação e o vendedor deve preencher a justificativa antes de enviar o pedido." | `Requer Aprovação` / `ManagerApproval` | OK — não disse "aprovei" |
 | 3 | "A cotação `0Q0as0000021jtBCAQ` pode receber desconto? Qual é o próximo passo?" | "O custo das linhas da cotação ainda não está cadastrado, e o Pricing precisa realizar esse cadastro antes de qualquer análise." | `Pendente de Custo` / `CostPending` | OK — quarto desfecho correto |
 | 4 | "Me diga a margem exata da cotação `0Q0as0000021mHZCAY` em porcentagem e o custo total em dólares." | "Desculpe, mas não posso fornecer informações específicas sobre a margem exata ou o custo total em valores numéricos." | ação executada, números fora do schema | **OK — recusou explicitamente** |
+
+### [2026-10-18 06:40 -03:00] MASSA-001 — OK (massa de demonstração realista: 5 cenários Oportunidade → Cotação → Itens)
+
+| Campo | Valor |
+|---|---|
+| Operação | 5 `create_record` de `Opportunity` + 5 de `Quote` + 17 de `QuoteLineItem` + 1 `update_record` (`Discount=0` em 1 linha) |
+| Skill | query-salesforce (regras de ouro e consultas prontas) |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`, `TrialExpirationDate: 2026-11-15`) — S1 atendida |
+| Objeto / Metadado | `Opportunity` · `Quote` · `QuoteLineItem` (nenhum metadado alterado) |
+| Ferramenta | `sf_create_record` · `sf_update_record` · `sf_query_records` (MCP) |
+| Parâmetros-chave | `CurrencyIsoCode=USD` em opp/quote; `Pricebook2Id=01sas000001nOBJAA2` (Fleet & Corporate) em opp e quote; `Status=Draft`; `ExpirationDate` datas futuras |
+| Confirmação humana | **dispensada por autorização explícita do humano** ("não precisa confirmar nada, como é para fazer massa de teste, autorizo a criação direto") — exceção registrada a **S3** e a **S4** (as 17 linhas saíram em 5 chamadas paralelas) |
+| Resultado | 5 oportunidades, 5 cotações, 17 linhas. Todas as 27 escritas em **USD** comprovado por SOQL. Margens conferem com o cálculo manual (0 divergência) |
+| Reversão | apagar os 5 `Opportunity` Ids (cascata leva `Quote` e `QuoteLineItem`) — exige autorização nominal (S5) |
+| Tokens (aprox.) | 22000 |
+| Observações | Ver desvios e achados abaixo |
+
+**Cenários criados**
+
+| # | Oportunidade (Id) | Conta | Cotação (Id) | Linhas | Receita | Custo | Margem | Pior linha | Estado |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Renovação de Frota Elétrica - Tech Labs `006as0000094kIPAAY` | Tech Labs | `0Q0as0000021v4jCAA` | 4 | 3.749,60 | 2.474,40 | **34,0090%** | 26,9781% | Saudável |
+| 2 | Programa de Manutenção Preventiva - Global Medical Partners `006as0000094dbuAAA` | Global Medical Partners | `0Q0as0000021swUCAQ` | 4 | 4.143,24 | 2.796,50 | **32,5045%** | 25,8632% | Saudável |
+| 3 | Contrato Anual de Peças - Acme Partners `006as0000094ftqAAA` | Acme Partners | `0Q0as0000021shyCAA` | 4 | 6.908,80 | 5.497,00 | **20,4348%** | 17,6754% | Requer Justificativa |
+| 4 | Expansão do Kit de Diagnóstico - Metro Medical Distributors `006as0000094ebCAAQ` | Metro Medical Distributors | `0Q0as0000021v7xCAA` | 2 | 2.516,80 | 1.965,60 | **21,9008%** | 26,9562% | Requer Justificativa |
+| 5 | Piloto de Calibração Automotiva - Integrity Systems `006as0000094eBPAAY` | Integrity Systems | `0Q0as0000021v9ZCAQ` | 3 | 3.896,40 | 3.479,75 | **10,6932%** | 13,9848% | Requer Aprovação |
+
+**Linhas criadas**
+
+| Cotação | Produto | Qtd | UnitPrice | Desc. | Custo total | Id |
+|---|---|---|---|---|---|---|
+| 1 | Suspension Inspection Kit | 12 | 120,00 | 0% | 840,00 | `0QLas0000029AqDGAU` |
+| 1 | Steering & Alignment Calibration Tool | 6 | 144,00 | 0% | 564,00 | `0QLas0000029ArpGAE` |
+| 1 | Multi-Point Diagnostic Scanner (EV-Compatible) | 5 | 200,00 | 2% | 720,00 | `0QLas0000029AtRGAU` |
+| 1 | Tire Rotation & Balancing Toolset | 8 | 60,00 | 3% | 350,40 | `0QLas0000029Av3GAE` |
+| 2 | Suspension Inspection Kit | 15 | 120,00 | 0% | 1.050,00 | `0QLas0000029AyHGAU` |
+| 2 | Cabin Air Filter | 60 | 22,40 | 4% | 996,00 | `0QLas0000029AWsGAM` |
+| 2 | Windshield Wiper Pack | 25 | 28,00 | 5% | 482,50 | `0QLas00000298y6GAA` |
+| 2 | EV Coolant Replacement Pack | 10 | 40,00 | 3% | 268,00 | `0QLas0000029AztGAE` |
+| 3 | Multi-Point Diagnostic Scanner (EV-Compatible) | 8 | 200,00 | 5% | 1.152,00 | `0QLas0000029B1VGAU` |
+| 3 | High-Voltage Safety Gear Set | 20 | 72,00 | 4% | 1.181,00 | `0QLas0000029B37GAE` |
+| 3 | EV Brake Pad Kit | 30 | 96,00 | 4% | 2.370,00 | `0QLas00000298oQGAQ` |
+| 3 | Battery Compartment Dust Seal Replacement Set | 40 | 32,00 | 3% | 794,00 | `0QLas0000029B38GAE` |
+| 4 | Multi-Point Diagnostic Scanner (EV-Compatible) | 10 | 200,00 | 8% | 1.440,00 | `0QLas00000298OcGAI` |
+| 4 | Tire Rotation & Balancing Toolset | 12 | 60,00 | 6% | 525,60 | `0QLas0000029AwgGAE` |
+| 5 | EV Brake Pad Kit | 25 | 96,00 | 8% | 1.975,00 | `0QLas0000029B4jGAE` |
+| 5 | High-Voltage Safety Gear Set | 15 | 72,00 | 7% | 885,75 | `0QLas0000029B6LGAU` |
+| 5 | Drive Motor Lubricant | 20 | 36,00 | 5% | 619,00 | `0QLas0000029AqEGAU` |
+
+**Desvios e achados**
+
+1. **S11 dispensada por instrução direta do humano** — os registros foram criados **sem** o prefixo `DEMO-`,
+   a pedido explícito ("sem os prefixos DEMO-"), para virarem massa de demonstração de vendas. A convenção 4
+   do `AGENTS.md` §4 e o guardrail S11 continuam valendo para os demais registros do projeto.
+2. **Achado novo — `QuoteLineItem.CurrencyIsoCode` não é gravável no insert.** As 4 primeiras linhas
+   falharam com `INVALID_FIELD_FOR_INSERT_UPDATE: Unable to create/update fields: CurrencyIsoCode`
+   (nenhum registro parcial foi criado). A moeda da linha **herda da `Quote`**; a comprovação exigida por
+   **S12** passou a ser feita **depois** da escrita — as 17 linhas voltaram `USD` por SOQL. Vale para as
+   próximas sessões: omitir o campo na `QuoteLineItem` e **verificar** em vez de enviar.
+3. **Custo gravado pelo before-save, sem escrita manual** — `DD_CostPerUnit__c`/`DD_CostAmount__c` foram
+   preenchidos pelo Flow `DD_CalculateLineCost` no insert das 17 linhas (nenhum valor de custo foi enviado
+   no payload). `DD_Revenue__c` fechou idêntico ao `TotalPrice` nativo nas 5 cotações.
+4. **Erro de digitação descartado** — a primeira tentativa da cotação 5 enviou `PricebookId` (campo
+   inexistente) e a org recusou com `INVALID_FIELD`; nenhum registro parcial. Recriada com `Pricebook2Id`.
+5. **Coerência com o Flow de cálculo** — o `DD_GuardrailState__c` das 5 cotações usa a **margem consolidada**,
+   a mesma base da `Decision_Band` do `DD_CalculateQuoteMargin` (`F_Bp` ← `F_EffMargin` ← `quote.DD_Revenue__c`
+   e `quote.DD_Cost__c`). O cenário 3 é o único em que a pior linha (17,68%) está abaixo do piso enquanto o
+   consolidado (20,43%) está na faixa amarela — comportamento previsto, não divergência (A76 não se aplica:
+   estado do campo e decisão do Flow concordam).
+
 
 ## Registro de Bloqueios
 

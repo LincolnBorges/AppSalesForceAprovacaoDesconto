@@ -63,12 +63,12 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
-| 5 | Acesso, dados e demo | 8 | 6 | CONCLUÍDO |
+| 5 | Acesso, dados e demo | 9 | 7 | CONCLUÍDO |
 | 6 | Camada Agentforce | 11 | 10 | CONCLUÍDO (2026-10-17) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **71** | **63** | |
+| **Total** | | **72** | **64** | |
 
-*Atualizado em 2026-10-17 (Fase 6 fechada: agente `DDDealDeskAgent` ativo e 4 perguntas reais validadas; tag `fase-6`).*
+*Atualizado em 2026-10-18 (F5-09: massa de demonstração realista sem `DEMO-`, 5 cenários completos).*
 
 ---
 
@@ -172,6 +172,7 @@ paradas no ponto indicado.
 | F5-06 | Fechar a Fase 5 | **F5-03**, **F5-05** | Atualizar `MEMORY.md`, `execution-log`, este plano e o `roadmap`; commit e tag `fase-5` | IA | CONCLUÍDO (2026-10-17): docs atualizados, commit de fechamento e tag `fase-5` |
 | F5-07 | Custo ausente não pode parecer margem perfeita | **F4-07** | Hoje `DD_CostAmount__c` nulo vira margem 100% e a cotação passa **verde** — inclusive com desconto de 90% (achado do teste do humano em 2026-10-17). Tratar dado incompleto como estado próprio (ex.: `Pendente de Custo`) no Flow de cálculo e no campo `DD_GuardrailState__c`, em vez de margem máxima | IA+H | CONCLUÍDO (2026-10-17): literal `Pendente de Custo` na fórmula da `Quote`, checagem **antes** da política no `DD_CalculateQuoteMargin` (decisão `CostPending`), `DD_RouteDiscountApproval` encerra sem pedido, LWC com badge cinza + alerta + envio bloqueado. 5 cenários testados; cotação do teste do humano saiu de `Saudável` para `Pendente de Custo`. Ver FLW-004/UI-003 |
 | F5-08 | Custo das entradas BRL | **F5-07** | As 3 entradas **BRL** do Standard Price Book (`MediScan Ventilator`, `Imager`, `Hospital Bed`) não têm `FixedCost__c`/`VariableCostPerUnit__c`; o custo foi semeado só em USD (24 entradas). Decidir entre semear custo proporcional (31% / 34% / 22,08%) ou restringir os testes a cotações USD | HUMANO | CANCELADO (2026-10-17, decisão do humano): não semear BRL — o humano já opera cotações em USD e a F5-07 protege o caso de uma cotação sem custo (estado `Pendente de Custo`, nunca verde). Semear BRL não paga o esforço |
+| F5-09 | Massa de demonstração realista (sem `DEMO-`) | F5-06 | Criar 5 cenários completos Oportunidade → Cotação → Itens com nomes em PT-BR, contas reais da org, produtos do `Fleet & Corporate` com custo e `USD` explícito — massa de **demonstração de vendas**, sem o prefixo `DEMO-` (exceção autorizada pelo humano a S11 e a S3/S4). Idempotência por nome da `Opportunity` antes de criar | IA | CONCLUÍDO (2026-10-18): 5 opps · 5 cotações · 17 linhas, 2 Saudável / 2 Requer Justificativa / 1 Requer Aprovação, todas `USD`, custo gravado pelo before-save. Novo aprendizado **A81** (`QuoteLineItem.CurrencyIsoCode` não é gravável). Ver MASSA-001 e `MEMORY.md` §1.9 |
 
 ### Fase 6 — Camada Agentforce
 
@@ -222,3 +223,4 @@ paradas no ponto indicado.
 | 2026-10-17 | **F6-05/F6-06/F6-07 bloqueadas** por falha de plataforma: `sf_create_agent` recusa o tipo `EinsteinServiceAgent` (sem acesso ao template), sem deixar resíduo. Criada **F6-10** (decisão humana de desbloqueio) e registrado **A78**. Fase 6: 4 de 10 ações concluídas |
 | 2026-10-17 | **v1.0.0 entregue:** F6-11 registrada como dívida conhecida (não bloqueia a v1.0); README com status `v1.0.0 - Entregue`; tag `v1.0.0` |
 | 2026-10-17 | **F6-10 decidida e F6-05 a F6-09 concluídas:** humano autorizou o probe de `Bot` Employee; agente `DDDealDeskAgent` criado por mdapi, tópico via MCP, planner no bundle, ativação no Builder. **4/4 perguntas reais** validadas (AF-004). Novas decisões/aprendizados **D30/A79/A80**; aberta **F6-11** (citar a política). Fase 6: 10 de 11 ações |
+| 2026-10-18 | **F5-09 criada e concluída:** massa de demonstração realista (5 cenários Oportunidade → Cotação → Itens, PT-BR, sem `DEMO-`, `USD`) por autorização explícita do humano; novo aprendizado **A81**. Total: 71 → 72 ações |
