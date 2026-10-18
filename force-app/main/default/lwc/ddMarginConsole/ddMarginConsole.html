@@ -72,14 +72,6 @@
                         </div>
                     </div>
 
-                    <template lwc:if={simRunning}>
-                        <lightning-flow
-                            flow-api-name="DD_CalculateQuoteMargin"
-                            flow-input-variables={simInputs}
-                            onstatuschange={handleSimulateStatus}
-                        ></lightning-flow>
-                    </template>
-
                     <template lwc:if={simError}>
                         <p class="slds-text-color_error slds-m-top_small">{simError}</p>
                     </template>
@@ -129,14 +121,6 @@
                         <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
                             {requestDisabledHint}
                         </p>
-                    </template>
-
-                    <template lwc:if={routeRunning}>
-                        <lightning-flow
-                            flow-api-name="DD_RouteDiscountApproval"
-                            flow-input-variables={routeInputs}
-                            onstatuschange={handleRouteStatus}
-                        ></lightning-flow>
                     </template>
 
                     <template lwc:if={routeError}>

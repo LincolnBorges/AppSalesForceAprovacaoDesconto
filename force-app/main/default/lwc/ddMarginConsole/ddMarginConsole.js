@@ -3,12 +3,15 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import GUARDRAIL_STATE_FIELD from '@salesforce/schema/Quote.DD_GuardrailState__c';
+import simulateMargin from '@salesforce/apex/DD_MarginConsoleController.simulate';
+import requestDiscountApproval from '@salesforce/apex/DD_MarginConsoleController.requestDiscount';
 
 // D14: a lista de campos das cotacoes NAO inclui margem nem custo.
 const QUOTE_FIELDS = [GUARDRAIL_STATE_FIELD];
 
-// O lightning-flow devolve as variaveis de saida em um array de { name, value }.
-// As chaves lidas aqui sao a whitelist do console: nenhuma delas e margem ou custo.
+// F5-11: os Flows sao chamados pelo DD_MarginConsoleController (Apex), nao mais pelo
+// lightning-flow — o componente nativo recusava a execucao para usuario nao-admin.
+// O Apex devolve um DTO com whitelist de campos: nenhuma chave abaixo e margem ou custo.
 const STATE_META = {
     'Saudável': {
         badgeClass: 'slds-badge slds-theme_success',
@@ -71,15 +74,13 @@ export default class DdMarginConsole extends LightningElement {
     // Simulador (nao grava nada)
     simDiscountPct = 10;
     simRunning = false;
-    simInputs = [];
     simResult;
     simError;
 
-    // Pedido de desconto (Flow de roteamento)
+    // Pedido de desconto (Flow de roteamento via Apex)
     reqDiscountPct = 10;
     reqJustification = '';
     routeRunning = false;
-    routeInputs = [];
     routeResult;
     routeError;
 
@@ -206,7 +207,7 @@ export default class DdMarginConsole extends LightningElement {
         this.simDiscountPct = event.target.value;
     }
 
-    handleSimulate() {
+    async handleSimulate() {
         this.simError = undefined;
         this.simResult = undefined;
         const pct = Number(this.simDiscountPct);
@@ -214,34 +215,28 @@ export default class DdMarginConsole extends LightningElement {
             this.simError = 'Informe um desconto entre 0 e 100.';
             return;
         }
-        this.simInputs = [
-            { name: 'quoteId', type: 'String', value: this.recordId },
-            { name: 'requestedDiscountPct', type: 'Number', value: pct }
-        ];
-        this.simRunning = true;
-    }
 
-    handleSimulateStatus(event) {
-        const detail = event.detail || {};
-        if (!this.isFlowFinished(detail.status)) {
-            if (detail.status === 'ERROR') {
-                this.simRunning = false;
-                this.simError = 'Falha ao simular o desconto.';
+        this.simRunning = true;
+        try {
+            const result = await simulateMargin({
+                quoteId: this.recordId,
+                requestedDiscountPct: pct
+            });
+            if (!result || !result.guardrailState) {
+                this.simError =
+                    'O cálculo não devolveu um estado. Verifique a política ativa e as linhas da cotação.';
+                return;
             }
-            return;
+            this.simResult = {
+                state: result.guardrailState,
+                policyName: result.policyName,
+                decision: result.decision
+            };
+        } catch (error) {
+            this.simError = this.reduceError(error);
+        } finally {
+            this.simRunning = false;
         }
-        const output = this.toOutputMap(detail.outputVariables);
-        this.simRunning = false;
-        if (!output.guardrailState) {
-            this.simError =
-                'O cálculo não devolveu um estado. Verifique a política ativa e as linhas da cotação.';
-            return;
-        }
-        this.simResult = {
-            state: output.guardrailState,
-            policyName: output.policyName,
-            decision: output.decision
-        };
     }
 
     handleRequestDiscountPctChange(event) {
@@ -252,7 +247,7 @@ export default class DdMarginConsole extends LightningElement {
         this.reqJustification = event.target.value;
     }
 
-    handleRequestDiscount() {
+    async handleRequestDiscount() {
         this.routeError = undefined;
         this.routeResult = undefined;
         const pct = Number(this.reqDiscountPct);
@@ -265,72 +260,45 @@ export default class DdMarginConsole extends LightningElement {
             this.routeError = `O estado "${projected}" exige justificativa antes do envio.`;
             return;
         }
-        this.routeInputs = [
-            { name: 'quoteId', type: 'String', value: this.recordId },
-            { name: 'requestedDiscountPct', type: 'Number', value: pct },
-            { name: 'justification', type: 'String', value: this.reqJustification }
-        ];
-        this.routeRunning = true;
-    }
 
-    handleRouteStatus(event) {
-        const detail = event.detail || {};
-        if (!this.isFlowFinished(detail.status)) {
-            if (detail.status === 'ERROR') {
-                this.routeRunning = false;
+        this.routeRunning = true;
+        try {
+            const result = await requestDiscountApproval({
+                quoteId: this.recordId,
+                requestedDiscountPct: pct,
+                justification: this.reqJustification
+            });
+            if (!result || !result.decision) {
                 this.routeError =
-                    'Falha ao executar o roteamento. Nenhum pedido deve ser considerado enviado.';
+                    'O roteamento não devolveu decisão. Nenhum pedido deve ser considerado enviado.';
+                return;
             }
-            return;
+            this.routeResult = {
+                decision: result.decision,
+                status: result.status,
+                requestId: result.requestId,
+                approverName: result.approverName,
+                message: result.message
+            };
+            const failed = result.decision === 'Fault' || result.decision === 'Blocked';
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: failed ? 'Pedido não encaminhado' : 'Pedido de desconto',
+                    message: result.message || this.routeResultDecision,
+                    variant: failed ? 'error' : 'success'
+                })
+            );
+        } catch (error) {
+            this.routeError = this.reduceError(error);
+        } finally {
+            this.routeRunning = false;
         }
-        const output = this.toOutputMap(detail.outputVariables);
-        this.routeRunning = false;
-        if (!output.decision) {
-            this.routeError =
-                'O roteamento não devolveu decisão. Nenhum pedido deve ser considerado enviado.';
-            return;
-        }
-        this.routeResult = {
-            decision: output.decision,
-            status: output.status,
-            requestId: output.requestId,
-            approverName: output.approverName,
-            message: output.message
-        };
-        const failed = output.decision === 'Fault' || output.decision === 'Blocked';
-        this.dispatchEvent(
-            new ShowToastEvent({
-                title: failed ? 'Pedido não encaminhado' : 'Pedido de desconto',
-                message: output.message || this.routeResultDecision,
-                variant: failed ? 'error' : 'success'
-            })
-        );
     }
 
     handleRefresh() {
         if (this.wiredQuoteResult) {
             refreshApex(this.wiredQuoteResult);
         }
-    }
-
-    isFlowFinished(status) {
-        return status === 'FINISHED_SCREEN' || status === 'FINISHED';
-    }
-
-    toOutputMap(outputVariables) {
-        const map = {};
-        if (Array.isArray(outputVariables)) {
-            outputVariables.forEach((item) => {
-                if (item && item.name) {
-                    map[item.name] = item.value;
-                }
-            });
-        } else if (outputVariables) {
-            Object.keys(outputVariables).forEach((key) => {
-                map[key] = outputVariables[key];
-            });
-        }
-        return map;
     }
 
     isValidDiscount(value) {

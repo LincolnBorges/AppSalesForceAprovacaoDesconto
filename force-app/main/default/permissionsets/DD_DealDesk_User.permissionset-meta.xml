@@ -4,6 +4,11 @@
         <application>DD_DealDesk</application>
         <visible>true</visible>
     </applicationVisibilities>
+    <!-- F5-11: o console chama os Flows pelo controller; sem acesso a classe o vendedor recebe erro. -->
+    <classAccesses>
+        <apexClass>DD_MarginConsoleController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Vendedor e gerente: usa o console, simula desconto e pede aprovacao. Nao le custo nem margem (D14). FLS de PS e aditivo: a negacao efetiva depende do perfil (ver F5-03).</description>
     <fieldPermissions>
         <editable>false</editable>
