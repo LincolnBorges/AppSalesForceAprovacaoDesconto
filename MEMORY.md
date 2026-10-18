@@ -212,7 +212,7 @@ Piso 20 e alvo 30 em todas (D12); o teto é o que diferencia genérica de espec�
 | As 3 `DEMO-Quote-Demo-*` | `Pricebook2Id = 01sas000001nOBJAA2` (Fleet & Corporate), `USD`, `Draft`, `ExpirationDate = 2026-10-31`; custo gravado pelo `DD_CalculateLineCost` no insert (nenhuma escrita manual de custo) |
 | Policy aplicada | `DEMO-Policy-Parts-Fleet` (`a0Mas000000PR6fEAG`): piso 20 · alvo 30 · teto 10 · exige justificativa |
 | PS `DD_DealDesk_User` | `0PSas000004H6puGAC`; atribuído ao Standard User `005as000003pCpEAAU` (Alan FieldTech) via `PermissionSetAssignment` `0Paas00000BpdrHCAR` |
-| Aprovador resolvido hoje (D26) | dono Lincoln sem gestor → dono da política é o próprio solicitante → 3º degrau = **Alan FieldTech** (1º ativo por nome). Para a demo, a opção é mudar o dono da cotação B para `005as000003pCovAAE` (Mehmood Zac, gestora Lincoln) — ver `docs/demo-script.md` §1.5 |
+| Aprovador resolvido hoje (D26) | **Atualizado em 2026-10-18:** existe hierarquia não-admin (Bruno Tavares → Renata Almeida) e o 1º degrau da escada é exercitado de fato — ver §1.10. Contexto original: dono Lincoln sem gestor → dono da política é o próprio solicitante → 3º degrau = **Alan FieldTech** (1º ativo por nome). Para a demo, a opção é mudar o dono da cotação B para `005as000003pCovAAE` (Mehmood Zac, gestora Lincoln) — ver `docs/demo-script.md` §1.5 |
 
 ### 1.9 Massa de demonstração realista — 5 cenários (2026-10-18, MASSA-001)
 
@@ -239,6 +239,53 @@ demonstração de vendas (exceção registrada a S11 e a S3/S4 na entrada `MASSA
 - **Cenário 3 é o caso de fronteira deliberado**: consolidado 20,43% (amarelo) com pior linha 17,68%
   (abaixo do piso). O campo e a `Decision_Band` do Flow usam a mesma base (margem consolidada) — coerente.
 - **Rollback:** apagar os 5 `Opportunity` Ids (a cascata leva `Quote` e `QuoteLineItem`) — exige
+  autorização nominal (S5).
+
+### 1.10 Hierarquia não-admin e cenários do vendedor (2026-10-18, MASSA-002)
+
+Corrige a limitação da massa anterior: **os 5 cenários de §1.9 têm Lincoln como proprietário**
+(System Administrator, sem gerente), então o `DD_RouteDiscountApproval` nunca exercitava o 1º degrau da
+escada (D26). Antes desta sessão **nenhum usuário não-admin tinha `ManagerId`** — os 3 que tinham gerente
+eram todos System Administrator apontando para Lincoln.
+
+| Papel | Nome | Id | Perfil | Gerente | Observação |
+|---|---|---|---|---|---|
+| Gerente Comercial | Renata Almeida | `005as000003piTVAAY` | **Key Account Manager** (não-admin) | — | `DD_DealDesk_User` `0Paas00000BqNIlCAN` |
+| Executivo de Vendas | Bruno Tavares | `005as000003piV7AAI` | **Standard User** (não-admin) | **Renata Almeida** | `DD_DealDesk_User` `0Paas00000BqQ1rCAF` |
+
+- **Sem `UserRole`** — `ManagerId` funciona sem papel nesta org (os 3 usuários com gerente já eram
+  `UserRole = null`). Nenhum metadado foi alterado.
+- `TimeZoneSidKey = America/Sao_Paulo`, `LocaleSidKey = pt_BR`, `Department = Vendas Corporativas`;
+  e-mails em *plus-addressing* do dono da org (`... +renata@` / `... +bruno@`), então **nenhuma caixa de
+  terceiros** recebe boas-vindas nem a notificação do aprovador.
+- **Licenças:** `Salesforce` 20 total / 12 usadas → **8 livres** antes; **6 livres** depois dos 2 usuários.
+
+**Cenários com o vendedor como proprietário** (todas `USD`, `Draft`, Fleet & Corporate)
+
+| # | Oportunidade (Id) | Conta | Cotação (Id) | Linhas | Receita | Custo | Margem | Estado |
+|---|---|---|---|---|---|---|---|---|
+| A | Renovação de Frota Comercial - Trane Company `006as0000094kK2AAI` | Trane Company `001as00000HCKw8AAH` | `0Q0as0000021vG1CAI` | 2 | 2.464,00 | 2.156,00 | **12,5000%** | Requer Aprovação |
+| B | Programa de Manutenção de Frota - Titan Fastener Products `006as0000094kblAAA` | Titan Fastener Products `001as00000HCKx1AAH` | `0Q0as0000021vHdCAI` | 3 | 3.432,80 | 2.467,00 | **28,1345%** | Requer Justificativa |
+| C | Contrato de Ferramentas de Calibração - Volt Technical Services `006as0000094kdNAAQ` | Volt Technical Services `001as00000HCLwwAAH` | `0Q0as0000021vJFCAY` | 3 | 4.531,20 | 2.736,00 | **39,6186%** | Saudável |
+
+**Pedidos de desconto — prova de que a escada usa o 1º degrau**
+
+| Pedido | Cotação | `Decision__c` | `Status__c` | Aprovador | `ApproverSource__c` |
+|---|---|---|---|---|---|
+| `DR-00001` `a0Nas00000TiGJhEAN` | A | `ManagerApproval` | `Submitted` | **Renata Almeida** (Key Account Manager) | **`Manager`** |
+| `DR-00002` `a0Nas00000TiGLJEA3` | B | `ManagerApproval` | `Submitted` | **Renata Almeida** (Key Account Manager) | **`Manager`** |
+
+- Os 2 pedidos têm **dono = Bruno Tavares**. O Apex anônimo roda como Lincoln (o dono nasceria Lincoln),
+  então o `OwnerId` foi corrigido por `sf_update_record` — no uso real o Flow roda no contexto do vendedor.
+  `Approver__c` e `ApproverSource__c` não mudam com essa correção.
+
+- Gerados com `sf_execute_anonymous_apex` + `Flow.Interview` no `DD_RouteDiscountApproval`, com
+  `requestedDiscountPct = 0` (usa a margem real da cotação). **A68 barra deploy de Apex, não a execução
+  anônima** — nenhum metadado foi tocado.
+- Cenário C **não** gerou pedido (`AutoApproved` acima do alvo) — 3 cotações → 2 pedidos é o esperado.
+- `OwnerId` foi gravado **explicitamente** na `Opportunity` **e** na `Quote`: sem isso a cotação nasce
+  com o dono igual ao usuário que cria, e a escada de aprovação mudaria de degrau.
+- **Rollback:** desativar os 2 usuários e apagar as 3 `Opportunity` (cascata) + os 2 pedidos — exige
   autorização nominal (S5).
 
 ---

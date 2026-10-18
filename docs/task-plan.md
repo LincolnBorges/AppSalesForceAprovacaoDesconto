@@ -63,12 +63,12 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 2 | Política de desconto | 7 | 7 | CONCLUÍDO |
 | 3 | Guardrail e roteamento | 10 | 9 | CONCLUÍDO |
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
-| 5 | Acesso, dados e demo | 9 | 7 | CONCLUÍDO |
+| 5 | Acesso, dados e demo | 10 | 8 | CONCLUÍDO |
 | 6 | Camada Agentforce | 11 | 10 | CONCLUÍDO (2026-10-17) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **72** | **64** | |
+| **Total** | | **73** | **65** | |
 
-*Atualizado em 2026-10-18 (F5-09: massa de demonstração realista sem `DEMO-`, 5 cenários completos).*
+*Atualizado em 2026-10-18 (F5-09 e F5-10: massa realista sem `DEMO-` e hierarquia não-admin vendedor → gerente).*
 
 ---
 
@@ -173,6 +173,7 @@ paradas no ponto indicado.
 | F5-07 | Custo ausente não pode parecer margem perfeita | **F4-07** | Hoje `DD_CostAmount__c` nulo vira margem 100% e a cotação passa **verde** — inclusive com desconto de 90% (achado do teste do humano em 2026-10-17). Tratar dado incompleto como estado próprio (ex.: `Pendente de Custo`) no Flow de cálculo e no campo `DD_GuardrailState__c`, em vez de margem máxima | IA+H | CONCLUÍDO (2026-10-17): literal `Pendente de Custo` na fórmula da `Quote`, checagem **antes** da política no `DD_CalculateQuoteMargin` (decisão `CostPending`), `DD_RouteDiscountApproval` encerra sem pedido, LWC com badge cinza + alerta + envio bloqueado. 5 cenários testados; cotação do teste do humano saiu de `Saudável` para `Pendente de Custo`. Ver FLW-004/UI-003 |
 | F5-08 | Custo das entradas BRL | **F5-07** | As 3 entradas **BRL** do Standard Price Book (`MediScan Ventilator`, `Imager`, `Hospital Bed`) não têm `FixedCost__c`/`VariableCostPerUnit__c`; o custo foi semeado só em USD (24 entradas). Decidir entre semear custo proporcional (31% / 34% / 22,08%) ou restringir os testes a cotações USD | HUMANO | CANCELADO (2026-10-17, decisão do humano): não semear BRL — o humano já opera cotações em USD e a F5-07 protege o caso de uma cotação sem custo (estado `Pendente de Custo`, nunca verde). Semear BRL não paga o esforço |
 | F5-09 | Massa de demonstração realista (sem `DEMO-`) | F5-06 | Criar 5 cenários completos Oportunidade → Cotação → Itens com nomes em PT-BR, contas reais da org, produtos do `Fleet & Corporate` com custo e `USD` explícito — massa de **demonstração de vendas**, sem o prefixo `DEMO-` (exceção autorizada pelo humano a S11 e a S3/S4). Idempotência por nome da `Opportunity` antes de criar | IA | CONCLUÍDO (2026-10-18): 5 opps · 5 cotações · 17 linhas, 2 Saudável / 2 Requer Justificativa / 1 Requer Aprovação, todas `USD`, custo gravado pelo before-save. Novo aprendizado **A81** (`QuoteLineItem.CurrencyIsoCode` não é gravável). Ver MASSA-001 e `MEMORY.md` §1.9 |
+| F5-10 | Hierarquia não-admin e cenários do vendedor | F5-09 | Criar 1 vendedor (Standard User) e 1 gerente comercial (Key Account Manager) em PT-BR, com `ManagerId` do vendedor apontando para o gerente, `DD_DealDesk_User` nos dois, e 3 cenários com o vendedor como dono — para exercitar o **1º degrau** da escada de aprovador (D26), que a massa anterior nunca tocava | IA+H | CONCLUÍDO (2026-10-18): `Renata Almeida` `005as000003piTVAAY` (gerente) e `Bruno Tavares` `005as000003piV7AAI` (vendedor, `ManagerId` = Renata). 3 cenários: 12,5000% (Requer Aprovação), 28,1345% (Requer Justificativa) e 39,6186% (Saudável). Roteamento gerou **DR-00001** e **DR-00002** com `ApproverSource__c = Manager` e aprovador Renata — o 1º degrau provado. Sem `UserRole` e sem metadado novo. Ver MASSA-002 e `MEMORY.md` §1.10 |
 
 ### Fase 6 — Camada Agentforce
 
@@ -224,3 +225,4 @@ paradas no ponto indicado.
 | 2026-10-17 | **v1.0.0 entregue:** F6-11 registrada como dívida conhecida (não bloqueia a v1.0); README com status `v1.0.0 - Entregue`; tag `v1.0.0` |
 | 2026-10-17 | **F6-10 decidida e F6-05 a F6-09 concluídas:** humano autorizou o probe de `Bot` Employee; agente `DDDealDeskAgent` criado por mdapi, tópico via MCP, planner no bundle, ativação no Builder. **4/4 perguntas reais** validadas (AF-004). Novas decisões/aprendizados **D30/A79/A80**; aberta **F6-11** (citar a política). Fase 6: 10 de 11 ações |
 | 2026-10-18 | **F5-09 criada e concluída:** massa de demonstração realista (5 cenários Oportunidade → Cotação → Itens, PT-BR, sem `DEMO-`, `USD`) por autorização explícita do humano; novo aprendizado **A81**. Total: 71 → 72 ações |
+| 2026-10-18 | **F5-10 criada e concluída:** hierarquia não-admin (vendedor Standard User → gerente Key Account Manager) e 3 cenários com o vendedor como dono; roteamento provou o 1º degrau da escada (`ApproverSource__c = Manager`). Total: 72 → 73 ações |

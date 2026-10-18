@@ -76,6 +76,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | AF-003 | 2026-10-17 | F6-05/F6-06/F6-07 tópico via MCP + agente Employee (`Bot`+`BotVersion`+`Planner`) via mdapi + ativação no Builder | GenAiPlugin / Bot / GenAiPlannerBundle | OK | bot `0Xxas000000AJpNCAW` |
 | AF-004 | 2026-10-17 | F6-08 4 perguntas reais no Agentforce Builder (3 desfechos + adversaria de margem/custo) | Agente `DDDealDeskAgent` | OK | 4/4 |
 | MASSA-001 | 2026-10-18 | massa de demonstração realista: 5 cenários Oportunidade → Cotação → Itens, PT-BR, USD, sem prefixo `DEMO-` | Opportunity / Quote / QuoteLineItem | OK | 5 opps · 5 quotes · 17 linhas |
+| MASSA-002 | 2026-10-18 | hierarquia não-admin: 2 usuários PT-BR (vendedor + gerente) + 3 cenários com o vendedor como proprietário + roteamento das 2 cotações que exigem aprovação | User / PermissionSetAssignment / Opportunity / Quote / DD_DiscountRequest__c | OK | 2 users · 2 PS · 3 opps · 3 quotes · 7 linhas · 2 pedidos |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -812,6 +813,82 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
    e `quote.DD_Cost__c`). O cenário 3 é o único em que a pior linha (17,68%) está abaixo do piso enquanto o
    consolidado (20,43%) está na faixa amarela — comportamento previsto, não divergência (A76 não se aplica:
    estado do campo e decisão do Flow concordam).
+
+### [2026-10-18 06:49 -03:00] MASSA-002 — OK (hierarquia não-admin: vendedor → gerente, com 2 pedidos roteados)
+
+| Campo | Valor |
+|---|---|
+| Operação | 2 `sf_create_user` + 2 `sf_update_user` + 2 `create_record` (`PermissionSetAssignment`) + 3 `Opportunity` + 3 `Quote` + 7 `QuoteLineItem` + 2 `sf_execute_anonymous_apex` (`Flow.Interview` no `DD_RouteDiscountApproval`) |
+| Skill | query-salesforce · route-approval (critério do aprovador) |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`, expira `2026-11-15`) — S1 atendida |
+| Objeto / Metadado | `User` · `PermissionSetAssignment` · `Opportunity` · `Quote` · `QuoteLineItem` · `DD_DiscountRequest__c` (nenhum metadado alterado) |
+| Ferramenta | `sf_create_user` · `sf_update_user` · `sf_create_record` · `sf_execute_anonymous_apex` (MCP) |
+| Parâmetros-chave | vendedor `OwnerId = 005as000003piV7AAI` na Opportunity **e** na Quote; gerente `ManagerId` no vendedor; `CurrencyIsoCode=USD`; `Pricebook2Id=01sas000001nOBJAA2`; `requestedDiscountPct=0` no roteamento (usa a margem real da cotação) |
+| Confirmação humana | **autorização direta**: o humano escolheu a opção "criar 2 usuários novos em PT-BR (vendedor + gerente)" na elicitação desta sessão. A criação dos cenários herdou a autorização de massa de teste de MASSA-001 |
+| Resultado | 2 usuários não-admin, hierarquia vendedor → gerente funcionando, 3 cenários e **2 pedidos de desconto com aprovador = gerente** |
+| Reversão | desativar os 2 usuários (`IsActive=false`) e apagar os 3 `Opportunity` (cascata leva cotas e linhas) + os 2 `DD_DiscountRequest__c` — exige autorização nominal (S5) |
+| Tokens (aprox.) | 19000 |
+| Observações | Ver desvios e achados abaixo |
+
+**Usuários criados**
+
+| Papel | Nome | Id | Perfil | Gerente | Licença |
+|---|---|---|---|---|---|
+| Gerente Comercial | Renata Almeida | `005as000003piTVAAY` | Key Account Manager (**não-admin**) | — | Salesforce (2 de 8 livres) |
+| Executivo de Vendas | Bruno Tavares | `005as000003piV7AAI` | Standard User (**não-admin**) | **Renata Almeida** | Salesforce (idem) |
+
+- Ambos: `TimeZoneSidKey = America/Sao_Paulo`, `LocaleSidKey = pt_BR`, `LanguageLocaleKey = pt_BR`,
+  `Department = Vendas Corporativas`, title preenchido; `DD_DealDesk_User` atribuído via
+  `PermissionSetAssignment` (Bruno `0Paas00000BqQ1rCAF`, Renata `0Paas00000BqNIlCAN`).
+- E-mails em *plus-addressing* do dono da org (`... +renata@` / `... +bruno@`) — nenhuma caixa de
+  terceiros é atingida por e-mail de boas-vindas ou pela notificação do aprovador.
+
+**Cenários com o vendedor como proprietário**
+
+| # | Oportunidade (Id) | Conta | Cotação (Id) | Linhas | Receita | Custo | Margem | Estado | Pedido |
+|---|---|---|---|---|---|---|---|---|---|
+| A | Renovação de Frota Comercial - Trane Company `006as0000094kK2AAI` | Trane Company | `0Q0as0000021vG1CAI` | 2 | 2.464,00 | 2.156,00 | **12,5000%** | Requer Aprovação | **DR-00001** |
+| B | Programa de Manutenção de Frota - Titan Fastener Products `006as0000094kblAAA` | Titan Fastener Products | `0Q0as0000021vHdCAI` | 3 | 3.432,80 | 2.467,00 | **28,1345%** | Requer Justificativa | **DR-00002** |
+| C | Contrato de Ferramentas de Calibração - Volt Technical Services `006as0000094kdNAAQ` | Volt Technical Services | `0Q0as0000021vJFCAY` | 3 | 4.531,20 | 2.736,00 | **39,6186%** | Saudável | — (sem pedido, correto) |
+
+**Pedidos de desconto roteados**
+
+| Pedido | Cotação | `Decision__c` | `Status__c` | `Approver__c` | `ApproverSource__c` | `GuardrailState__c` |
+|---|---|---|---|---|---|---|
+| `DR-00001` `a0Nas00000TiGJhEAN` | A (`0Q0as0000021vG1CAI`) | `ManagerApproval` | `Submitted` | **Renata Almeida** (Key Account Manager) | **`Manager`** | Requer Aprovação |
+| `DR-00002` `a0Nas00000TiGLJEA3` | B (`0Q0as0000021vHdCAI`) | `ManagerApproval` | `Submitted` | **Renata Almeida** (Key Account Manager) | **`Manager`** | Requer Justificativa |
+
+**Desvios e achados**
+
+1. **Resposta à pergunta do humano:** os 5 cenários de MASSA-001 foram criados **todos como Lincoln
+   Borges** (System Administrator) — `OwnerId` de Lincoln nas 5 `Opportunity` e nas 5 `Quote`. Como o
+   `DD_RouteDiscountApproval` resolve o aprovador pelo `User.ManagerId` do **dono da cotação** e Lincoln
+   não tem gerente, a escada cairia no 2º degrau (dono da política = o próprio solicitante) e no 3º
+   (primeiro ativo ≠ solicitante) — nunca no "gerente imediato".
+2. **Gap da org que motivou MASSA-002:** nenhum usuário não-admin tinha gerente. Os únicos 3 com
+   `ManagerId` (Sam Elliott, Drake Chloe, Mehmood Zac) são **System Administrator** e apontam para Lincoln.
+   Os não-admin existentes (Alan FieldTech, Deepak J, Eric Lee, Benedict Wong) estavam todos com
+   `ManagerId = null`.
+3. **`ManagerId` funciona sem `UserRole`** — os 3 usuários com gerente na org têm `UserRole = null`, então
+   a hierarquia foi montada **sem criar papel** e **sem alterar metadado**.
+4. **`sf_create_user` não expõe `title`/`department`.** O tool rejeitou os campos
+   (`Unrecognized key(s) in object: 'title', 'department'`) — foram gravados pelo `sf_update_user` logo depois.
+5. **Roteamento via Apex anônimo** (`Flow.Interview`) e **não** pela UI: os 2 pedidos saíram com o
+   `justification` informado, `requestedDiscountPct = 0` (margem real da cotação) e o aprovador correto.
+   Confirma que **A68 não bloqueia executar Apex**, só **deployar** — o `DD_RouteDiscountApproval` rodou
+   sem tocar em metadado.
+6. **Renata enxerga os pedidos por dado:** `DD_DiscountRequest__c.sharingModel = ReadWrite` e o
+   `DD_DealDesk_User` concede leitura no objeto — não é preciso transferir propriedade do pedido.
+7. **Cenário C não gerou pedido** — coerente com D24 (`AutoApproved` acima do alvo não cria registro).
+   Contagem 3 cotações → 2 pedidos é a prova esperada.
+8. **Dono dos 2 pedidos corrigido para o vendedor** — o Apex anônimo roda como Lincoln, então o
+   `DD_DiscountRequest__c` nasceu com dono Lincoln; no uso real (console do vendedor por `lightning-flow`)
+   o Flow roda no contexto do vendedor e o dono seria Bruno. Foram 2 `sf_update_record` de `OwnerId` para
+   `005as000003piV7AAI`, para a lista "meus pedidos" do vendedor ficar coerente na demonstração. O
+   `Approver__c` continua **Renata** e o `ApproverSource__c` continua `Manager` — a escada não muda.
+9. **Licenças:** `Salesforce` 20 total · 14 usadas (**6 livres**) depois dos 2 usuários novos.
+   `Service Cloud` 10/0 e as demais intocadas.
+
 
 
 ## Registro de Bloqueios
