@@ -82,6 +82,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | APR-001 | 2026-10-18 | F5-12 tela nativa de aprovação: `ApprovalProcess` no pedido, submissão pelo controller, `Status__c` opcional + regra, FLS de leitura | ApprovalProcess / Workflow / CustomField / PermissionSet / ApexClass | OK | processo ativo `04aas000000atijAAA` |
 | APR-002 | 2026-10-18 | submissão dos 3 pedidos que já existiam à fila da gerente (DR-00001/2/3) | DD_DiscountRequest__c | OK | 3 `ProcessInstanceWorkitem` para Renata |
 | LAY-001 | 2026-10-18 | layout do pedido orientado à decisão do gerente: 4 seções, 2 colunas, justificativa em largura total | Layout `DD_DiscountRequest__c` | OK | `09Sas000000QZuzEAG` |
+| APR-003 | 2026-10-18 | `approvalPageFields` do processo: 9 campos na tela de aprovação (antes só Nome e Owner) | ApprovalProcess | OK | `04aas000000atijAAA` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -1156,6 +1157,40 @@ datas no cabeçalho do item.
 - **A91:** campo custom `required` **é reinjetado pelo Salesforce** na primeira seção do layout quando o
   deploy não o inclui — a reinjeção vem no topo e desalinha as colunas. Incluir o campo
   explicitamente (aqui, na seção `Decisão`) é o único jeito de controlar a posição.
+
+### [2026-10-18 09:10 -03:00] APR-003 — OK (F5-14: campos na tela de aprovação)
+
+| Campo | Valor |
+|---|---|
+| Operação | Inclusão de `<approvalPageFields>` no `DD_Manager_Approval`; dry-run e deploy |
+| Skill | validate-metadata |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `ApprovalProcess DD_DiscountRequest__c.DD_Manager_Approval` (`04aas000000atijAAA`) |
+| Ferramenta | `sf project deploy start` (dry-run + real) · `sf_retrieve_metadata` · `sf api request rest .../describe/approvalLayouts` |
+| Parâmetros-chave | `Name`, `Quote__c`, `RequestedDiscountPct__c`, `GuardrailState__c`, `PolicyName__c`, `PolicyFloorMarginPct__c`, `PolicyTargetMarginPct__c`, `Justification__c`, `Owner` |
+| Payload / SOQL | 1 componente / 1 arquivo; `--test-level NoTestRun` |
+| Confirmação humana | **sim** — o humano identificou a causa e pediu a correção (F5-14) |
+| Resultado | dry-run `Succeeded` `0Afas0000060FOcCAM`; deploy real `Succeeded`; `describe/approvalLayouts` devolve os 9 campos na ordem; 3 `ProcessInstanceWorkitem` seguem `Pending` |
+| Reversão | remover o nó `<approvalPageFields>` e redeployar (volta ao default `Name` + `Owner`) |
+| Tokens (aprox.) | 9000 |
+| Observações | Processo **ativo** aceitou a alteração — não foi preciso desativar; itens pendentes não foram afetados |
+
+**Causa**
+
+O Page Layout do objeto (LAY-001) **não** governa a tela de aprovação. O nó certo do `ApprovalProcess` é
+`<approvalPageFields>` — o retrieve mostrava `Name` e `Owner`, exatamente os dois campos da tela da Renata.
+O nome sugerido `<approvalLayout>` não existe no tipo; `approvalPageFields` é a lista de campos.
+
+**Evidência (`GET /sobjects/DD_DiscountRequest__c/describe/approvalLayouts`)**
+
+`Numero do Pedido` · `Cotacao` · `Desconto Pedido (%)` · `Estado do Guardrail` · `Nome da Politica (snapshot)` ·
+`Piso da Politica (%)` · `Alvo da Politica (%)` · `Justificativa` · `Owner` — 9 itens, read-only, na ordem acima.
+
+**Aprendizado**
+
+- **A92:** a tela de aprovação usa `ApprovalProcess.approvalPageFields`, **não** o Page Layout do objeto nem
+  `<approvalLayout>`. O default são só `Name` + `Owner`; `describe/approvalLayouts` é a fonte de verdade do
+  que o aprovador vê.
 
 ## Registro de Bloqueios
 
