@@ -81,6 +81,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 | FLW-006 | 2026-10-18 | teste do Perfil `Standard` concedendo acesso aos 2 Flows (+ sonda de FLS, 7ª combinação) | Profile / PermissionSet | FALHA | mesmo erro — Perfil não é o gate |
 | APR-001 | 2026-10-18 | F5-12 tela nativa de aprovação: `ApprovalProcess` no pedido, submissão pelo controller, `Status__c` opcional + regra, FLS de leitura | ApprovalProcess / Workflow / CustomField / PermissionSet / ApexClass | OK | processo ativo `04aas000000atijAAA` |
 | APR-002 | 2026-10-18 | submissão dos 3 pedidos que já existiam à fila da gerente (DR-00001/2/3) | DD_DiscountRequest__c | OK | 3 `ProcessInstanceWorkitem` para Renata |
+| LAY-001 | 2026-10-18 | layout do pedido orientado à decisão do gerente: 4 seções, 2 colunas, justificativa em largura total | Layout `DD_DiscountRequest__c` | OK | `09Sas000000QZuzEAG` |
 
 > Atualize também [`MEMORY.md`](../MEMORY.md) §1 com os Ids criados.
 
@@ -1118,6 +1119,43 @@ roteava para um registro `DD_DiscountRequest__c` e mandava e-mail — não havia
 | Reversão | "Recall" pela tela de aprovação (submissor ou admin) ou `Approval.ProcessWorkitemRequest`; o pedido volta a `Submitted` sem item — nenhum campo do pedido muda na submissão |
 | Tokens (aprox.) | 3000 |
 | Observações | O `Submitted By` do histórico fica Lincoln (o script roda como ele); pedidos novos criados pelo console saem como o vendedor |
+
+### [2026-10-18 09:00 -03:00] LAY-001 — OK (F5-13: layout do pedido para a decisão do gerente)
+
+| Campo | Valor |
+|---|---|
+| Operação | Reescrita do Page Layout `DD_DiscountRequest__c-DD Discount Request Layout` em 4 seções; `--dry-run` e deploy |
+| Skill | validate-metadata · sf-schema |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Objeto / Metadado | `Layout DD_DiscountRequest__c-DD Discount Request Layout` (`09Sas000000QZuzEAG`) |
+| Ferramenta | `sf project deploy start` (dry-run + real) · `sf_retrieve_metadata` |
+| Parâmetros-chave | 1 componente / 1 arquivo; `--test-level NoTestRun` |
+| Payload / SOQL | §1 `Resumo do Pedido` (`Quote__c`, `RequestedDiscountPct__c` \| `GuardrailState__c`, `Status__c`) · §2 `Política Aplicada` (`PolicyName__c`, `PolicyFloorMarginPct__c` \| `PolicyTargetMarginPct__c`) · §3 `Justificativa` (`Justification__c`, `OneColumn`) · §4 `Decisão` (`Decision__c`, `DecisionNote__c`, `OneColumn`) |
+| Confirmação humana | **sim** — pedido explícito do humano (F5-13) com os campos e as seções definidos |
+| Resultado | dry-run `Succeeded` `0Afas0000060GEDCA2`; deploy real `Succeeded` `0Afas0000060FreCAE`; retrieve confirma as 4 seções e os 10 campos |
+| Reversão | redeploy da versão anterior do layout (git) ou inserir de volta os campos removidos pela UI |
+| Tokens (aprox.) | 6000 |
+| Observações | A plataforma reinjetou `Decision__c` (required) na 1ª seção no 1º deploy; o 2º colocou-o na seção `Decisão`. Nenhum campo de margem/custo da cotação está no layout (D14) |
+
+**Decisão de desenho**
+
+O layout responde a três perguntas, na ordem em que o gerente decide: **o que foi pedido** (cotação,
+desconto, estado do guardrail, status), **sob qual política** (nome, piso, alvo) e **com qual
+justificativa**. `PolicyFloorMarginPct__c`/`PolicyTargetMarginPct__c` são os **limites da política**
+(snapshot), não a margem do negócio — a margem e o custo da cotação continuam fora da tela (D14).
+
+**Fora do layout (dados preservados, FLS inalterada)**
+
+`Approver__c`, `ApproverSource__c`, `DecidedAt__c`, `Policy__c`, `PolicySpecificity__c`,
+`PolicyEffectiveFrom__c`, `PolicyMaxDiscountPct__c`, `PolicyRequiresJustification__c`,
+`CreatedById`, `LastModifiedById`, `Name`. A página de aprovação continua mostrando `Assigned To` e as
+datas no cabeçalho do item.
+
+**Aprendizado**
+
+- **A91:** campo custom `required` **é reinjetado pelo Salesforce** na primeira seção do layout quando o
+  deploy não o inclui — a reinjeção vem no topo e desalinha as colunas. Incluir o campo
+  explicitamente (aqui, na seção `Decisão`) é o único jeito de controlar a posição.
 
 ## Registro de Bloqueios
 
