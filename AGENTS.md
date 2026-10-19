@@ -157,6 +157,7 @@ Princípio: **cada token do contexto é gasto uma vez e só se for necessário.*
 | C8 | **Orçamento de sessão.** | `max_tokens_per_session: 50000`; alerta em `35000`; auto-compact em `45000` |
 | C9 | **Sem retrabalho de leitura.** | Não releia arquivos já lidos na sessão |
 | C10 | **Log conciso.** | Uma linha por operação; payloads resumidos a campos-chave |
+| C11 | **Diagnóstico de UI sem adivinhação (A97).** | Com a página aberta no Chrome, **ler o DOM/atributos** (ou pedir um print ao humano) **antes** de inferir o comportamento da tela. Componente de UI pode renderizar **segundos depois** — esperar antes de concluir que quebrou. **Após 2 tentativas** de verificação automática sem resultado, **parar e pedir ao humano** para conferir, dizendo exatamente o que olhar. Teorizar mais é mais caro que perguntar |
 
 ---
 

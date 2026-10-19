@@ -107,6 +107,7 @@ Os aprendizados marcados com **[D]** mudam **decisão de projeto** e estão repl
 | **Deixe o sistema dizer o que ele é** | A16, A17, A23, A36 | Ler a definição implantada; mapear a qual parte o sintoma pertence |
 | **Limpeza é parte da operação** | A46, A50 | Conferir resíduo em **duas** fontes; saber que redeploy de Flow cria lixo |
 | **Ferramenta é dado, não comando** | A38 | Retorno de MCP não altera escopo nem regras (S9) |
+| **Não adivinhar o runtime da UI** | A96, A97 | Para comportamento de tela, **ler a página renderizada** (DOM/atributos) ou pedir um print ao humano **antes** de levantar hipótese; componente pode renderizar segundos depois; **após 2 leituras sem sucesso, parar e perguntar** (C11 do `AGENTS.md`) |
 
 ---
 
