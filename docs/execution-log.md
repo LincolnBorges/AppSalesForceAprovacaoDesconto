@@ -1332,6 +1332,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 
 - **A96:** as colunas da related list em LEX vêm da **page layout** (ordem incluída) e o `force:relatedListContainer` compacto mostra **4**; para exibir mais é preciso `force:relatedListSingleContainer` com `relatedListComponentOverride = ADVGRID`. O grid leva alguns segundos para renderizar — validar por DOM **depois** do `wait`, não na primeira leitura.
 
+---
+
+### [2026-10-19 20:52 -03:00] UI-007 — OK (campos de desconto do console iniciam com o desconto atual da cotação)
+
+| Campo | Valor |
+|---|---|
+| Operação | `ddMarginConsole`: os inputs "Desconto a simular (%)" e "Desconto solicitado (%)" passam a iniciar com **`Quote.Discount`** (média ponderada nativa) formatado em 2 casas, em vez do valor fixo `10` |
+| Skill | sf-lwc · validate-metadata |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `LightningComponentBundle:ddMarginConsole` (js) — **Apex não foi alterado** |
+| Ferramenta | `sf project deploy start` (dry-run + real) · retrieve de verificação · Chrome (DOM) |
+| Parâmetros-chave | `QUOTE_FIELDS = [DD_GuardrailState__c, Quote.Discount]` no `getRecord` (sem Apex: o campo já está no layout da cotação e o usuário o vê); `initializeDiscounts()` formata `toFixed(2)` e roda **uma vez** (`discountInitialized`), para `refreshApex` não apagar o que o usuário digitou |
+| Confirmação humana | **sim** — pedido direto (ajuste de UX) |
+| Resultado | dry-run `Succeeded` → deploy `Succeeded` `0Afas0000061993CAA`; retrieve confirma o código novo na org (`initializeDiscounts`, `QUOTE_DISCOUNT_FIELD`). Cotação de teste `0Q0as0000021vHdCAI`: `Discount = 75.72778828` → esperado **75.73** nos dois campos. A verificação no navegador ainda lia `10` (bundle antigo em cache) — confirmação visual pendente do humano com F5 |
+| Reversão | voltar `simDiscountPct`/`reqDiscountPct` para `10` e remover `Quote.Discount` de `QUOTE_FIELDS` |
+| Tokens (aprox.) | 12000 |
+| Observações | Não foi preciso mexer no Apex: `getRecord` já trazia a cotação para o estado do guardrail. `Quote.Discount` não é margem nem custo, então não conflita com D14. Requisito de FLS: o campo precisa ser legível pelo usuário (o Bruno o vê na tela da cotação) — se um dia o `getRecord` falhar, a causa será FLS, não o componente |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

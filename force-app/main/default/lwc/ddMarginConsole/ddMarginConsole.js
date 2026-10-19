@@ -3,11 +3,13 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import GUARDRAIL_STATE_FIELD from '@salesforce/schema/Quote.DD_GuardrailState__c';
+import QUOTE_DISCOUNT_FIELD from '@salesforce/schema/Quote.Discount';
 import simulateMargin from '@salesforce/apex/DD_MarginConsoleController.simulate';
 import requestDiscountApproval from '@salesforce/apex/DD_MarginConsoleController.requestDiscount';
 
 // D14: a lista de campos das cotacoes NAO inclui margem nem custo.
-const QUOTE_FIELDS = [GUARDRAIL_STATE_FIELD];
+// Discount e desconto comercial (o usuario ja ve na tela da cotacao), nao margem.
+const QUOTE_FIELDS = [GUARDRAIL_STATE_FIELD, QUOTE_DISCOUNT_FIELD];
 
 // F5-11: os Flows sao chamados pelo DD_MarginConsoleController (Apex), nao mais pelo
 // lightning-flow — o componente nativo recusava a execucao para usuario nao-admin.
@@ -68,17 +70,22 @@ export default class DdMarginConsole extends LightningElement {
     @api recordId;
 
     quoteState;
+    quoteDiscount;
     loadError;
     wiredQuoteResult;
+    // UX: os dois campos de desconto nascem com o desconto atual da cotacao
+    // (campo nativo Quote.Discount = media ponderada das linhas). Inicializa uma vez
+    // para que refreshApex/re-render nao apaguem o que o usuario digitou.
+    discountInitialized = false;
 
     // Simulador (nao grava nada)
-    simDiscountPct = 10;
+    simDiscountPct = '';
     simRunning = false;
     simResult;
     simError;
 
     // Pedido de desconto (Flow de roteamento via Apex)
-    reqDiscountPct = 10;
+    reqDiscountPct = '';
     reqJustification = '';
     routeRunning = false;
     routeResult;
@@ -90,11 +97,25 @@ export default class DdMarginConsole extends LightningElement {
         const { data, error } = result;
         if (data) {
             this.quoteState = getFieldValue(data, GUARDRAIL_STATE_FIELD);
+            this.quoteDiscount = getFieldValue(data, QUOTE_DISCOUNT_FIELD);
+            this.initializeDiscounts(this.quoteDiscount);
             this.loadError = undefined;
         } else if (error) {
             this.quoteState = undefined;
             this.loadError = this.reduceError(error);
         }
+    }
+
+    // Formata com 2 casas (ex.: 75.73). Desconto nulo/vazio vira 0.00.
+    initializeDiscounts(rawDiscount) {
+        if (this.discountInitialized) {
+            return;
+        }
+        const value = Number(rawDiscount);
+        const formatted = (Number.isFinite(value) ? value : 0).toFixed(2);
+        this.simDiscountPct = formatted;
+        this.reqDiscountPct = formatted;
+        this.discountInitialized = true;
     }
 
     get hasRecordId() {
