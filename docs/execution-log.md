@@ -1270,6 +1270,24 @@ conteúdo não. A prova usada foi o retrieve do `CustomObject:Quote` + o merge a
 - **A94:** o org default de Lightning Record Page vive no `CustomObject` (não na `FlexiPage`, não no app, não
   no perfil) e exige `formFactor` (`Large`/`Small`) — `Flexipage` sem form factor é recusado.
 
+---
+
+### [2026-10-19 19:48 -03:00] UI-005 — EM TESTE (probe: remove o `AppUsageAssignment` de 1 cotação)
+
+| Campo | Valor |
+|---|---|
+| Operação | **Delete** de 1 registro de `AppUsageAssignment` (`RevenueLifecycleManagement`) da cotação `0Q0as0000021vHdCAI`, para provar se é ele que bloqueia a edição da cotação na UI (erro `You can't edit quotes with the Revenue Lifecycle Management or Subscription Management application usage assignment`) |
+| Skill | — (diagnóstico de org + validate-metadata) |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`) |
+| Objeto / Metadado | `AppUsageAssignment` `0j8as000003rCVzAAM` (`Name = Revenue Lifecycle Management`, `RecordId = 0Q0as0000021vHdCAI`, `AppUsageType = RevenueLifecycleManagement`, criado `2026-10-18T09:47:45Z` pela própria org no insert da cotação) |
+| Ferramenta | `sf data query` · `sf api request rest` (describe) · `sf data delete record` |
+| Parâmetros-chave | `-s AppUsageAssignment -i 0j8as000003rCVzAAM` |
+| Confirmação humana | **sim** — exceção ao **S5** autorizada nominalmente: opção **A** ("probe em 1 cotação") escolhida em 2026-10-19 |
+| Resultado | delete `success: true`; `AppUsageAssignment` 25 → **24**; cotação intacta (`Draft`, `3.432,80 USD`); **pendente** o teste do humano na UI (adicionar/editar produto) |
+| Reversão | recriar o registro: `AppUsageAssignment{ RecordId: '0Q0as0000021vHdCAI', AppUsageType: 'RevenueLifecycleManagement', Name: 'Revenue Lifecycle Management' }` — o objeto tem `createable = true` |
+| Tokens (aprox.) | 12000 |
+| Observações | **Diagnóstico:** os 25 assignments são criados pela **plataforma** no insert da cotação (timestamp idêntico ao `CreatedDate` da `Quote`); 9 deles são de 2026-10-15 (seed do trial, antes do projeto) e a `Teste cotação` (`0Q0as0000021jtBCAQ`, criada pelo humano) também tem — logo **não é efeito de criação via MCP**. `ProductSellingModel`/`SalesTransactionType` têm **0** registros e `SalesTransaction` não existe: a org carrega o *assignment* do RLM sem o motor provisionado |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
