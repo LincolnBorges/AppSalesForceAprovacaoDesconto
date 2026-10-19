@@ -1313,6 +1313,25 @@ conteúdo não. A prova usada foi o retrieve do `CustomObject:Quote` + o merge a
 
 O print do humano mostra a cotação aberta no app **Manufacturing** já com o console (`Justificativa` + `Pedir desconto` + `DD Estado do Guardrail`) — prova visual de que o Org Default da `Quote` (UI-004) vale fora do app `DD_DealDesk`.
 
+---
+
+### [2026-10-19 20:35 -03:00] UI-006 — OK (coluna Desconto (%) no "Quote Line Items" da cotação)
+
+| Campo | Valor |
+|---|---|
+| Operação | `Quote-Quote Layout`: related list `RelatedQuoteLineItemList` reduzida de **17** para **5** campos (Product, Sales Price, Quantity, Subtotal, **Discount** ao final). `DD_Quote_Record_Page`: troca do `force:relatedListContainer` (compacto) por **3 `force:relatedListSingleContainer`** com `relatedListComponentOverride = ADVGRID` — `QuoteLineItems`, `QuoteDocuments`, `CombinedAttachments`, `parentFieldApiName = Quote.Id` |
+| Skill | validate-metadata |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ferramenta | `sf project deploy start` (dry-run + real) · retrieve da `FlexiPage`/`Layout` · Chrome (verificação do DOM) |
+| Confirmação humana | **sim** — pedido direto: "deixa apenas o que era padrão e mais o campo de desconto ao final" |
+| Resultado | dry-run `Succeeded` (2/2) → deploy `Succeeded` `0Afas00000618g1CAA` (2/2). DOM da página confirma a tabela com **Product · Sales Price · Quantity · Subtotal · Discount (Percentage)** e os 3 cards (QLI, Quote PDFs, Notes & Attachments) de volta |
+| Reversão | devolver os 17 campos da related list no layout e o `force:relatedListContainer` na FlexiPage (`git show HEAD~1:...`) |
+| Observações | **Armadilha:** o container padrão exibe só os **4 primeiros** campos do layout; com `relatedListSingleContainer` + `ADVGRID` a lista mostra **todos**. `parentFieldApiName` tem de ser `Quote.Id` (`QuoteLineItem.QuoteId` é recusado; `QuoteLineItem.Quote` também). A propriedade `fields` **não existe** no componente |
+
+**Aprendizado**
+
+- **A96:** as colunas da related list em LEX vêm da **page layout** (ordem incluída) e o `force:relatedListContainer` compacto mostra **4**; para exibir mais é preciso `force:relatedListSingleContainer` com `relatedListComponentOverride = ADVGRID`. O grid leva alguns segundos para renderizar — validar por DOM **depois** do `wait`, não na primeira leitura.
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
