@@ -188,7 +188,7 @@ dispara o Flow da Fase 3.
 | Entregável | Entrega real |
 |---|---|
 | LWC | `ddMarginConsole` com `wire` em `DD_GuardrailState__c`, semáforo, simulador e ação de pedido |
-| FlexiPage | `DD_Quote_Record_Page`, ativada **apenas no app Deal Desk** via `actionOverrides` |
+| FlexiPage | `DD_Quote_Record_Page`, **Org Default da `Quote`** (desktop `Large` + mobile `Small`) desde 2026-10-19 — vale em qualquer app; o `actionOverrides` do app Deal Desk foi **mantido** (mesmo destino). Ver UI-004 |
 | Aba e app | `DD_Margin_Console` (motif `Custom41: Stack of Cash`) e `DD_DealDesk` |
 | Semáforo | 3 estados validados com dados reais (`Saudável`, `Requer Justificativa`, `Requer Aprovação`) |
 | Simulador | `d=25` no verde projeta âmbar sem DML (contagens e `LastModifiedDate` idênticos) |

@@ -1234,6 +1234,42 @@ travados por aprovação; `recordEditability = AdminOnly` permite ao admin).
 - **A93:** atribuição de fórmula `Currency` a **campo** de registro preserva as 2 casas; o arredondamento
   para inteiro documentado em **A62** vale para atribuição a **variável `Number`** do Flow.
 
+---
+
+### [2026-10-19 19:15 -03:00] UI-004 — OK (console em qualquer app: `DD_Quote_Record_Page` vira Org Default da `Quote`)
+
+| Campo | Valor |
+|---|---|
+| Operação | Tornar `DD_Quote_Record_Page` a página **Org Default** do objeto `Quote` (desktop + mobile) via `CustomObject:Quote`; 2 dry-runs (o 1º falhou), deploy e verificação por retrieve |
+| Skill | validate-metadata · chrome (leitura exploratória) |
+| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`, `TrialExpirationDate: 2026-11-15`) |
+| Objeto / Metadado | `CustomObject:Quote` (`actionOverrides` da ação `View`) · `FlexiPage DD_Quote_Record_Page` (**não alterada**) · `CustomApplication DD_DealDesk` (**mantido**) |
+| Ferramenta | `sf project deploy start` (dry-run + real) · `sf project retrieve start` · `sf org list metadata` · `sf data query` |
+| Parâmetros-chave | `--metadata CustomObject:Quote --test-level NoTestRun`; 39 `actionOverrides` do objeto preservados; das 3 de `View`, a genérica fica `Default`, `Large` e `Small` viram `Flexipage` + `DD_Quote_Record_Page` |
+| Confirmação humana | **sim** — pedido direto: *"Faça o --dry-run e o deploy. Me avise quando terminar"* (2026-10-19) |
+| Resultado | **dry-run 1** (`--source-dir objects/Quote`): `Failed` — `null is not a supported form factor.` (override `Flexipage` sem `<formFactor>`, **A94**) → **dry-run 2**: `Succeeded` `0Afas0000061741CAA` (6/6; `CustomObject:Quote` = `Changed`) → **deploy real**: `Succeeded` `0Afas00000615NDCAY` (6/6, 0 erro) → **retrieve**: `View/Large/Flexipage` e `View/Small/Flexipage` com `content = DD_Quote_Record_Page` e `skipRecordTypeSelect = false`; a genérica segue `Default`; **39/39** overrides e **53** campos do objeto intactos |
+| Reversão | devolver as 2 entradas `View` de form factor para `<type>Default</type>` (sem `content`/`formFactor`) e redeployar `CustomObject:Quote`. Estado anterior: as 3 entradas de `View` eram `Default` — o objeto **não tinha** página org default |
+| Tokens (aprox.) | 42000 |
+| Observações | Os 5 `CustomField` de `Quote` entraram no pacote como `Unchanged` (a resolução de `CustomObject:Quote` arrasta a pasta `fields/`), sem escrita. O `skipRecordTypeSelect=false` foi gravado pela **própria org** (não foi enviado) — sinal de que ela interpretou o deploy como assignment de página. `Quote` não tem `RecordType` (0), então o org default vale para toda cotação |
+
+**Por que não bastava o app nem o perfil**
+
+O `actionOverrides` do `DD_DealDesk` só vale **dentro daquele app**; `profileActionOverrides` cobre app+perfil.
+O `CustomObject` da `Quote` é o único lugar que expressa "padrão para toda a org" (**A94**) — e o org default
+é o **menor** degrau de precedência, então o app `DD_DealDesk` continua com o override dele, apontando para a
+mesma página (sem conflito).
+
+**Verificação visual pendente (honesta)**
+
+O Setup de "Páginas de registro do Lightning" **não** abriu nesta sessão: o Chrome está logado como
+**Alan FieldTech** (Standard User, sem `Customize Application`) — a navegação do Object Manager aparece, o
+conteúdo não. A prova usada foi o retrieve do `CustomObject:Quote` + o merge aceito pela org.
+
+**Aprendizado**
+
+- **A94:** o org default de Lightning Record Page vive no `CustomObject` (não na `FlexiPage`, não no app, não
+  no perfil) e exige `formFactor` (`Large`/`Small`) — `Flexipage` sem form factor é recusado.
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
