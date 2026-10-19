@@ -303,6 +303,24 @@ eram todos System Administrator apontando para Lincoln.
 - **Rollback:** desativar os 2 usuários e apagar as 3 `Opportunity` (cascata) + os 2 pedidos — exige
   autorização nominal (S5).
 
+### 1.11 Quirk da org: `AppUsageAssignment` de RLM nas cotações (2026-10-19, UI-005)
+
+Toda cotação criada nesta org desde o seed do trial recebe **1 registro de `AppUsageAssignment`**
+(`Name = Revenue Lifecycle Management`, `AppUsageType = RevenueLifecycleManagement`, `RecordId` = Id da
+`Quote`). Enquanto o registro existe, a UI clássica **recusa salvar** a edição da cotação:
+
+> `You can't edit quotes with the Revenue Lifecycle Management or Subscription Management application usage assignment.`
+
+| Fato verificado | Valor |
+|---|---|
+| Quem cria o assignment | a **plataforma**, no insert da `Quote` (mesmo segundo) — nunca nos nossos payloads |
+| É efeito de MCP/API? | **não** — 9 cotações do seed de **2026-10-15** (antes do projeto) e a `Teste cotação` (criada pelo humano pela UI) também tinham |
+| O delete resolve? | **sim** e é **estável** — `AppUsageAssignment` `deletable/createable = true`; após apagar, o humano adicionou uma `QuoteLineItem` pela UI e salvou; **nenhum re-tag** depois do save |
+| Escopo limpo em 2026-10-19 | **16** cotações do projeto (15 em lote autorizado + 1 probe). Total na org: 25 → **9**, só as do seed ACME de 2026-10-15 |
+| Rollback | recriar `AppUsageAssignment{ RecordId, AppUsageType, Name }` — snapshot dos 16 Ids em UI-005 no `execution-log` |
+| RLM provisionado? | **não** — `ProductSellingModel` e `SalesTransactionType` com **0** registros; `SalesTransaction` inexistente. O assignment é órfão do motor |
+| Atenção futura | cotação **nova** criada daqui para frente nasce tagueada de novo — se a demo exigir edição de linha pela UI numa cotação recém-criada, repetir a limpeza (1 registro, com autorização) |
+
 ---
 
 ## 2. Decisões de Arquitetura
@@ -389,6 +407,7 @@ eram todos System Administrator apontando para Lincoln.
 | A92 | **A tela de aprovação não usa o Page Layout do objeto:** usa `ApprovalProcess.approvalPageFields` (default = `Name` + `Owner`). `<approvalLayout>` não existe no tipo. | Para o aprovador ver os campos do pedido, incluir o nó no XML do `ApprovalProcess` e validar por `GET /sobjects/<Objeto>/describe/approvalLayouts`. Processo ativo aceita a mudança (não precisou desativar). Visto em APR-003 | 2026-10-18 |
 | A93 | **Atribuir uma fórmula `Currency` a um campo de registro no Flow preserva as 2 casas** (100,55 × 33,33% gravou 33,51). O arredondamento para inteiro do **A62** é da atribuição a **variável `Number`**, não do `inputAssignment` em campo `Currency`. | Provado no teste `requestDiscount_storesAmountsWithCents` (FIN-001). Não é preciso contornar com pontos-base para valores monetários em campo | 2026-10-18 |
 | A94 | **A ativação "Org Default" de uma Lightning Record Page não vive em nada que se esperaria:** não está na `FlexiPage`, não está no `CustomApplication` e não está no `Profile`. Vive no **`CustomObject` do objeto**, como `actionOverrides` da ação `View` com `<type>Flexipage</type>` + `<content>`. Em objeto **padrão** (`Quote`) o deploy é um **merge**: um arquivo mínimo com os `actionOverrides` basta e o resto do objeto (campos, sharing, feeds) fica intacto. E **override `Flexipage` sem `<formFactor>` é recusado**: erro literal `null is not a supported form factor.` — é obrigatório um par `Large` (desktop) + `Small` (mobile). | Refuta a suposição de que bastaria mexer no app/perfil: `CustomApplication.actionOverrides` cobre **só aquele app** e `profileActionOverrides` cobre app+perfil. O org default é o único mecanismo "vale em qualquer app" — e é o **menor** degrau de precedência, ou seja, qualquer override de app vence (foi por isso que o `DD_DealDesk` manteve o dele sem conflito). A ação genérica `View` (sem form factor) tem de continuar `Default`. Provado em UI-004: o dry-run pegou o form factor nulo antes de qualquer escrita | 2026-10-19 |
+| A95 | **O erro `You can't edit quotes with the Revenue Lifecycle Management or Subscription Management application usage assignment` é do registro `AppUsageAssignment` da cotação — não do canal de criação.** A org de trial carrega o assignment do RLM em **toda cotação nova**, mesmo sem o motor provisionado (`ProductSellingModel`/`SalesTransactionType` vazios, `SalesTransaction` inexistente). Apagar o registro (`deletable = true`) **libera a edição pela UI de forma estável** — a plataforma não re-tagueia a cotação ao salvar. | Responde a falsa suspeita de que criar cotação via MCP quebraria a edição: o seed de 2026-10-15 e uma cotação feita na UI pelo humano tinham o mesmo tag. Corolário: a limpeza é **por record** (não há toggle de metadata), precisa de autorização nominal (S5) e a cotação **nova** nasce tagueada outra vez. Diagnóstico recomendado: `SELECT Id, RecordId, AppUsageType, CreatedDate FROM AppUsageAssignment` e comparar com `Quote.CreatedDate` | 2026-10-19 |
 | A65 | **`IsNull` sobre campo de lookup não é avaliado** e **filtro em campo de objeto relacionado não resolve** em `Get Records`.** `owner.ManagerId` IsNull → caiu no ramo errado e estourou `columnName: null__NotFound`; `Profile.Name` no filtro → mesmo erro. | Toda checagem de nulidade de Id deve virar **fórmula booleana** (`NOT(ISBLANK(...))` quando o campo é texto) e o filtro deve usar campo **do próprio objeto** (`IsActive`, `Id`). Consequência: a escada não consegue isolar "admin"; o último degrau virou "primeiro usuário ativo ≠ solicitante" (D26) | 2026-10-17 |
 | A66 | **Saída de subflow não se referencia por `Call_Flow.var` quando `storeOutputAutomatically=false`.** O mapeamento é `<outputAssignments><assignToReference>VAR_DO_PAI</assignToReference><name>VAR_DO_SUBFLOW</name></outputAssignments>` — `value`/`elementReference` é inválido. | Erro literal: `Element value invalid at this location in type FlowSubflowOutputAssignment`. Bateu no RTE-001 | 2026-10-17 |
 | A57 | **Não se deploya `FieldPermissions` para campo `required`.** Erro literal: `You cannot deploy to a required field: <Objeto>.<Campo__c>`. A org **não cria** linha de `FieldPermissions` para esses campos, e a verificação de FLS por `FieldPermissions` volta vazia — o que parece falha de S13 e não é. | Para campo obrigatório, a prova de visibilidade é **funcional** (criar o registro e reler o valor), não por `FieldPermissions`. Pegou no dry-run de DPM-001 |

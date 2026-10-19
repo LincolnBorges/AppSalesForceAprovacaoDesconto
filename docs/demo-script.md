@@ -262,6 +262,7 @@ estado e **sem** os campos de custo/margem no painel de detalhes.
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
 | Card do console não aparece | a página pode ter deixado de ser org default, ou o usuário não tem o Apex/LWC | desde UI-004 a `DD_Quote_Record_Page` é **org default da `Quote`** (qualquer app): confira `CustomObject:Quote` (`View` `Large`/`Small` → `Flexipage`) e o `classAccesses` de `DD_MarginConsoleController` no `DD_DealDesk_User` |
+| "Can't save records with errors… Revenue Lifecycle Management application usage assignment" ao adicionar/editar linha | a cotação carrega um `AppUsageAssignment` de RLM (a org marca **toda** cotação nova) | remova o registro `AppUsageAssignment` cujo `RecordId` é o Id da cotação — ver UI-005 e A95; o console, o simulador e o guardrail **não** dependem dele |
 | Badge não atualiza após a simulação | cache do componente | botão de atualizar ao lado do badge |
 | "Pedido não encaminhado" | justificativa ausente com estado que exige, ou aprovador não resolvido | preencha a justificativa; se persistir, é o degrau `Blocked` — a mensagem diz o que falta |
 | Nenhum aprovador razoável | dono da cotação sem gestor (D26) | ver §1.5 |

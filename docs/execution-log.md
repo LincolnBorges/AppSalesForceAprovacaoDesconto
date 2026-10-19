@@ -1272,21 +1272,46 @@ conteúdo não. A prova usada foi o retrieve do `CustomObject:Quote` + o merge a
 
 ---
 
-### [2026-10-19 19:48 -03:00] UI-005 — EM TESTE (probe: remove o `AppUsageAssignment` de 1 cotação)
+### [2026-10-19 19:48 -03:00] UI-005 — OK (RLM `AppUsageAssignment` bloqueava a edição da cotação: probe + limpeza em 16)
 
 | Campo | Valor |
 |---|---|
-| Operação | **Delete** de 1 registro de `AppUsageAssignment` (`RevenueLifecycleManagement`) da cotação `0Q0as0000021vHdCAI`, para provar se é ele que bloqueia a edição da cotação na UI (erro `You can't edit quotes with the Revenue Lifecycle Management or Subscription Management application usage assignment`) |
-| Skill | — (diagnóstico de org + validate-metadata) |
+| Operação | **Delete** dos registros de `AppUsageAssignment` (`RevenueLifecycleManagement`) das cotações do projeto: 1 probe (`0Q0as0000021vHdCAI`) + 15 em lote autorizado. Diagnóstico do erro `You can't edit quotes with the Revenue Lifecycle Management or Subscription Management application usage assignment` |
+| Skill | — (diagnóstico de org) |
 | Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`) |
-| Objeto / Metadado | `AppUsageAssignment` `0j8as000003rCVzAAM` (`Name = Revenue Lifecycle Management`, `RecordId = 0Q0as0000021vHdCAI`, `AppUsageType = RevenueLifecycleManagement`, criado `2026-10-18T09:47:45Z` pela própria org no insert da cotação) |
+| Objeto / Metadado | `AppUsageAssignment` (16 registros, todos `Name = Revenue Lifecycle Management`, `AppUsageType = RevenueLifecycleManagement`) |
 | Ferramenta | `sf data query` · `sf api request rest` (describe) · `sf data delete record` |
-| Parâmetros-chave | `-s AppUsageAssignment -i 0j8as000003rCVzAAM` |
-| Confirmação humana | **sim** — exceção ao **S5** autorizada nominalmente: opção **A** ("probe em 1 cotação") escolhida em 2026-10-19 |
-| Resultado | delete `success: true`; `AppUsageAssignment` 25 → **24**; cotação intacta (`Draft`, `3.432,80 USD`); **pendente** o teste do humano na UI (adicionar/editar produto) |
-| Reversão | recriar o registro: `AppUsageAssignment{ RecordId: '0Q0as0000021vHdCAI', AppUsageType: 'RevenueLifecycleManagement', Name: 'Revenue Lifecycle Management' }` — o objeto tem `createable = true` |
-| Tokens (aprox.) | 12000 |
-| Observações | **Diagnóstico:** os 25 assignments são criados pela **plataforma** no insert da cotação (timestamp idêntico ao `CreatedDate` da `Quote`); 9 deles são de 2026-10-15 (seed do trial, antes do projeto) e a `Teste cotação` (`0Q0as0000021jtBCAQ`, criada pelo humano) também tem — logo **não é efeito de criação via MCP**. `ProductSellingModel`/`SalesTransactionType` têm **0** registros e `SalesTransaction` não existe: a org carrega o *assignment* do RLM sem o motor provisionado |
+| Parâmetros-chave | probe `-i 0j8as000003rCVzAAM`; lote = 15 registros das cotações com `CreatedDate >= 2026-10-17` (as 9 do seed de 2026-10-15 ficaram) |
+| Confirmação humana | **sim** — exceção ao **S5** autorizada nominalmente em duas etapas: opção **A** (probe em 1) em 19:35 e "**Só as 15 do projeto**" em 19:52 |
+| Resultado | probe: `success`, assignment 25 → 24, cotação intacta; **humano adicionou uma `QuoteLineItem` pela UI e salvou** (`1 Quote Line Item record was updated.`) → guard confirmado. **Nenhum re-tag** após o save (assignment da cotação = 0, total 24). Lote: **15/15** `success`, total 24 → **9** (só seed); nenhuma cotação do projeto tagueada; `DEMO-Quote-Demo-Abaixo` (192, Requer Aprovação) e `Renovação de Frota Elétrica` (3.749,60, Saudável) intactas |
+| Reversão | recriar cada registro com `RecordId` = Id da cotação, `AppUsageType = RevenueLifecycleManagement`, `Name = Revenue Lifecycle Management` (objeto com `createable = true`). Snapshot completo na tabela abaixo |
+| Tokens (aprox.) | 30000 |
+| Observações | **Diagnóstico:** os assignments são criados pela **plataforma** no insert da cotação (timestamp idêntico ao `CreatedDate` da `Quote`); 9 são de 2026-10-15 (seed do trial, antes do projeto) e a `Teste cotação` (criada pelo humano) também tinha — logo **não é efeito de criação via MCP**. `ProductSellingModel`/`SalesTransactionType` têm **0** registros e `SalesTransaction` não existe: a org carrega o *assignment* do RLM **sem o motor provisionado**. O delete é **estável** (não re-tagueia ao salvar), mas o RLM pode re-taguear cotações **novas** criadas a partir de agora |
+
+**Snapshot para rollback (16 registros removidos)**
+
+| # | `AppUsageAssignment.Id` | Cotação (`RecordId`) | Nome da cotação | Removido em |
+|---|---|---|---|---|
+| 1 | `0j8as000003rCVzAAM` | `0Q0as0000021vHdCAI` | Cotação Programa de Manutenção de Frota - Titan | probe (19:48) |
+| 2 | `0j8as000003qmmnAAA` | `0Q0as0000021hOLCAY` | DEMO-Quote-Margin-Bands | lote (19:54) |
+| 3 | `0j8as000003qpSwAAI` | `0Q0as0000021j1xCAA` | DEMO-Quote-Guardrail-Green | lote |
+| 4 | `0j8as000003qpfpAAA` | `0Q0as0000021j3ZCAQ` | DEMO-Quote-Guardrail-Generic | lote |
+| 5 | `0j8as000003qrHpAAI` | `0Q0as0000021jtBCAQ` | Teste cotação | lote |
+| 6 | `0j8as000003qr4yAAA` | `0Q0as0000021jlACAQ` | Cotação USD | lote |
+| 7 | `0j8as000003qv8XAAQ` | `0Q0as0000021mHZCAY` | DEMO-Quote-Demo-Saudavel | lote |
+| 8 | `0j8as000003qv6wAAA` | `0Q0as0000021mFyCAI` | DEMO-Quote-Demo-Limite | lote |
+| 9 | `0j8as000003qv27AAA` | `0Q0as0000021mJBCAY` | DEMO-Quote-Demo-Abaixo | lote |
+| 10 | `0j8as000003rDztAAE` | `0Q0as0000021v4jCAA` | Renovação de Frota Elétrica - Tech Labs | lote |
+| 11 | `0j8as000003r74uAAA` | `0Q0as0000021swUCAQ` | Manutenção Preventiva - Global Medical | lote |
+| 12 | `0j8as000003r9OQAAY` | `0Q0as0000021shyCAA` | Contrato Anual de Peças - Acme Partners | lote |
+| 13 | `0j8as000003rE6LAAU` | `0Q0as0000021v7xCAA` | Expansão do Kit - Metro Medical | lote |
+| 14 | `0j8as000003rDocAAE` | `0Q0as0000021v9ZCAQ` | Piloto de Calibração - Integrity Systems | lote |
+| 15 | `0j8as000003rEO5AAM` | `0Q0as0000021vG1CAI` | Renovação de Frota Comercial - Trane | lote |
+| 16 | `0j8as000003rEPhAAM` | `0Q0as0000021vJFCAY` | Contrato de Ferramentas - Volt Technical | lote |
+
+**Achado colateral (bônus do teste)**
+
+O print do humano mostra a cotação aberta no app **Manufacturing** já com o console (`Justificativa` + `Pedir desconto` + `DD Estado do Guardrail`) — prova visual de que o Org Default da `Quote` (UI-004) vale fora do app `DD_DealDesk`.
 
 ## Registro de Bloqueios
 
