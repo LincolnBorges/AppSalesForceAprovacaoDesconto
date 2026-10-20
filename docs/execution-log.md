@@ -1489,7 +1489,25 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 | Resultado | 6/6 oportunidades e 12/12 cotações criadas, 27/27 itens. Faixas: **4 `Saudável`** (Titan 35,06/35,66%; Trane 33,01/33,01%), **4 `Requer Justificativa`** (Volt 23,70/24,22%; Metro 26,43/26,28%), **4 `Requer Aprovação`** (Integrity 13,48/8,72%; Acme 13,90/7,99%). Tudo `USD`, dono Bruno, `HasReadAccess`/`HasEditAccess` confirmados |
 | Reversão | Apagar oportunidades (cascata nas cotações/itens) — exige autorização nominal (S5); IDs em `MEMORY.md` §1.13 |
 | Tokens (aprox.) | 9000 |
-| Observações | Estrutura escolhida: **2 oportunidades por faixa** (não 2 cotações no total), cada uma com 2 cotações na mesma faixa — atende "cada oportunidade com múltiplas cotações". S11 aplicado nos `Name` (`DEMO-`); textos de `Description`/`NextStep` em PT-BR realista. Bruno está com moeda de usuário `BRL` na org, mas os registros são `USD` (S12) |
+| Observações | Estrutura escolhida: **2 oportunidades por faixa** (não 2 cotações no total), cada uma com 2 cotações na mesma faixa — atende "cada oportunidade com múltiplas cotações". Os `Name` nasceram com `DEMO-` (S11) e foram **renomeados na MASSA-004** para nomes comerciais reais, por autorização do humano (exceção ao S11, A81). Textos de `Description`/`NextStep` em PT-BR realista. Bruno está com moeda de usuário `BRL` na org, mas os registros são `USD` (S12) |
+
+---
+
+### [2026-10-20 19:16 -03:00] MASSA-004 — OK (nomes comerciais nas oportunidades e cotações do Bruno)
+
+| Campo | Valor |
+|---|---|
+| Operação | Renomear 6 `Opportunity` e 12 `Quote` da MASSA-003, removendo o prefixo `DEMO-` e adotando nomes que um vendedor usaria |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | 6 `Opportunity` `006as0000096MrtAAE`…`MryAAE` · 12 `Quote` `0Q0as0000022g21CAA`…`g2CCAQ` |
+| Ferramenta | `sf apex run` (update em lote) |
+| Parâmetros-chave | Ex.: `Renovação do Contrato de Manutenção - Titan Fastener Products`, `Expansão da Frota Comercial - Trane Company`, `Retenção de Cliente - Integrity Systems`; cotações como `Renovação 2026 - Escopo Atual`, `Piloto de Peças - Volume Anual 30%` |
+| Confirmação humana | **sim** — "nenhum vendedor vai dar o nome DEMO para uma oportunidade, tem como editar o nome?" (2026-10-20) |
+| Resultado | 6/6 oportunidades e 12/12 cotações renomeadas; faixas e margens **inalteradas** (4 `Saudável`, 4 `Requer Justificativa`, 4 `Requer Aprovação`) |
+| Reversão | Nomes anteriores (`DEMO-…`) registrados na MASSA-003; reaplicar o mapa inverso |
+| Tokens (aprox.) | 3000 |
+| Observações | Exceção ao S11 autorizada pelo humano (mesmo precedente do A81): massa de demonstração realista não deve carregar prefixo que denuncie o teste. `Name` de `Opportunity` e `Quote` é gravável (nenhuma limitação de plataforma) |
 
 ---
 

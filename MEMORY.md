@@ -353,9 +353,10 @@ sem devolver o botão legado — ver UI-008). Pedido criado direto por API:
 ### 1.13 Massa de teste do vendedor Bruno (2026-10-20, MASSA-003)
 
 Dono de todos os registros: **Bruno Tavares `005as000003piV7AAI`** (Standard User, PS `DD_DealDesk_User`,
-gerente Renata Almeida). Price book `01sas000001nOBJAA2`, **USD** explícito, cotações `Draft`. Nomes com
-prefixo `DEMO-` (S11). Estrutura: **6 oportunidades × 2 cotações**, 2 oportunidades por faixa e as duas
-cotações da mesma oportunidade na mesma faixa.
+gerente Renata Almeida). Price book `01sas000001nOBJAA2`, **USD** explícito, cotações `Draft`. Nomes
+comerciais reais, **sem prefixo `DEMO-`**, por autorização explícita do humano (exceção ao S11, precedente
+A81): o prefixo denuncia a massa e quebra o realismo pedido. Estrutura: **6 oportunidades × 2 cotações**,
+2 oportunidades por faixa e as duas cotações da mesma oportunidade na mesma faixa.
 
 | Faixa | Oportunidade | Cotações | Margem |
 |---|---|---|---|
