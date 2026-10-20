@@ -1475,6 +1475,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 
 ---
 
+### [2026-10-20 19:12 -03:00] MASSA-003 — OK (6 oportunidades × 2 cotações para o vendedor Bruno)
+
+| Campo | Valor |
+|---|---|
+| Operação | Criar massa de teste para o usuário Bruno Tavares: 6 `Opportunity` + 12 `Quote` + 27 `QuoteLineItem`, 2 oportunidades em cada faixa de margem |
+| Skill | query-salesforce · validate-metadata |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Opportunity` `006as0000096MrtAAE`…`MryAAE` (6) · `Quote` `0Q0as0000022g21CAA`…`g2CCAQ` (12) · 27 `QuoteLineItem` |
+| Ferramenta | `sf apex run` (DML em lote, autorizado pelo pedido explícito do humano) |
+| Parâmetros-chave | `OwnerId=005as000003piV7AAI` (Bruno); `Pricebook2Id=01sas000001nOBJAA2`; `CurrencyIsoCode=USD`; `Status=Draft`; contas existentes com acesso do Bruno; descontos por linha para atingir as faixas |
+| Confirmação humana | **sim** — "crie umas 6 oportunidades onde cada oportunidade tenha múltiplas cotações, sendo 2 ficando verde, 2 ficando amarelo e 2 ficando vermelho" (2026-10-20) |
+| Resultado | 6/6 oportunidades e 12/12 cotações criadas, 27/27 itens. Faixas: **4 `Saudável`** (Titan 35,06/35,66%; Trane 33,01/33,01%), **4 `Requer Justificativa`** (Volt 23,70/24,22%; Metro 26,43/26,28%), **4 `Requer Aprovação`** (Integrity 13,48/8,72%; Acme 13,90/7,99%). Tudo `USD`, dono Bruno, `HasReadAccess`/`HasEditAccess` confirmados |
+| Reversão | Apagar oportunidades (cascata nas cotações/itens) — exige autorização nominal (S5); IDs em `MEMORY.md` §1.13 |
+| Tokens (aprox.) | 9000 |
+| Observações | Estrutura escolhida: **2 oportunidades por faixa** (não 2 cotações no total), cada uma com 2 cotações na mesma faixa — atende "cada oportunidade com múltiplas cotações". S11 aplicado nos `Name` (`DEMO-`); textos de `Description`/`NextStep` em PT-BR realista. Bruno está com moeda de usuário `BRL` na org, mas os registros são `USD` (S12) |
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

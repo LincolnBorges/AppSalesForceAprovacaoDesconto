@@ -350,6 +350,32 @@ sem devolver o botão legado — ver UI-008). Pedido criado direto por API:
 
 ---
 
+### 1.13 Massa de teste do vendedor Bruno (2026-10-20, MASSA-003)
+
+Dono de todos os registros: **Bruno Tavares `005as000003piV7AAI`** (Standard User, PS `DD_DealDesk_User`,
+gerente Renata Almeida). Price book `01sas000001nOBJAA2`, **USD** explícito, cotações `Draft`. Nomes com
+prefixo `DEMO-` (S11). Estrutura: **6 oportunidades × 2 cotações**, 2 oportunidades por faixa e as duas
+cotações da mesma oportunidade na mesma faixa.
+
+| Faixa | Oportunidade | Cotações | Margem |
+|---|---|---|---|
+| Saudável (verde) | Titan `006as0000096MrtAAE` — renovação do contrato de manutenção | `0Q0as0000022g21CAA` (A) · `0Q0as0000022g22CAA` (B) | 35,06% · 35,66% |
+| Saudável (verde) | Trane `006as0000096MruAAE` — expansão da frota (8 vs 12 veículos) | `0Q0as0000022g23CAA` · `0Q0as0000022g24CAA` | 33,01% · 33,01% |
+| Requer Justificativa (amarelo) | Volt `006as0000096MrvAAE` — disputa com concorrente na calibração | `0Q0as0000022g25CAA` · `0Q0as0000022g26CAA` | 23,70% · 24,22% |
+| Requer Justificativa (amarelo) | Metro `006as0000096MrwAAE` — upgrade do kit de diagnóstico | `0Q0as0000022g27CAA` · `0Q0as0000022g28CAA` | 26,43% · 26,28% |
+| Requer Aprovação (vermelho) | Integrity `006as0000096MrxAAE` — recuperação de cliente em risco | `0Q0as0000022g29CAA` · `0Q0as0000022g2ACAQ` | 13,48% · 8,72% |
+| Requer Aprovação (vermelho) | Acme `006as0000096MryAAE` — piloto de peças 90 dias | `0Q0as0000022g2BCAQ` · `0Q0as0000022g2CCAQ` | 13,90% · 7,99% |
+
+- **27 `QuoteLineItem`**, todos `USD` (a linha herda a moeda da cotação — A81), custo calculado pelo
+  `DD_CalculateLineCost` e margem pelo roll-up/fórmula.
+- **Acesso:** Bruno tem `HasReadAccess` e `HasEditAccess` em todas as 6 contas, oportunidades e cotações.
+- **Uso previsto:** testar o console, o roteamento (amarelo/vermelho) e as VRs da Fase 7 (só as vermelhas
+  bloqueiam aceite sem pedido aprovado; as amarelas também, por decisão D34).
+- **Observação:** a moeda do usuário Bruno está **`BRL`** na org, embora o print do Setup mostre `USD`;
+  os registros foram criados em `USD` (S12). Se a intenção é ele visualizar em USD, ajustar o usuário.
+
+---
+
 ## 2. Decisões de Arquitetura
 
 | # | Decisão | Justificativa | Data |
