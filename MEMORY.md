@@ -444,6 +444,7 @@ sem devolver o botão legado — ver UI-008). Pedido criado direto por API:
 | A100 | **`ISCHANGED` funciona em campo de fórmula dentro de ValidationRule e pega o recálculo de roll-up do pai.** A cotação `0Q0as0000022fp7CAA` foi aceita saudável (33,02%) e a alteração da linha para 75% foi **bloqueada** pela VR, com o estado permanecendo `Saudável` e o desconto da linha em `0.00` | Fecha o vetor "aceitar saudável e derrubar a margem depois". Não foi preciso `PRIORVALUE` nem regra no `QuoteLineItem`. Testar sempre por DML, porque o comportamento não é óbvio |
 | A101 | **`ValidationRule.description` tem limite de 255 caracteres** e o dry-run recusa com `Validation rule description cannot be longer than 255 characters long.` | Descrição de VR nasce curta; o detalhe longo vai para o `MEMORY.md`/log. Pegou na F7-02/F7-03 antes de qualquer deploy |
 | A102 | **`Order.Status` é `createable=true` e `updateable=false`:** ativar pedido não é `update` comum, é operação própria da plataforma. | A VR `DD_Block_Unapproved_Order` usa `ISCHANGED(Status)` para a ativação, mas o caminho de ativação não foi exercitado na F7 (F7-05) — validar em pedido descartável antes de confiar nele |
+| A103 | **O field update da ação final do `ApprovalProcess` dispara o Flow record-triggered e o gate é recalculado.** Submissão + aprovação de `a0Nas00000UVFpWEAX` via `Approval.process` gravaram `Status__c = Approved` e `DecidedAt__c`, e `Quote.DD_HasApprovedRequest__c` virou `true` no mesmo teste | O caminho real (gerente aprova na fila) atualiza o gate: não é preciso Flow no `ProcessInstance` nem scheduled path. Cobrir também o Rejected no futuro | 2026-10-20 |
 | A57 | **Não se deploya `FieldPermissions` para campo `required`.** Erro literal: `You cannot deploy to a required field: <Objeto>.<Campo__c>`. A org **não cria** linha de `FieldPermissions` para esses campos, e a verificação de FLS por `FieldPermissions` volta vazia — o que parece falha de S13 e não é. | Para campo obrigatório, a prova de visibilidade é **funcional** (criar o registro e reler o valor), não por `FieldPermissions`. Pegou no dry-run de DPM-001 |
 | A67 | **`lightning-flow` EXECUTA flow autolaunched e entrega saídas — mas com nomes e formato diferentes do esperado.** O evento é `onstatuschange`; o status que indica fim é **`FINISHED_SCREEN`** (não `FINISHED`); e `outputVariables` vem como **array** de `{dataType, name, value, isCollection, flowName}` — não como objeto. Enquanto está montado, o componente renderiza um banner do próprio flow (`<label> … FINISHED`). | O handler que esperava `FINISHED` + objeto nunca rodava e a tela ficava em "Simulando…". Correção: `isFlowFinished()` aceitando `FINISHED_SCREEN`/`FINISHED`, `toOutputMap()` convertendo o array e desmontar o flow ao concluir (o banner desaparece). Ver UI-001 |
 | A68 | **REFUTADO em 2026-10-18 (F5-11; ver A86/A87).** O deploy de Apex **funciona** com `--test-level RunSpecifiedTests` e cobertura do código do deploy (73/77 ≈ 95%), mesmo com `ApexOrgWideCoverage` = 0%. Texto original: Apex está fora de alcance nesta org — `ApexOrgWideCoverage` = **0%** e deploy em org não-sandbox exigiria **75% de cobertura org-wide** — qualquer `ApexClass` nova falha mesmo com a própria classe 100% coberta. | Assinatura do bloqueio: dry-run `Status = Failed` com `numberComponentErrors = 0`, `numFailures = 0` e nenhuma `componentFailure` — silêncio total. Consequência: toda integração LWC↔Flow é **declarativa** (A67) ou por subflow de tela. Ver APX-001 |
@@ -693,13 +694,14 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 | `Draft` vermelha (12,5%) → `Accepted` sem gate | **bloqueado** (`0Q0as0000021vG1CAI`) |
 | Insert `Order` de cotação vermelha sem gate | **bloqueado** (mensagem de F7-03) |
 | Gate `true` (pedido `Approved`) → aceitar vermelha | **permitido** (`0Q0as0000022fnVCAQ`, margem -229,17%) |
+| Aprovação pelo `ApprovalProcess` real → gate | **`true`** — `Approval.process` submeteu e aprovou; `Status__c = Approved`, `DecidedAt__c` preenchido (F7-004/A103) |
 | Pedido volta a `Submitted` → gate `false` → aceitar | **bloqueado** |
 | Aceitar saudável sem gate → linha para 75% | **bloqueado** (A100) |
 | Grandfathering | 5 aceitas: 4 `Pendente de Custo` + 1 `Requer Aprovação` com gate `false` (Titan) — nenhuma tocada |
 
-- **Dados de teste deixados (prefixo `DEMO-`):** cotações `0Q0as0000022fnVCAQ` (Draft, vermelha, pedido
-  `a0Nas00000UVFpWEAX` `Submitted`) e `0Q0as0000022fp7CAA` (Draft, saudável, 33,02%); linha
-  `0QLas0000029vvbGAA`.
+- **Dados de teste deixados (prefixo `DEMO-`):** cotações `0Q0as0000022fnVCAQ` (Draft, vermelha, gate
+  `true`; pedido `a0Nas00000UVFpWEAX` **`Approved`** pelo `ApprovalProcess` no teste F7-004) e
+  `0Q0as0000022fp7CAA` (Draft, saudável, 33,02%); linha `0QLas0000029vvbGAA`.
 - **Lacunas residuais (F7-05):** (a) delete de pedido aprovado não dispara recálculo — gate ficaria
   `true` (DELETE de pedido é admin-only: o PS não tem delete); (b) ativação de `Order` não exercitada
   (A102); (c) `AutoApproved` não existe em `Status__c` (D35).

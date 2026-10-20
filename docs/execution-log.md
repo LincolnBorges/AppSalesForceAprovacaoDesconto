@@ -1451,9 +1451,27 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 | Parâmetros-chave | Q1: linha 20 × 96 com 75% → margem -229,17%; pedido `Submitted` → gate `false`; pedido `Approved` + `DecidedAt` → **gate `true`**; aceitar → **OK**; reverter pedido para `Submitted` → gate `false`; aceitar → **bloqueado**. Q2: linha saudável 33,02% → aceitar **OK**; linha para 75% → **bloqueado**, estado permaneceu `Saudável` e `Discount=0.00` |
 | Confirmação humana | **sim** — mesma ordem de execução da F7 |
 | Resultado | Flow grava `true`/`false` corretamente nas duas direções; VR bloqueia a queda de faixa em cotação aceita (**A100**); round-trip sem resíduo de estado (Q1 e Q2 terminaram `Draft`) |
-| Reversão | Q1 e Q2 deixadas em `Draft`; pedido `a0Nas00000UVFpWEAX` em `Submitted`. Exclusão exige autorização (S5) |
+| Reversão | Q1 e Q2 deixadas em `Draft`; o pedido `a0Nas00000UVFpWEAX` foi aprovado no teste F7-004 (fica `Approved`). Exclusão exige autorização (S5) |
 | Tokens (aprox.) | 12000 |
 | Observações | Varredura F7-04: **5** cotações `Accepted` — 4 `Pendente de Custo` e **1** `Requer Aprovação` com gate `false` (Titan `0Q0as0000021vHdCAI`, grandfathering). Nenhuma tocada. Ativação de `Order` e delete de pedido aprovado não exercitados → **F7-05** (A102) |
+
+---
+
+### [2026-10-20 19:00 -03:00] F7-004 — OK (aprovação pelo `ApprovalProcess` real atualiza o gate)
+
+| Campo | Valor |
+|---|---|
+| Operação | Submeter e aprovar o pedido `a0Nas00000UVFpWEAX` pelo `ApprovalProcess` `DD_Manager_Approval` via `Approval.process` e conferir o gate da cotação |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `DD_DiscountRequest__c` `a0Nas00000UVFpWEAX` · `Quote` `0Q0as0000022fnVCAQ` · `ApprovalProcess` `DD_Manager_Approval` |
+| Ferramenta | `sf apex run` (`Approval.process` + `ProcessWorkitemRequest`) |
+| Parâmetros-chave | `ProcessSubmitRequest` no pedido → 1 `ProcessInstanceWorkitem` → `ProcessWorkitemRequest` ação `Approve` |
+| Confirmação humana | **sim** — mesmo escopo de teste da F7 |
+| Resultado | `SUBMIT success=true`, `APPROVE success=true`; `Status__c = Approved`, `DecidedAt__c = 2026-10-20 22:00:04` (UTC) e **`Quote.DD_HasApprovedRequest__c = true`** |
+| Reversão | O pedido fica `Approved` com `ProcessInstance` concluído (não há caminho limpo de volta); a cotação fica `Draft` e o gate `true` |
+| Tokens (aprox.) | 4000 |
+| Observações | Prova que o field update da ação final do `ApprovalProcess` **dispara** o Flow `RecordAfterSave` (**A103**). O caminho da UI do gerente está coberto; sem isso, aprovar pela fila não destravaria o aceite |
 
 ---
 
