@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_HasApprovedRequest__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Gate de aprovacao mantido pelo Flow DD_SyncQuoteGate (F7-01/D34). Fica true quando existe DD_DiscountRequest__c com Status Approved para esta cotacao e false quando nao existe. A ValidationRule DD_Block_Unapproved_Quote le este campo porque ValidationRule nao consulta registros filhos. Campo de sistema: o Flow e a unica fonte legitima do valor.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Indica que existe pedido de desconto aprovado para esta cotacao. Mantido pelo sistema.</inlineHelpText>
+    <label>DD Tem Pedido Aprovado</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

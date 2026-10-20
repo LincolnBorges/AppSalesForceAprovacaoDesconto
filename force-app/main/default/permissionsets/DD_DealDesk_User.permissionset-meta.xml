@@ -145,6 +145,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Quote.DD_HasApprovedRequest__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Quote.DD_Cost__c</field>
         <readable>false</readable>
     </fieldPermissions>

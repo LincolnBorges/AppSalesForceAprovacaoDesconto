@@ -98,6 +98,10 @@
                 <behavior>Readonly</behavior>
                 <field>DD_GuardrailState__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>DD_HasApprovedRequest__c</field>
+            </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
     </layoutSections>
