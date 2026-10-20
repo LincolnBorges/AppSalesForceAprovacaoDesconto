@@ -1529,6 +1529,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 
 ---
 
+### [2026-10-20 19:48 -03:00] MASSA-005 — OK (cotação amarela com desconto visível para o Bruno)
+
+| Campo | Valor |
+|---|---|
+| Operação | Criar 1 `Quote` + 2 `QuoteLineItem` na oportunidade `Upgrade do Kit de Diagnóstico - Metro Medical Distributors`, com desconto comercial de 10% no scanner e a interface de frenagem na tabela; remover o `AppUsageAssignment` de RLM da cotação nova |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Quote` `0Q0as0000022gbVCAQ` · 2 `QuoteLineItem` · `AppUsageAssignment` `0j8as000003sibqAAA` (removido) |
+| Ferramenta | `sf apex run` (insert) · `sf data delete record` |
+| Parâmetros-chave | `OwnerId=005as000003piV7AAI` (Bruno); `Pricebook2Id=01sas000001nOBJAA2`; `USD`; `Status=Draft`; scanner `01uas000000RovFAAS` 4 × 200 com 10% (net 720, custo 576); interface `01uas000000RovjAAC` 2 × 160 sem desconto (net 320, custo 248) |
+| Confirmação humana | **sim** — "cria uma cotação amarela pra mim que possui desconto" (2026-10-20) |
+| Resultado | Cotação criada com **margem 20,77%**, estado **`Requer Justificativa`** (amarelo), total `USD 1.040,00`; desconto de 10% visível na linha do scanner. O `AppUsageAssignment` de RLM foi removido (mesmo procedimento do UI-009); resíduo = 0 e a cotação ficou editável na UI |
+| Reversão | Apagar a cotação (cascata nos 2 itens) e, se necessário, recriar o assignment — exige autorização nominal (S5) |
+| Tokens (aprox.) | 4000 |
+| Observações | Efeito didático: o desconto é visível (10%) e a cotação continua amarela porque o scanner tem margem de tabela de 28% e a interface 22,5%; a média ponderada fica em 20,77%. O limite para o scanner continuar >= 20% é exatamente 10% de desconto |
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

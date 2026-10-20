@@ -357,7 +357,9 @@ Dono de todos os registros: **Bruno Tavares `005as000003piV7AAI`** (Standard Use
 gerente Renata Almeida). Price book `01sas000001nOBJAA2`, **USD** explícito, cotações `Draft`. Nomes
 comerciais reais, **sem prefixo `DEMO-`**, por autorização explícita do humano (exceção ao S11, precedente
 A81): o prefixo denuncia a massa e quebra o realismo pedido. Estrutura: **6 oportunidades × 2 cotações**,
-2 oportunidades por faixa e as duas cotações da mesma oportunidade na mesma faixa.
+2 oportunidades por faixa e as duas cotações da mesma oportunidade na mesma faixa. A cotação extra
+`Upgrade de Diagnóstico - Desconto Comercial` foi criada depois, a pedido do humano, para testar a faixa
+amarela **com desconto visível** (10% no scanner; interface na tabela).
 
 | Faixa | Oportunidade | Cotações | Margem |
 |---|---|---|---|
@@ -365,10 +367,11 @@ A81): o prefixo denuncia a massa e quebra o realismo pedido. Estrutura: **6 opor
 | Saudável (verde) | Trane `006as0000096MruAAE` — expansão da frota (8 vs 12 veículos) | `0Q0as0000022g23CAA` · `0Q0as0000022g24CAA` | 33,01% · 33,01% |
 | Requer Justificativa (amarelo) | Volt `006as0000096MrvAAE` — disputa com concorrente na calibração | `0Q0as0000022g25CAA` · `0Q0as0000022g26CAA` | 23,70% · 24,22% |
 | Requer Justificativa (amarelo) | Metro `006as0000096MrwAAE` — upgrade do kit de diagnóstico | `0Q0as0000022g27CAA` · `0Q0as0000022g28CAA` | 26,43% · 26,28% |
+| Requer Justificativa (amarelo) | Metro — **variação com desconto comercial** (a pedido do humano) | `0Q0as0000022gbVCAQ` | 20,77% |
 | Requer Aprovação (vermelho) | Integrity `006as0000096MrxAAE` — recuperação de cliente em risco | `0Q0as0000022g29CAA` · `0Q0as0000022g2ACAQ` | 13,48% · 8,72% |
 | Requer Aprovação (vermelho) | Acme `006as0000096MryAAE` — piloto de peças 90 dias | `0Q0as0000022g2BCAQ` · `0Q0as0000022g2CCAQ` | 13,90% · 7,99% |
 
-- **27 `QuoteLineItem`**, todos `USD` (a linha herda a moeda da cotação — A81), custo calculado pelo
+- **29 `QuoteLineItem`**, todos `USD` (a linha herda a moeda da cotação — A81), custo calculado pelo
   `DD_CalculateLineCost` e margem pelo roll-up/fórmula.
 - **Acesso:** Bruno tem `HasReadAccess` e `HasEditAccess` em todas as 6 contas, oportunidades e cotações.
 - **Uso previsto:** testar o console, o roteamento (amarelo/vermelho) e as VRs da Fase 7 (só as vermelhas
