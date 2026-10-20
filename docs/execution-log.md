@@ -1350,6 +1350,23 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 | Tokens (aprox.) | 12000 |
 | Observações | Não foi preciso mexer no Apex: `getRecord` já trazia a cotação para o estado do guardrail. `Quote.Discount` não é margem nem custo, então não conflita com D14. Requisito de FLS: o campo precisa ser legível pelo usuário (o Bruno o vê na tela da cotação) — se um dia o `getRecord` falhar, a causa será FLS, não o componente |
 
+---
+
+### [2026-10-20 00:25 -03:00] UI-008 — OK (botão "Create Order" habilitado nas ações Lightning da cotação)
+
+| Campo | Valor |
+|---|---|
+| Operação | `Layout:Quote-Quote Layout`: remover `CreateOrder` de `<excludeButtons>` e incluir `CreateOrder` (`StandardButton`) na `<platformActionList>` (ações Lightning), `sortOrder = 29`. Base = layout retornado da org (que já tinha as mudanças feitas pelo humano na UI), não o arquivo local |
+| Skill | validate-metadata |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ferramenta | `sf project deploy start` (dry-run + real) · retrieve de layout · `SetupAuditTrail` · Chrome |
+| Parâmetros-chave | desligar "Advanced Order Creation From Quote" + limpar o campo do flow (feito pelo humano: audit trail `advCreateOrdersFromQuoteOnOff` e `value_ADV_Q2_O_SCREEN_FLOW` 00:11–00:17). O flow `revenue_adv_q2o__CreateOrdersFromQuote` é de **pacote gerenciado** e **não pode ser ativado** ("No actions available") — o campo do Revenue Settings espera um flow **do cliente** |
+| Confirmação humana | **sim** — caminho **A** escolhido pelo humano ("desligar o modo avançado") |
+| Resultado | dry-run `Succeeded` → deploy `Succeeded` `0Afas00000619llCAA`; retrieve confirma `excludeButtons = [GenerateKnowledge, Submit]` e `CreateOrder` na `platformActionList` (30 itens). DOM: o botão não aparece entre os 3 primeiros (vai para o menu "Show more actions"), verificação visual pendente do humano |
+| Reversão | devolver `CreateOrder` para `excludeButtons` e remover o item da `platformActionList` |
+| Tokens (aprox.) | 22000 |
+| Observações | A UI do editor de layout não permitia arrastar o botão para "Salesforce Mobile and Lightning Experience Actions"; o caminho determinístico foi metadata. O botão `CreateOrder` estava **excluído** do layout — era por isso que não aparecia nem no Classic |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
