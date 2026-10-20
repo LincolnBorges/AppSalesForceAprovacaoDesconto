@@ -382,6 +382,22 @@ amarela **com desconto visível** (10% no scanner; interface na tabela).
 
 ---
 
+### 1.14 Pedido da cotação do piloto Acme (2026-10-20, Q2O-003)
+
+Cotação `0Q0as0000022g2BCAQ` (`Piloto de Peças - Entrada 25%`, `Accepted`, `Requer Aprovação`, gate
+`true`; pedido `DR-00005` aprovado pela Renata em 20/10/2026). Pedido criado por API, `Draft`:
+
+| Item | Valor |
+|---|---|
+| `Order` | `801as00000HIYj0AAH` — número `00000638`, `Draft`, `USD`, `TotalAmount = 1.140,00` |
+| Origem | `QuoteId = 0Q0as0000022g2BCAQ`; conta `001as00000HCKvnAAH` (Acme Partners); price book `01sas000001nOBJAA2` |
+| `OrderItem` (2) | `Battery Compartment Dust Seal` 30 × 24,00 (desc. 25%) = 720,00 · `Windshield Wiper Pack` 20 × 21,00 (desc. 25%) = 420,00 |
+| Regra A98 | `UnitPrice` = **líquido** (32 × 0,75 = 24; 28 × 0,75 = 21); `Discount = 25%` fica só informativo, porque `OrderItem.TotalPrice` é `UnitPrice × Quantity` |
+| Por que passou na VR | `DD_HasApprovedRequest__c = true` na cotação — caminho positivo da `DD_Block_Unapproved_Order` (F7-03) |
+| Rollback | apagar o `Order` (cascata nos itens) — exige autorização nominal (S5) |
+
+---
+
 ## 2. Decisões de Arquitetura
 
 | # | Decisão | Justificativa | Data |
@@ -725,6 +741,7 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 | Insert `Quote` já `Accepted` | **bloqueado** — `FIELD_CUSTOM_VALIDATION_EXCEPTION` |
 | `Draft` vermelha (12,5%) → `Accepted` sem gate | **bloqueado** (`0Q0as0000021vG1CAI`) |
 | Insert `Order` de cotação vermelha sem gate | **bloqueado** (mensagem de F7-03) |
+| Insert `Order` de cotação vermelha **com** gate `true` | **permitido** — `00000638` (`Q2O-003`) |
 | Gate `true` (pedido `Approved`) → aceitar vermelha | **permitido** (`0Q0as0000022fnVCAQ`, margem -229,17%) |
 | Aprovação pelo `ApprovalProcess` real → gate | **`true`** — `Approval.process` submeteu e aprovou; `Status__c = Approved`, `DecidedAt__c` preenchido (F7-004/A103) |
 | Pedido volta a `Submitted` → gate `false` → aceitar | **bloqueado** |

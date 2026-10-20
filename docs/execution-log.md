@@ -1547,6 +1547,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 
 ---
 
+### [2026-10-20 20:01 -03:00] Q2O-003 — OK (pedido da cotação do piloto Acme, após aprovação da gestora)
+
+| Campo | Valor |
+|---|---|
+| Operação | Criar 1 `Order` + 2 `OrderItem` espelhando a cotação `0Q0as0000022g2BCAQ` (`Piloto de Peças - Entrada 25%`), já `Accepted` com pedido de desconto aprovado |
+| Skill | query-salesforce |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Order` `801as00000HIYj0AAH` (`00000638`) · 2 `OrderItem` (Battery Compartment Dust Seal 30 × 24,00; Windshield Wiper Pack 20 × 21,00) |
+| Ferramenta | `sf apex run` (insert do pedido + itens) |
+| Parâmetros-chave | `AccountId=001as00000HCKvnAAH`; `Pricebook2Id=01sas000001nOBJAA2`; `QuoteId=0Q0as0000022g2BCAQ`; `EffectiveDate=2026-10-20`; `Status=Draft`; `CurrencyIsoCode=USD`; `OwnerId=005as000003piV7AAI`; `UnitPrice` **líquido** (24,00 e 21,00) e `Discount=25%` informativo (A98) |
+| Confirmação humana | **sim** — "a cotação 0Q0as0000022g2BCAQ eu consegui mudar para o status de aceito após aprovação da gestora direto, por favor criar um pedido dessa cotação" (2026-10-20) |
+| Resultado | `Order` criado `Draft`, `USD 1.140,00`, `TotalAmount` = 720 + 420; 2/2 `OrderItem` com `TotalPrice` de 720,00 e 420,00; dono Bruno; `QuoteId` preenchido. **A VR `DD_Block_Unapproved_Order` permitiu** porque `DD_HasApprovedRequest__c = true` (caminho positivo da F7-03) |
+| Reversão | Apagar o `Order` (cascata nos itens) — exige autorização nominal (S5) |
+| Tokens (aprox.) | 5000 |
+| Observações | A cotação está `Requer Aprovação` (13,90%) e foi aceita legitimamente após o `DR-00005` aprovado pela Renata. É a prova positiva que faltava para o `Order`: sem gate o insert é bloqueado (F7-002), com gate é permitido. Pedido deixado em `Draft`; a ativação não foi exercitada (F7-05/A102) |
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
