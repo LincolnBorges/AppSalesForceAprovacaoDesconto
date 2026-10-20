@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Block_Unapproved_Order</fullName>
+    <active>true</active>
+    <description>F7-03/D34: bloqueia criar ou ativar pedido de cotacao em faixa de risco sem pedido de desconto aprovado na cotacao. Le Quote.DD_GuardrailState__c e Quote.DD_HasApprovedRequest__c. Pedido sem cotacao de origem nao e avaliado; sem grandfathering.</description>
+    <errorConditionFormula>AND(NOT(ISBLANK(QuoteId)), Quote.DD_HasApprovedRequest__c = false, OR(Quote.DD_GuardrailState__c = "Requer Aprovação", Quote.DD_GuardrailState__c = "Requer Justificativa"), OR(ISNEW(), AND(ISCHANGED(Status), ISPICKVAL(Status, "Activated"))))</errorConditionFormula>
+    <errorDisplayField>Status</errorDisplayField>
+    <errorMessage>Pedido originado de cotação em faixa de risco exige pedido de desconto aprovado. Aprove o pedido de desconto na cotação antes de criar ou ativar o pedido.</errorMessage>
+</ValidationRule>

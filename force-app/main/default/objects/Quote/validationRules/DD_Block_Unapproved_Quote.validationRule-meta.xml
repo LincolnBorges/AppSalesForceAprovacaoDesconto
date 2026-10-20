@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DD_Block_Unapproved_Quote</fullName>
+    <active>true</active>
+    <description>F7-02/D34: bloqueia aceitar cotacao em faixa de risco sem pedido de desconto aprovado (gate DD_HasApprovedRequest__c). Sem grandfathering: atua em insert, mudanca de Status ou de faixa; insert Accepted sempre bloqueado, pois cotacao nova nao tem custo.</description>
+    <errorConditionFormula>AND(ISPICKVAL(Status, "Accepted"), DD_HasApprovedRequest__c = false, OR(ISNEW(), AND(OR(ISCHANGED(Status), ISCHANGED(DD_GuardrailState__c)), OR(DD_GuardrailState__c = "Requer Aprovação", DD_GuardrailState__c = "Requer Justificativa"))))</errorConditionFormula>
+    <errorDisplayField>Status</errorDisplayField>
+    <errorMessage>Cotação em faixa de risco exige pedido de desconto aprovado. Envie o pedido ao gerente e aguarde a aprovação antes de aceitar.</errorMessage>
+</ValidationRule>
