@@ -1511,6 +1511,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 
 ---
 
+### [2026-10-20 19:22 -03:00] UI-009 — OK (RLM: limpeza dos 12 `AppUsageAssignment` da massa do Bruno)
+
+| Campo | Valor |
+|---|---|
+| Operação | **Delete** dos 12 registros de `AppUsageAssignment` (`RevenueLifecycleManagement`) das cotações da MASSA-003, para liberar a edição pela UI clássica |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `AppUsageAssignment` `0j8as000003sirxAAA`…`0j8as000003sis8AAA` (12) · `Quote` `0Q0as0000022g21CAA`…`g2CCAQ` |
+| Ferramenta | `sf data delete record` (um a um) |
+| Parâmetros-chave | 12 deletes individuais; IDs mapeados em [`MEMORY.md`](../MEMORY.md) §1.11/§1.13 |
+| Confirmação humana | **sim** — "Confirmo que você remova os 12 AppUsageAssignment das cotações da massa do Bruno" (2026-10-20) |
+| Resultado | **12/12 `OK`**. Nenhum assignment restante nas 12 cotações; total da org 21 → **11** (9 do seed ACME de 2026-10-15 + 2 cotações de teste da F7). Cotações e linhas intactas: **12** cotações e **27** `QuoteLineItem`; faixas inalteradas |
+| Reversão | Recriar `AppUsageAssignment{ RecordId, AppUsageType = RevenueLifecycleManagement, Name = Revenue Lifecycle Management }` por cotação |
+| Tokens (aprox.) | 4000 |
+| Observações | Mesmo procedimento do UI-005 (A95): o delete é estável e não re-tagueia após o save. A restrição do RLM é da UI; update por Apex/API já funcionava com o assignment presente. As 2 cotações de teste da F7 continuam tagueadas de propósito (não autorizadas nesta limpeza) |
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

@@ -327,6 +327,7 @@ Toda cotação criada nesta org desde o seed do trial recebe **1 registro de `Ap
 | É efeito de MCP/API? | **não** — 9 cotações do seed de **2026-10-15** (antes do projeto) e a `Teste cotação` (criada pelo humano pela UI) também tinham |
 | O delete resolve? | **sim** e é **estável** — `AppUsageAssignment` `deletable/createable = true`; após apagar, o humano adicionou uma `QuoteLineItem` pela UI e salvou; **nenhum re-tag** depois do save |
 | Escopo limpo em 2026-10-19 | **16** cotações do projeto (15 em lote autorizado + 1 probe). Total na org: 25 → **9**, só as do seed ACME de 2026-10-15 |
+| Segunda limpeza (2026-10-20, UI-009) | **12** cotações da massa do Bruno (MASSA-003), com autorização nominal do humano. Total na org: 21 → **11** (9 do seed ACME + as 2 cotações de teste da F7 `0Q0as0000022fnVCAQ`/`0Q0as0000022fp7CAA`, que ficaram tagueadas e não foram tocadas). As 12 cotações e 27 linhas seguem intactas |
 | Rollback | recriar `AppUsageAssignment{ RecordId, AppUsageType, Name }` — snapshot dos 16 Ids em UI-005 no `execution-log` |
 | RLM provisionado? | **não** — `ProductSellingModel` e `SalesTransactionType` com **0** registros; `SalesTransaction` inexistente. O assignment é órfão do motor |
 | Atenção futura | cotação **nova** criada daqui para frente nasce tagueada de novo — se a demo exigir edição de linha pela UI numa cotação recém-criada, repetir a limpeza (1 registro, com autorização) |
@@ -372,6 +373,7 @@ A81): o prefixo denuncia a massa e quebra o realismo pedido. Estrutura: **6 opor
 - **Acesso:** Bruno tem `HasReadAccess` e `HasEditAccess` em todas as 6 contas, oportunidades e cotações.
 - **Uso previsto:** testar o console, o roteamento (amarelo/vermelho) e as VRs da Fase 7 (só as vermelhas
   bloqueiam aceite sem pedido aprovado; as amarelas também, por decisão D34).
+- **RLM:** as 12 cotações nasceram com `AppUsageAssignment` de RLM (A95). Removidos em **UI-009** com autorização do humano; a edição pela UI está liberada e não houve re-tag.
 - **Observação:** a moeda do usuário Bruno está **`BRL`** na org, embora o print do Setup mostre `USD`;
   os registros foram criados em `USD` (S12). Se a intenção é ele visualizar em USD, ajustar o usuário.
 
