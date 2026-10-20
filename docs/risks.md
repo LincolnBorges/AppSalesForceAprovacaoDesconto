@@ -59,6 +59,9 @@ algum motor assim?*
 | **R10** | **`CurrencyIsoCode` divergente** entre registros `DD_` e a `Quote` (`USD`) | Média | Médio | Enviar moeda explícita em todo registro (A13) e conferir o filho contra o pai na verificação pós-criação |
 | **R11** | **S11 inaplicável** se `DD_DiscountRequest__c` usar `Name` autonumber | Média | Baixo | Decidir na Fase 3; se autonumber, registrar a exceção em vez de forçar (A14) |
 | **R12** | **Deploy sem dry-run** quebra algo em silêncio | Baixa | Alto | S7 obrigatório. Em 4 sessões consecutivas o dry-run pegou um erro que só apareceria no deploy real |
+| **R13** | **Gate órfão: delete de `DD_DiscountRequest__c` aprovado não dispara recálculo** — `Quote.DD_HasApprovedRequest__c` fica `true` | Baixa | Alto | DELETE de pedido é **admin-only** (o `DD_DealDesk_User` não tem delete). Flow de delete em F7-05; até lá, auditar deletes de pedido aprovado |
+| **R14** | **Ativação de `Order` pode não passar pelas Validation Rules** (`Status` é `updateable=false`; ativação é operação própria) | Média | Alto | F7-05: exercitar em pedido descartável; se a ativação ignorar VR, bloquear por Flow before-update no `Order` |
+| **R15** | **Vendedor vira o gate manualmente** e aceita sem aprovação | Baixa | Alto | Gate tem FLS **read-only** no `DD_DealDesk_User`; só o perfil Admin edita. A VR não confia em edição manual: o valor é recalculado pelo Flow a cada mudança de pedido |
 
 ---
 

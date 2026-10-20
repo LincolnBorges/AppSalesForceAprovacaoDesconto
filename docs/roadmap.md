@@ -279,6 +279,31 @@ estejam corretos e o trace mostre a política.
 
 ---
 
+## Fase 7 — Enforcement do guardrail — **CONCLUÍDA (2026-10-20)**
+
+**Objetivo:** o guardrail deixa de apenas aconselhar e passa a **impedir** aceitar cotação em faixa de
+risco sem pedido de desconto aprovado, na `Quote` e no `Order`.
+
+**Entregáveis**
+1. `Quote.DD_HasApprovedRequest__c` (Checkbox) + FLS/layout na mesma operação (D20/S13).
+2. Flow record-triggered `DD_SyncQuoteGate` no `DD_DiscountRequest__c`, mantendo o gate.
+3. `ValidationRule` `DD_Block_Unapproved_Quote` e `DD_Block_Unapproved_Order`.
+
+**Resultado (2026-10-20)**
+
+| Entregável | Como saiu |
+|---|---|
+| Campo-gate | `Quote.DD_HasApprovedRequest__c`, deploy `0Afas0000061TfkCAE`; FLS read+edit no Admin e read-only no `DD_DealDesk_User`; layout Totals |
+| Flow | `DD_SyncQuoteGate` (`RecordAfterSave`, `CreateAndUpdate`), **Active** v1; DML provou `true` na aprovação e `false` no retorno a `Submitted` |
+| VRs | `DD_Block_Unapproved_Quote` e `DD_Block_Unapproved_Order` ativas, deploy `0Afas0000061VhRCAU` |
+| Teste de burlada | Insert `Accepted`, transição vermelha e `Order` de cotação vermelha **bloqueados**; aceite com aprovação **permitido**; queda de faixa pós-aceite **bloqueada** |
+| Varredura | 5 aceitas: 4 `Pendente de Custo` + 1 Titan em risco (grandfathering), nenhuma tocada |
+
+**Dívida conhecida (F7-05):** ativação de `Order` não exercitada; delete de pedido aprovado não
+recalcula o gate; `AutoApproved` não existe em `Status__c`.
+
+---
+
 ## Critérios de parada (quando NÃO avançar)
 
 | Situação | Ação |

@@ -1403,6 +1403,60 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 | Tokens (aprox.) | 9000 |
 | Observações | A mensagem cita um campo que já está vazio — comportamento incoerente da validação do Revenue Cloud nesta org, mesma família do `Order.DiscountPercent` read-only e do flow de Q2O inativo. Conclusão prática: o **percentual** é o único campo do cabeçalho gravável; o valor em moeda não. Nenhum total mudou (`TotalAmount = 1.027,20`) |
 
+### [2026-10-20 18:45 -03:00] F7-001 — OK (campo-gate, Flow e 2 VRs deployados com dry-run)
+
+| Campo | Valor |
+|---|---|
+| Operação | Criar `Quote.DD_HasApprovedRequest__c` + Flow `DD_SyncQuoteGate` + `ValidationRule` `Quote.DD_Block_Unapproved_Quote` e `Order.DD_Block_Unapproved_Order` + layout + FLS (F7-01/F7-02/F7-03) |
+| Skill | validate-metadata |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` (`IsSandbox=false`, `TrialExpirationDate=2026-11-15`) |
+| Objeto / Metadado | Campo `Quote.DD_HasApprovedRequest__c` (Checkbox) · Flow `DD_SyncQuoteGate` (RecordAfterSave) · 2 `ValidationRule` · `Layout:Quote-Quote Layout` · `Profile:Admin` · `PermissionSet:DD_DealDesk_User` |
+| Ferramenta | `sf project deploy start --dry-run` e `--metadata` (2 etapas) |
+| Parâmetros-chave | **Dry-run 1** (campo): `Succeeded` 1/1. **Deploy 1** `0Afas0000061TfkCAE`. **Dry-run 2**: **falhou** nas 2 VRs com `Validation rule description cannot be longer than 255 characters long.` (A101) → descrições encurtadas → **dry-run 2 `Succeeded` 6/6** → **deploy 2 `0Afas0000061VhRCAU` `Succeeded` 6/6** |
+| Confirmação humana | **sim** — ordem direta do humano em 2026-10-20 ("Execute a F7-01... F7-02 e F7-03... faça o --dry-run... Teste de Burlada Final") sobre as 4 decisões de D34 |
+| Resultado | FLS: Admin `read+edit`, PS `read=true/edit=false`. Layout: `grep` do campo = **1** na seção Totals. Flow: `Active`, `RecordAfterSave`, versão **1** (sem `Obsolete`). VRs: **2 Active**. `FlowDefinitionView` 256 (220 ativos, 33 locais) |
+| Reversão | Remover as 2 VRs, desativar/remover o Flow e o campo (exige autorização nominal, S5). O campo tem default `false` e nenhum dado histórico depende dele |
+| Tokens (aprox.) | 30000 |
+| Observações | A fórmula final da `Quote` diverge do plano em um ponto deliberado: `ISNEW()` bloqueia **qualquer** insert `Accepted` (sem linhas não há margem nem aprovação) e `ISCHANGED(DD_GuardrailState__c)` cobre a queda de faixa pós-aceite — D35. `AutoApproved` não existe no picklist de `Status__c` (é `Decision__c`): o gate usa `Approved` |
+
+---
+
+### [2026-10-20 18:53 -03:00] F7-002 — OK (teste de burlada: insert `Accepted`, transição vermelha e `Order` bloqueados)
+
+| Campo | Valor |
+|---|---|
+| Operação | 3 tentativas de burlar o gate por DML/REST: (1) insert de `Quote` já `Accepted`; (2) `Draft` vermelha → `Accepted`; (3) insert de `Order` a partir de cotação vermelha sem aprovação |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Quote` · `Order` · campo-gate `DD_HasApprovedRequest__c` |
+| Ferramenta | `sf data create record` · `sf data update record` · `sf apex run` |
+| Parâmetros-chave | (1) `Name=DEMO-F7-Q-InsertAccepted`, `Status=Accepted`, `OpportunityId=006as0000094kK2AAI`, `Pricebook2Id=01sas000001nOBJAA2`, `CurrencyIsoCode=USD`; (2) `0Q0as0000021vG1CAI` (12,5%, `Requer Aprovação`) → `Status=Accepted`; (3) `Order` `QuoteId=0Q0as0000021vG1CAI`, `Status=Draft` |
+| Confirmação humana | **sim** — teste pedido nominalmente ("O Salesforce DEVE retornar erro") |
+| Resultado | (1) **`FIELD_CUSTOM_VALIDATION_EXCEPTION`** — "Cotação em faixa de risco exige pedido de desconto aprovado..."; (2) **mesmo erro**, cotação permaneceu `Draft`; (3) **`FIELD_CUSTOM_VALIDATION_EXCEPTION`** — "Pedido originado de cotação em faixa de risco exige pedido de desconto aprovado..." Nenhum registro criado |
+| Reversão | Nenhuma necessária: as 3 operações falharam e não gravaram nada |
+| Tokens (aprox.) | 8000 |
+| Observações | O insert direto `Accepted` é bloqueado mesmo sem margem (a cotação nasce sem linha/custo). O requisito "com margem vermelha" no insert é estruturalmente impossível de montar num único DML (filhos exigem pai), por isso a prova da faixa usa a transição em (2) |
+
+---
+
+### [2026-10-20 18:55 -03:00] F7-003 — OK (gate pelo Flow, round-trip e regressão de faixa)
+
+| Campo | Valor |
+|---|---|
+| Operação | Provar o Flow `DD_SyncQuoteGate` ponta a ponta e a regra de faixa em cotação já aceita, com dados `DEMO-` |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Quote` `0Q0as0000022fnVCAQ` e `0Q0as0000022fp7CAA` · `QuoteLineItem` `0QLas0000029vvbGAA` · `DD_DiscountRequest__c` `a0Nas00000UVFpWEAX` |
+| Ferramenta | `sf apex run` (DML em Apex para gravar a linha; `QuoteLineItem.CurrencyIsoCode` é derivado da cotação — A81) |
+| Parâmetros-chave | Q1: linha 20 × 96 com 75% → margem -229,17%; pedido `Submitted` → gate `false`; pedido `Approved` + `DecidedAt` → **gate `true`**; aceitar → **OK**; reverter pedido para `Submitted` → gate `false`; aceitar → **bloqueado**. Q2: linha saudável 33,02% → aceitar **OK**; linha para 75% → **bloqueado**, estado permaneceu `Saudável` e `Discount=0.00` |
+| Confirmação humana | **sim** — mesma ordem de execução da F7 |
+| Resultado | Flow grava `true`/`false` corretamente nas duas direções; VR bloqueia a queda de faixa em cotação aceita (**A100**); round-trip sem resíduo de estado (Q1 e Q2 terminaram `Draft`) |
+| Reversão | Q1 e Q2 deixadas em `Draft`; pedido `a0Nas00000UVFpWEAX` em `Submitted`. Exclusão exige autorização (S5) |
+| Tokens (aprox.) | 12000 |
+| Observações | Varredura F7-04: **5** cotações `Accepted` — 4 `Pendente de Custo` e **1** `Requer Aprovação` com gate `false` (Titan `0Q0as0000021vHdCAI`, grandfathering). Nenhuma tocada. Ativação de `Order` e delete de pedido aprovado não exercitados → **F7-05** (A102) |
+
+---
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.

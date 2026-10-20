@@ -58,8 +58,11 @@ nomes reservados — serve para evitar retrabalho e colisão.
 | `CustomApplication` `DD_DealDesk` | **criado (Fase 4, 2026-10-17)** | App "Deal Desk": Home, Quotes e Console de Margem; visibilidade no perfil Admin (A72) |
 | Ações Agentforce `DD_*` | **criado (Fase 6, 2026-10-17)** | `GenAiFunction` **`DD_CalculateMargin`** = `172as000008FaHtAAK`, aponta para o Flow `DD_CalculateQuoteMargin`; bundle mdapi de 3 arquivos, API **66.0**, deploy `0Afas0000060DQ1CAM`; retrieve devolveu os 3 arquivos. Ver AF-001 |
 | Agente `DDDealDeskAgent` | **criado e ATIVO (Fase 6, 2026-10-17)** | `Bot` `0Xxas000000AJpNCAW` (`AgentforceEmployeeAgent`) · `BotVersion` v1 `0X9as000000F9kXCAS` **`Active`** · planner `DDDealDeskPlanner` `16jas00000061avAAA` · tópico `DD_DealDesk_Guardrail` `179as000000E0rNAAS`. O MCP `sf_create_agent` **não** serviu (AF-002/A78); saiu por bundle mdapi (AF-003, decisão **D30**) |
-| Permission set `DD_DealDesk_User` | **criado (Fase 5, 2026-10-17)** | `0PSas000004H6puGAC`, deploy `0Afas0000060D6fCAE`: 5 objetos read-only, 22 FLS de leitura (só `DD_GuardrailState__c` entre os campos de número), aba e app visíveis, 2 Flows habilitados. **2026-10-18 (F5-11):** + `classAccesses` para `DD_MarginConsoleController` (sem isso o vendedor recebe erro ao chamar o Apex). **2026-10-18 (F5-12):** + leitura de `DD_DiscountRequest__c.Status__c` para o aprovador. Ver FLS-001/APX-002/APR-001 |
+| Permission set `DD_DealDesk_User` | **criado (Fase 5, 2026-10-17)** | `0PSas000004H6puGAC`, deploy `0Afas0000060D6fCAE`: 5 objetos read-only, 22 FLS de leitura (só `DD_GuardrailState__c` entre os campos de número), aba e app visíveis, 2 Flows habilitados. **2026-10-18 (F5-11):** + `classAccesses` para `DD_MarginConsoleController` (sem isso o vendedor recebe erro ao chamar o Apex). **2026-10-18 (F5-12):** + leitura de `DD_DiscountRequest__c.Status__c` para o aprovador. **2026-10-20 (F7):** + leitura de `Quote.DD_HasApprovedRequest__c` (read-only; o vendedor **não** pode virar o gate). Ver FLS-001/APX-002/APR-001 |
 | `ApprovalProcess` `DD_DiscountRequest__c.DD_Manager_Approval` | **criado e ATIVO (F5-12, 2026-10-18)** | `ProcessDefinition` `04aas000000atijAAA` (`Approvação do Pedido de Desconto`); 1 etapa `Gerente_Comercial` com aprovador `relatedUserField` = `Approver__c`; entrada `Status__c = Submitted`; ações finais gravam `Status__c` (`Approved`/`Rejected`) + `DecidedAt__c` (`NOW()`); `recordEditability = AdminOnly`. Submetido pelo `DD_MarginConsoleController` via `Approval.process` — é a tela "Itens para Aprovar" da gerente. As 3 `WorkflowFieldUpdate` vivem em `workflow/DD_DiscountRequest__c.workflow-meta.xml` |
+| `Quote.DD_HasApprovedRequest__c` | **criado (F7-01, 2026-10-20)** | Checkbox default `false` — gate de aprovação da cotação, mantido pelo Flow `DD_SyncQuoteGate` e lido pela VR `DD_Block_Unapproved_Quote`. FLS read+edit no perfil Admin e **read-only** no `DD_DealDesk_User` (o vendedor vê, mas não vira o gate). Layout `Quote-Quote Layout`, seção Totals. Deploy `0Afas0000061TfkCAE` |
+| Flow `DD_SyncQuoteGate` | **criado (F7-01, 2026-10-20)** | `RecordAfterSave` no `DD_DiscountRequest__c` (`CreateAndUpdate`), **Active** versão 1: consulta pedido `Status__c = Approved` da cotação e grava o checkbox (`true`/`false`) na `Quote`. Deploy `0Afas0000061VhRCAU` |
+| `ValidationRule` Fase 7 | **criadas (F7-02/F7-03, 2026-10-20)** | `Quote.DD_Block_Unapproved_Quote` e `Order.DD_Block_Unapproved_Order`, ambas **Active** — fórmulas exatas e matriz de teste em §4.11. Deploy `0Afas0000061VhRCAU` |
 | `DD_DiscountRequest__c` financeiro (F5-15, 2026-10-18) | **3 campos `Currency(18,2)`** | `OriginalAmount__c` (Quote.TotalPrice no momento do pedido) · `DiscountAmount__c` (× pct) · `FinalAmount__c` (original − desconto). Gravados pelo `DD_RouteDiscountApproval` **v9** via lookup `Get_Quote`; FLS read-only no PS e read+edit no perfil Admin. Só receita — custo/margem fora (D14) |
 | Fila de aprovação aberta (2026-10-18, APR-002) | **DR-00001/2/3 `Pending` para Renata** | `ProcessInstanceWorkitem` `04ias000000ASMPAA4`/`ASMQAA4`/`ASMRAA4`; `Actor = 005as000003piTVAAY`. Aprovar/rejeitar grava `Status__c` + `DecidedAt__c` |
 | `DD_DiscountRequest__c.Status__c` | **opcional desde F5-12 (2026-10-18)** | Era `required`; virou opcional porque a plataforma recusa FLS somente-leitura em campo required (**A88**). A obrigatoriedade está na regra `DD_Request_Status_Required` (`ISBLANK(TEXT(Status__c))`); default `Draft` |
@@ -186,6 +189,13 @@ Agregado dos 5: receita 720,00 · custo 511,00 · margem 209,00 · **29,03%**.
 > as 2 entradas `View` de form factor (`Large`/`Small`) passaram de `type = Default` para
 > `type = Flexipage` + `content = DD_Quote_Record_Page`. Nenhum Flow, campo ou LWC tocado — sem versão
 > `Obsolete` nova (A50). Deploy `0Afas00000615NDCAY`.
+>
+> **Reconferido em 2026-10-20 (F7-01 a F7-04):** `FlowDefinitionView` **256** (220 ativos, 33 sem
+> namespace) e `ValidationRule` ativas em `Quote`/`Order` = **2** (as duas da Fase 7; `DJ_Test` segue
+> inativa). O `DD_SyncQuoteGate` tem **1 versão `Active`**, sem `Obsolete` (Tooling `Flow`). Nenhum
+> LWC, `CustomTab`, `FlexiPage`, `CustomObject` ou `ApexClass` foi criado ou alterado. O campo novo
+> `Quote.DD_HasApprovedRequest__c` é campo de objeto padrão — não muda a contagem de objetos `DD_`.
+> Deploy `0Afas0000061TfkCAE` (campo) e `0Afas0000061VhRCAU` (Flow + 2 VRs + layout + FLS).
 >
 > **Regra de limpeza (A46):** ao remover um Flow, conferir **`FlowDefinitionView` E a Tooling API
 > `Flow`** — `sf_delete_metadata` apaga só a versão mais recente e deixa a anterior `Obsolete` quando
@@ -378,6 +388,7 @@ sem devolver o botão legado — ver UI-008). Pedido criado direto por API:
 | D32 | **A decisão humana acontece num `ApprovalProcess` nativo sobre o `DD_DiscountRequest__c`, não numa tela própria.** O Flow continua decidindo a margem; o controller **submete** o pedido já criado (`Approval.process`) e o gerente aprova/rejeita em "Itens para Aprovar". Aprovação e rejeição gravam `Status__c` e `DecidedAt__c` por `WorkflowFieldUpdate`. O `recordEditability` é `AdminOnly`: o aprovador não edita o pedido, só decide (com comentário no histórico de aprovação). | Resposta a F5-12 (o pedido existia, mas não havia onde a Renata aprovar — a org não tinha nenhum `ProcessDefinition`). Usar a UI nativa entrega fila, e-mail, histórico e auditoria sem escrever LWC novo, e mantém a tese do projeto: o Approval Process **não** decide margem, só apresenta a decisão ao humano (D15). Rejeitada a fila própria em LWC por duplicar a plataforma | 2026-10-18 |
 | D33 | **O snapshot financeiro do pedido de desconto é só receita e vem da `Quote` na hora da decisão:** `OriginalAmount__c = Quote.TotalPrice` (o que o cliente paga hoje, já líquido de descontos de linha), `DiscountAmount__c = TotalPrice × pct`, `FinalAmount__c = TotalPrice − DiscountAmount`. Os três são **gravados** (nunca fórmula viva) e custo/margem continuam fora do objeto (D14/D23). | Registrada em FIN-001. `TotalPrice` e não `Subtotal`: o desconto pedido incide sobre o preço atual. A engine preserva as 2 casas ao gravar `Currency` (A93) | 2026-10-18 |
 | D34 | **Enforcement do guardrail na `Quote` e no `Order` (Fase 7), com 4 decisões do humano:** (1) **ambas** as faixas de risco bloqueiam aceitar — `Requer Aprovação` **e** `Requer Justificativa`; (2) "aprovado" = `DD_DiscountRequest__c.Status__c` ∈ {`Approved`, `AutoApproved`}; (3) **sem grandfathering** — a regra atua em novas transições (`ISCHANGED(Status)`, mais `ISNEW()` para cobrir insert direto via API); (4) o `Order` bloqueia no `ISNEW()` **e** na transição para `Status = 'Activated'`. O gate é o campo `Quote.DD_HasApprovedRequest__c`, mantido por Flow, porque `ValidationRule` não consulta filhos. | Fecha o gap verificado em Q2O-003: a cotação `0Q0as0000021vHdCAI` foi aceita com 75,73% e o `DR-00002` `Submitted`, sem `ApprovalProcess` nem `ValidationRule` no objeto. O guardrail passava de consultivo para **impositivo** — decisão explícita do humano em 2026-10-19; execução em 2026-10-20 (F7-01 a F7-04) | 2026-10-19 |
+| D35 | **Refinamento de execução da F7-02/F7-03 (2026-10-20):** (a) a VR da `Quote` bloqueia **todo insert com `Status = Accepted`**, não só em faixa de risco — cotação recém-inserida não tem linha, custo nem pedido aprovado, então aceitar no insert é sempre sem base (era o que o `ISNEW()` da decisão 3 deveria cobrir); (b) a regra também dispara em `ISCHANGED(DD_GuardrailState__c)`, provado por DML: alterar a linha de uma cotação já `Accepted` para 75% de desconto é **bloqueado**, fechando o vetor "aceitar saudável e derrubar a margem depois"; (c) `AutoApproved` **não existe** no picklist de `Status__c` (é valor de `Decision__c`): o gate considera só `Approved`; se o valor for criado, incluir nas duas VRs e no Flow; (d) o `Order` bloqueia insert e ativação, mas a **ativação não foi exercitada** e o Flow **não cobre delete** de pedido aprovado (gate ficaria `true`) — DELETE de pedido é admin-only (o PS não tem delete) e as duas lacunas viram F7-05 | Fecha os dois vetores que a fórmula original deixava abertos e registra as lacunas residuais com dono | 2026-10-20 |
 ---
 
 ## 3. Aprendizados
@@ -429,6 +440,10 @@ sem devolver o botão legado — ver UI-008). Pedido criado direto por API:
 | A96 | **As colunas da related list no LEX vêm da `page layout`** (a ordem conta). O `force:relatedListContainer` (componente "Related Lists" padrão) exibe só os **4 primeiros** campos — parece limite de plataforma, mas não é. Com **`force:relatedListSingleContainer` + `relatedListComponentOverride = ADVGRID`** a lista mostra **todos** os campos definidos no layout. `parentFieldApiName` tem de ser o **pai** (`Quote.Id`); `QuoteLineItem.QuoteId` é recusado (`The parent record name is invalid`) e `QuoteLineItem.Quote` não existe. Não existe propriedade `fields` no componente (`Invalid property [fields]`). | Explica o "só aparecem 4 colunas": é o componente compacto, não FLS nem limite de plataforma. O grid avançado também demora alguns segundos para renderizar — validar por DOM depois de esperar, não na primeira leitura (evita diagnosticar tela vazia como falha de deploy) | 2026-10-19 |
 | A97 | **Diagnóstico de UI: ler a página renderizada antes de teorizar — e escalar para o humano cedo.** Na UI-006 gastei dezenas de chamadas inferindo de onde vinham as colunas da related list (`FlexiPage`? `Layout`? `CompactLayout`? FLS? propriedade `fields`?) em vez de ler o DOM da página que já estava aberta — que respondeu em **uma** chamada. Pior: quando a leitura do DOM falhou por renderização tardia, insisti em vez de pedir ao humano para olhar o Chrome; ele mostrou em **um print** o que eu não vi em ~40 chamadas. | Regra operacional: (1) com a página aberta, **ler o DOM/atributos** (ou pedir print) **antes** de montar hipótese; (2) component de UI pode renderizar **segundos depois** — esperar/selecionar o elemento antes de concluir "quebrou"; (3) **após 2 tentativas** de verificação automática sem resultado, **parar e pedir ao humano** para conferir no Chrome, dizendo exatamente o que olhar. Não substituir isso por mais teoria: cada rodada de suposição custa mais caro que a pergunta | 2026-10-19 || A65 | **`IsNull` sobre campo de lookup não é avaliado** e **filtro em campo de objeto relacionado não resolve** em `Get Records`.** `owner.ManagerId` IsNull → caiu no ramo errado e estourou `columnName: null__NotFound`; `Profile.Name` no filtro → mesmo erro. | Toda checagem de nulidade de Id deve virar **fórmula booleana** (`NOT(ISBLANK(...))` quando o campo é texto) e o filtro deve usar campo **do próprio objeto** (`IsActive`, `Id`). Consequência: a escada não consegue isolar "admin"; o último degrau virou "primeiro usuário ativo ≠ solicitante" (D26) | 2026-10-17 |
 | A98 | **`OrderItem.TotalPrice` = `UnitPrice × Quantity` e NÃO aplica o campo `Discount`.** Diferente do `QuoteLineItem.TotalPrice`, que é líquido de desconto. Criar o pedido copiando `UnitPrice` + `Discount` da cotação infla o `Order.TotalAmount` (4.232,00 em vez de 1.027,20). | Ao espelhar cotação com desconto em `Order`/`OrderItem`, gravar **`UnitPrice` líquido** (`unit × (1 − desconto)`); o `Discount` fica como informação de percentual. Corrigido na Q2O-001 com 4 updates. Vale para qualquer integração futura cotação→pedido | 2026-10-19 || A66 | **Saída de subflow não se referencia por `Call_Flow.var` quando `storeOutputAutomatically=false`.** O mapeamento é `<outputAssignments><assignToReference>VAR_DO_PAI</assignToReference><name>VAR_DO_SUBFLOW</name></outputAssignments>` — `value`/`elementReference` é inválido. | Erro literal: `Element value invalid at this location in type FlowSubflowOutputAssignment`. Bateu no RTE-001 | 2026-10-17 |
+| A99 | **ValidationRule não consulta registros filhos.** Não existe fórmula "há um `DD_DiscountRequest__c` aprovado para esta cotação?" — o caminho é **campo-gate no pai** (`Quote.DD_HasApprovedRequest__c`) mantido por Flow record-triggered, e a VR lê o campo. Provado na F7-01/F7-02 | Qualquer bloqueio futuro que dependa de filho segue o mesmo desenho: gate no pai + automação que o mantém + VR simples e determinística |
+| A100 | **`ISCHANGED` funciona em campo de fórmula dentro de ValidationRule e pega o recálculo de roll-up do pai.** A cotação `0Q0as0000022fp7CAA` foi aceita saudável (33,02%) e a alteração da linha para 75% foi **bloqueada** pela VR, com o estado permanecendo `Saudável` e o desconto da linha em `0.00` | Fecha o vetor "aceitar saudável e derrubar a margem depois". Não foi preciso `PRIORVALUE` nem regra no `QuoteLineItem`. Testar sempre por DML, porque o comportamento não é óbvio |
+| A101 | **`ValidationRule.description` tem limite de 255 caracteres** e o dry-run recusa com `Validation rule description cannot be longer than 255 characters long.` | Descrição de VR nasce curta; o detalhe longo vai para o `MEMORY.md`/log. Pegou na F7-02/F7-03 antes de qualquer deploy |
+| A102 | **`Order.Status` é `createable=true` e `updateable=false`:** ativar pedido não é `update` comum, é operação própria da plataforma. | A VR `DD_Block_Unapproved_Order` usa `ISCHANGED(Status)` para a ativação, mas o caminho de ativação não foi exercitado na F7 (F7-05) — validar em pedido descartável antes de confiar nele |
 | A57 | **Não se deploya `FieldPermissions` para campo `required`.** Erro literal: `You cannot deploy to a required field: <Objeto>.<Campo__c>`. A org **não cria** linha de `FieldPermissions` para esses campos, e a verificação de FLS por `FieldPermissions` volta vazia — o que parece falha de S13 e não é. | Para campo obrigatório, a prova de visibilidade é **funcional** (criar o registro e reler o valor), não por `FieldPermissions`. Pegou no dry-run de DPM-001 |
 | A67 | **`lightning-flow` EXECUTA flow autolaunched e entrega saídas — mas com nomes e formato diferentes do esperado.** O evento é `onstatuschange`; o status que indica fim é **`FINISHED_SCREEN`** (não `FINISHED`); e `outputVariables` vem como **array** de `{dataType, name, value, isCollection, flowName}` — não como objeto. Enquanto está montado, o componente renderiza um banner do próprio flow (`<label> … FINISHED`). | O handler que esperava `FINISHED` + objeto nunca rodava e a tela ficava em "Simulando…". Correção: `isFlowFinished()` aceitando `FINISHED_SCREEN`/`FINISHED`, `toOutputMap()` convertendo o array e desmontar o flow ao concluir (o banner desaparece). Ver UI-001 |
 | A68 | **REFUTADO em 2026-10-18 (F5-11; ver A86/A87).** O deploy de Apex **funciona** com `--test-level RunSpecifiedTests` e cobertura do código do deploy (73/77 ≈ 95%), mesmo com `ApexOrgWideCoverage` = 0%. Texto original: Apex está fora de alcance nesta org — `ApexOrgWideCoverage` = **0%** e deploy em org não-sandbox exigiria **75% de cobertura org-wide** — qualquer `ApexClass` nova falha mesmo com a própria classe 100% coberta. | Assinatura do bloqueio: dry-run `Status = Failed` com `numberComponentErrors = 0`, `numFailures = 0` e nenhuma `componentFailure` — silêncio total. Consequência: toda integração LWC↔Flow é **declarativa** (A67) ou por subflow de tela. Ver APX-001 |
@@ -638,7 +653,60 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 
 ---
 
-## 5. Pendências — Roadmap de Construção (Fases 0 a 6)
+### 4.11 Enforcement do guardrail — gate, Flow e as 2 VRs (criado 2026-10-20, F7-01 a F7-04)
+
+- **Campo-gate:** `Quote.DD_HasApprovedRequest__c` — Checkbox, default `false`, não nulo. FLS read+edit
+  no **perfil Admin** e **read-only** no `DD_DealDesk_User`. Presente no `Quote-Quote Layout` (Totals,
+  behavior `Edit`). Verificação pós-deploy: `FieldPermissions` com 2 linhas corretas e `grep` do campo
+  no layout retornado (S13/D20).
+- **Flow:** `DD_SyncQuoteGate` — `RecordAfterSave` em `DD_DiscountRequest__c`, `CreateAndUpdate`, filtro
+  `ISNEW() || ISCHANGED({!$Record.Status__c}) || ISCHANGED({!$Record.Quote__c})`. `Get_ApprovedRequest`
+  (`Quote__c = $Record.Quote__c AND Status__c = "Approved"`, first only) → `Set_Gate_True` /
+  `Set_Gate_False` na `Quote` por `$Record.Quote__c`. **Sem fault handler de propósito:** falha ao gravar
+  o gate derruba a transação (falha fechada); gate silenciosamente velho liberaria aceitar.
+- **VR `Quote.DD_Block_Unapproved_Quote`** (ativa):
+
+  ```
+  AND(ISPICKVAL(Status, "Accepted"),
+      DD_HasApprovedRequest__c = false,
+      OR(ISNEW(),
+         AND(OR(ISCHANGED(Status), ISCHANGED(DD_GuardrailState__c)),
+             OR(DD_GuardrailState__c = "Requer Aprovação",
+                DD_GuardrailState__c = "Requer Justificativa"))))
+  ```
+
+- **VR `Order.DD_Block_Unapproved_Order`** (ativa):
+
+  ```
+  AND(NOT(ISBLANK(QuoteId)),
+      Quote.DD_HasApprovedRequest__c = false,
+      OR(Quote.DD_GuardrailState__c = "Requer Aprovação",
+         Quote.DD_GuardrailState__c = "Requer Justificativa"),
+      OR(ISNEW(), AND(ISCHANGED(Status), ISPICKVAL(Status, "Activated"))))
+  ```
+
+- **Matriz de teste (2026-10-20, DML):**
+
+| Cenário | Resultado |
+|---|---|
+| Insert `Quote` já `Accepted` | **bloqueado** — `FIELD_CUSTOM_VALIDATION_EXCEPTION` |
+| `Draft` vermelha (12,5%) → `Accepted` sem gate | **bloqueado** (`0Q0as0000021vG1CAI`) |
+| Insert `Order` de cotação vermelha sem gate | **bloqueado** (mensagem de F7-03) |
+| Gate `true` (pedido `Approved`) → aceitar vermelha | **permitido** (`0Q0as0000022fnVCAQ`, margem -229,17%) |
+| Pedido volta a `Submitted` → gate `false` → aceitar | **bloqueado** |
+| Aceitar saudável sem gate → linha para 75% | **bloqueado** (A100) |
+| Grandfathering | 5 aceitas: 4 `Pendente de Custo` + 1 `Requer Aprovação` com gate `false` (Titan) — nenhuma tocada |
+
+- **Dados de teste deixados (prefixo `DEMO-`):** cotações `0Q0as0000022fnVCAQ` (Draft, vermelha, pedido
+  `a0Nas00000UVFpWEAX` `Submitted`) e `0Q0as0000022fp7CAA` (Draft, saudável, 33,02%); linha
+  `0QLas0000029vvbGAA`.
+- **Lacunas residuais (F7-05):** (a) delete de pedido aprovado não dispara recálculo — gate ficaria
+  `true` (DELETE de pedido é admin-only: o PS não tem delete); (b) ativação de `Order` não exercitada
+  (A102); (c) `AutoApproved` não existe em `Status__c` (D35).
+
+---
+
+## 5. Pendências — Roadmap de Construção (Fases 0 a 7)
 
 > Esta seção **não** lista problemas: lista o plano. Detalhamento em
 > [`docs/roadmap.md`](docs/roadmap.md). Riscos e mitigações em [`docs/risks.md`](docs/risks.md).
@@ -651,7 +719,8 @@ Não redescobrir: estas respostas custaram dry-run e estão registradas em PRB-0
 | **3** | Guardrail e roteamento: `DD_DiscountRequest__c` + Flow `DD_RouteDiscountApproval` + notificação ao aprovador | Fase 2 | **CONCLUÍDO** (2026-10-17: 18 campos + 3 regras, 2 flows ativos, 3 cenários ponta a ponta) |
 | **4** | UI: LWC `ddMarginConsole` + `FlexiPage` na `Quote` + `CustomTab` + `CustomApplication` | Fase 3 | **CONCLUÍDO** (2026-10-17: console, página, aba e app; 3 estados validados) |
 | **5** | Acesso e acabamento: permission set `DD_DealDesk_User`, dados de demonstração, testes, roteiro de demo de 30 min | Fase 4 | **CONCLUÍDO** (2026-10-17: F5-07 corrigido, PS `DD_DealDesk_User`, 3 cotações de demo, roteiro de 30 min, acesso sem admin validado pelo humano) |
-| **6** | Agentforce: ações (bundle 3 arquivos, API 66.0) → tópico (MCP) → planner (MCP) → link | Fase 5 | PENDENTE |
+| **6** | Agentforce: ações (bundle 3 arquivos, API 66.0) → tópico (MCP) → planner (MCP) → link | Fase 5 | **CONCLUÍDO** (2026-10-17: `DDDealDeskAgent` ativo, 4/4 perguntas validadas; dívida cosmética F6-11) |
+| **7** | Enforcement do guardrail: gate `Quote.DD_HasApprovedRequest__c` + Flow `DD_SyncQuoteGate` + VRs `DD_Block_Unapproved_Quote`/`DD_Block_Unapproved_Order` | Fase 6 | **CONCLUÍDO** (2026-10-20: 2 deploys com dry-run; 7 cenários DML provados, incluindo insert direto `Accepted` bloqueado; F7-05 aberta para ativação/delete) |
 
 **Bloqueios conhecidos: nenhum.** As 4 incógnitas de plataforma foram eliminadas por teste
 (T1/T2/T6/T7) — ver [`docs/risks.md`](docs/risks.md).

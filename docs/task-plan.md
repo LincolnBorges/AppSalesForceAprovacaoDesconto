@@ -65,11 +65,11 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
 | 5 | Acesso, dados e demo | 11 | 9 | EM ANDAMENTO (F5-11 concluída em 2026-10-18) |
 | 6 | Camada Agentforce | 11 | 10 | CONCLUÍDO (2026-10-17) |
-| 7 | Enforcement do guardrail | 4 | 0 | PENDENTE (aberta em 2026-10-19) |
+| 7 | Enforcement do guardrail | 5 | 4 | CONCLUÍDO (2026-10-20; F7-05 é dívida conhecida) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **79** | **66** | |
+| **Total** | | **80** | **70** | |
 
-*Atualizado em 2026-10-19 (UI-004 a UI-008 e Q2O-001/Q2O-002; **Fase 7 aberta** com F7-01 a F7-04 — enforcement do guardrail na Quote e no Order, a pedido do humano).*
+*Atualizado em 2026-10-20 (F7-01 a F7-04 concluídas: campo-gate, Flow `DD_SyncQuoteGate`, VRs `DD_Block_Unapproved_Quote`/`DD_Block_Unapproved_Order`; teste de burlada por DML executado e bloqueado. F7-05 aberta para ativação/delete).*
 
 ---
 
@@ -195,7 +195,7 @@ paradas no ponto indicado.
 | F5-11 | Console não roda para usuário não-admin | F5-10 | O `lightning-flow` recusa a execução para não-admin com `FLOW_ACCESS_RESTRICTED` (`currentFlowVersionId` nulo), mesmo com acesso ao Flow, FLS nos campos lidos, `ApiEnabled` e modo sistema. Sem isso a demo "vendedor pede desconto" **não funciona** — F5-03 validou só a tela, nunca o simulador. Resolver por arquitetura: o LWC chama os Flows por Apex | IA+H | **CONCLUÍDO (2026-10-18):** `DD_MarginConsoleController` (`with sharing`, `WITH USER_MODE`, DTOs com whitelist) chama `DD_CalculateQuoteMargin`/`DD_RouteDiscountApproval` por `Flow.Interview`; LWC republicado sem `lightning-flow`; `classAccesses` no `DD_DealDesk_User`. Dry-run e deploy `0Afas0000060FWgCAM`: **10/10 testes**, **73/77 linhas (≈95%)**. `System.runAs` de Standard User no teste prova o caminho não-admin. Nenhum Flow alterado. A causa raiz do gate do componente segue não identificada (A84) — o Apex a contorna. Ver APX-002, D31, A86/A87 |
 | F4-08 | Console em qualquer app — FlexiPage como Org Default | **F4-03** | A tela da cotação só aparecia dentro do app Deal Desk (o override vivia no `CustomApplication`). Tornar `DD_Quote_Record_Page` **org default do objeto `Quote`** (desktop + mobile) para valer em qualquer app, sem o vendedor trocar de app | IA | **CONCLUÍDO (2026-10-19):** `CustomObject:Quote` com `View` `Large`/`Small` → `Flexipage`. Dry-run 1 falhou com `null is not a supported form factor.` (**A94**); dry-run 2 + deploy `0Afas00000615NDCAY` passaram 6/6. O `actionOverrides` do `DD_DealDesk` foi mantido. Ver UI-004 |
 
-### Fase 7 — Enforcement do guardrail (aberta em 2026-10-19, a pedido do humano)
+### Fase 7 — Enforcement do guardrail (aberta em 2026-10-19, concluída em 2026-10-20)
 
 > **Origem:** a cotação `0Q0as0000021vHdCAI` foi aceita com **75,73% de desconto** e um
 > `DD_DiscountRequest__c` **`Submitted`** (DR-00002) e mesmo assim gerou pedido — pela API e, na UI,
@@ -211,10 +211,11 @@ paradas no ponto indicado.
 
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
-| F7-01 | Campo-gate de aprovação na `Quote` | — | Criar `Quote.DD_HasApprovedRequest__c` (Checkbox, default `false`) + Flow record-triggered no `DD_DiscountRequest__c` que o mantém: `true` quando existir request `Status__c = Approved` para a cotação, `false` caso contrário. Entregar na mesma operação: FLS no perfil (D20/S13) e no `DD_DealDesk_User`, e o campo no Page Layout | IA | PENDENTE |
-| F7-02 | `ValidationRule` `DD_Block_Unapproved_Quote` | **F7-01** | Bloquear `Status = 'Accepted'` quando `DD_GuardrailState__c` ∈ {`Requer Aprovação`, **`Requer Justificativa`**} **e** `DD_HasApprovedRequest__c = false` (decisões 1 e 2). Gatilho `OR(ISNEW(), ISCHANGED(Status))` — sem grandfathering (decisão 3), e o `ISNEW()` cobre insert direto via API com `Status = Accepted`, que `ISCHANGED` sozinho não pega. Mensagem PT-BR nomeando a pendência | IA | PENDENTE |
-| F7-03 | `ValidationRule` `DD_Block_Unapproved_Order` | **F7-01** | Bloquear `Order` com `QuoteId` preenchido quando `Quote.DD_GuardrailState__c` é de risco **e** `Quote.DD_HasApprovedRequest__c = false` (decisão 4: `OR(ISNEW(), AND(ISCHANGED(Status), ISPICKVAL(Status,'Activated')))`). Pedido **sem** cotação de origem não é bloqueado | IA | PENDENTE |
-| F7-04 | Varredura de dados + ativação controlada | **F7-02**, **F7-03** | Contar cotações já `Accepted` que violariam a regra (grandfathering), decidir tratamento, e ativar as duas VRs com `--dry-run` + teste em 1 registro de cada tipo | IA+H | PENDENTE |
+| F7-01 | Campo-gate de aprovação na `Quote` | — | Criar `Quote.DD_HasApprovedRequest__c` (Checkbox, default `false`) + Flow record-triggered no `DD_DiscountRequest__c` que o mantém: `true` quando existir request `Status__c = Approved` para a cotação, `false` caso contrário. Entregar na mesma operação: FLS no perfil (D20/S13) e no `DD_DealDesk_User`, e o campo no Page Layout | IA | CONCLUÍDO (2026-10-20): campo `Quote.DD_HasApprovedRequest__c` (deploy `0Afas0000061TfkCAE`) + Flow `DD_SyncQuoteGate` `RecordAfterSave`/`CreateAndUpdate` ativo v1 (deploy `0Afas0000061VhRCAU`); FLS read+edit no Admin e read-only no PS; campo no layout Totals. Gate provado true/false por DML (F7-003) |
+| F7-02 | `ValidationRule` `DD_Block_Unapproved_Quote` | **F7-01** | Bloquear `Status = 'Accepted'` quando `DD_GuardrailState__c` ∈ {`Requer Aprovação`, **`Requer Justificativa`**} **e** `DD_HasApprovedRequest__c = false` (decisões 1 e 2). Gatilho `OR(ISNEW(), ISCHANGED(Status))` — sem grandfathering (decisão 3), e o `ISNEW()` cobre insert direto via API com `Status = Accepted`, que `ISCHANGED` sozinho não pega. Mensagem PT-BR nomeando a pendência | IA | CONCLUÍDO (2026-10-20): VR ativa; fórmula final em `MEMORY.md` §4.11. `ISNEW()` bloqueia todo insert `Accepted` e `ISCHANGED(DD_GuardrailState__c)` cobre a queda de faixa (D35/A100). Bloqueios literais em F7-002/F7-003 |
+| F7-03 | `ValidationRule` `DD_Block_Unapproved_Order` | **F7-01** | Bloquear `Order` com `QuoteId` preenchido quando `Quote.DD_GuardrailState__c` é de risco **e** `Quote.DD_HasApprovedRequest__c = false` (decisão 4: `OR(ISNEW(), AND(ISCHANGED(Status), ISPICKVAL(Status,'Activated')))`). Pedido **sem** cotação de origem não é bloqueado | IA | CONCLUÍDO (2026-10-20): VR ativa; insert de `Order` a partir de cotação vermelha bloqueado (F7-002). Ativação não exercitada — F7-05 |
+| F7-04 | Varredura de dados + ativação controlada | **F7-02**, **F7-03** | Contar cotações já `Accepted` que violariam a regra (grandfathering), decidir tratamento, e ativar as duas VRs com `--dry-run` + teste em 1 registro de cada tipo | IA+H | CONCLUÍDO (2026-10-20): varredura 5 aceitas (4 `Pendente de Custo` + 1 Titan em risco com gate `false`); nenhuma tocada. Dry-runs e testes em F7-001/F7-002/F7-003 |
+| F7-05 | Lacunas do enforcement | F7-02/F7-03 | (a) delete de pedido aprovado não dispara o recálculo do gate (ficaria `true`); (b) ativação de `Order` não exercitada; (c) `AutoApproved` não existe em `Status__c` | IA+H | PENDENTE — **dívida conhecida, não bloqueia o fechamento** |
 
 **Decisões de negócio — TOMADAS em 2026-10-19 para execução em 2026-10-20 (registradas como D34):**
 
@@ -275,3 +276,4 @@ paradas no ponto indicado.
 | 2026-10-19 | **UI-008:** `CreateOrder` habilitado na `platformActionList` e removido de `excludeButtons` — botão não renderiza mesmo assim (Revenue Cloud híbrido) |
 | 2026-10-19 | **Q2O-001/Q2O-002:** pedido `00000637` criado via API a partir da cotação aceita (A98: `OrderItem.TotalPrice` não aplica `Discount`); `AppliedDiscount` grava, `AppliedDiscountAmount` não |
 | 2026-10-19 | **Fase 7 aberta (F7-01 a F7-04):** enforcement do guardrail — campo-gate na `Quote`, VR `DD_Block_Unapproved_Quote` e VR `DD_Block_Unapproved_Order`. Decisão do humano pelas opções 1 e 3 de Q2O-003. Total: 75 → **79** ações |
+| 2026-10-20 | **Fase 7 concluída (F7-01 a F7-04):** gate `Quote.DD_HasApprovedRequest__c` + Flow `DD_SyncQuoteGate` + VRs `DD_Block_Unapproved_Quote`/`DD_Block_Unapproved_Order`. Dry-run pegou o limite de 255 chars das descrições (A101); teste de burlada por DML bloqueou insert `Accepted`, transição vermelha e `Order` de cotação vermelha. Novas D35/A99/A100/A102. Aberta **F7-05** (ativação/delete). Total: 79 → **80** ações |
