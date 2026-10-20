@@ -81,7 +81,7 @@ paradas no ponto indicado.
 | ID | Decisão | Bloqueia | Efeito se não houver resposta |
 |---|---|---|---|
 | — | Nenhuma pendente até 2026-10-18 (Fases 0 e 1 fechadas em 2026-10-17) | — | — |
-| F7-01..F7-03 | **4 decisões de enforcement** (ver Fase 7): quais estados bloqueiam; o que conta como "aprovado"; tratamento das cotações já aceitas; bloqueio no `insert` vs na ativação do `Order` | F7-02, F7-03 | A Fase 7 para em **F7-01** (campo-gate), que não depende de decisão de negócio |
+| — | **Fase 7 sem pendência:** as 4 decisões de enforcement foram tomadas em 2026-10-19 (**D34**) | — | Execução começa em F7-01 |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
 > F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15 · F6-10 → D30.
@@ -212,16 +212,23 @@ paradas no ponto indicado.
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
 |---|---|---|---|---|---|
 | F7-01 | Campo-gate de aprovação na `Quote` | — | Criar `Quote.DD_HasApprovedRequest__c` (Checkbox, default `false`) + Flow record-triggered no `DD_DiscountRequest__c` que o mantém: `true` quando existir request `Status__c = Approved` para a cotação, `false` caso contrário. Entregar na mesma operação: FLS no perfil (D20/S13) e no `DD_DealDesk_User`, e o campo no Page Layout | IA | PENDENTE |
-| F7-02 | `ValidationRule` `DD_Block_Unapproved_Quote` | **F7-01** | Bloquear a transição para `Status = 'Accepted'` quando `DD_GuardrailState__c` ∈ {`Requer Aprovação`, `Requer Justificativa`} **e** `DD_HasApprovedRequest__c = false`. Usar `PRIORVALUE(Status) <> 'Accepted'` para não travar updates alheios; mensagem em PT-BR nomeando a pendência e o aprovador | IA | PENDENTE |
-| F7-03 | `ValidationRule` `DD_Block_Unapproved_Order` | **F7-01** | Bloquear `insert` de `Order` com `QuoteId` preenchido quando `Quote.DD_GuardrailState__c` é de risco **e** `Quote.DD_HasApprovedRequest__c = false` (referência cruzada ao pai, permitida em fórmula de VR). Pedido **sem** cotação de origem não é bloqueado | IA | PENDENTE |
+| F7-02 | `ValidationRule` `DD_Block_Unapproved_Quote` | **F7-01** | Bloquear `Status = 'Accepted'` quando `DD_GuardrailState__c` ∈ {`Requer Aprovação`, **`Requer Justificativa`**} **e** `DD_HasApprovedRequest__c = false` (decisões 1 e 2). Gatilho `OR(ISNEW(), ISCHANGED(Status))` — sem grandfathering (decisão 3), e o `ISNEW()` cobre insert direto via API com `Status = Accepted`, que `ISCHANGED` sozinho não pega. Mensagem PT-BR nomeando a pendência | IA | PENDENTE |
+| F7-03 | `ValidationRule` `DD_Block_Unapproved_Order` | **F7-01** | Bloquear `Order` com `QuoteId` preenchido quando `Quote.DD_GuardrailState__c` é de risco **e** `Quote.DD_HasApprovedRequest__c = false` (decisão 4: `OR(ISNEW(), AND(ISCHANGED(Status), ISPICKVAL(Status,'Activated')))`). Pedido **sem** cotação de origem não é bloqueado | IA | PENDENTE |
 | F7-04 | Varredura de dados + ativação controlada | **F7-02**, **F7-03** | Contar cotações já `Accepted` que violariam a regra (grandfathering), decidir tratamento, e ativar as duas VRs com `--dry-run` + teste em 1 registro de cada tipo | IA+H | PENDENTE |
 
-**Decisões de negócio ainda abertas (bloqueiam F7-02/F7-03):**
+**Decisões de negócio — TOMADAS em 2026-10-19 para execução em 2026-10-20 (registradas como D34):**
 
-1. `Requer Justificativa` (amarelo) **também** bloqueia aceitar, ou só `Requer Aprovação` (vermelho)?
-2. O que conta como "aprovado": só `Status__c = Approved`, ou também `AutoApproved`?
-3. Cotações **já** aceitas antes da regra: bloquear qualquer update futuro nelas ou liberar (grandfathering)?
-4. O bloqueio do `Order` vale só no `insert` ou também na ativação (`Status = Activated`)?
+| # | Pergunta | Decisão |
+|---|---|---|
+| 1 | `Requer Justificativa` também bloqueia? | **Sim** — as duas faixas de risco bloqueiam aceitar; o objetivo é forçar aprovação/justificativa em ambas |
+| 2 | O que conta como "aprovado"? | `Status__c` ∈ {**`Approved`, `AutoApproved`**} |
+| 3 | Cotações já aceitas? | **Sem tratamento retroativo** — usar `ISCHANGED(Status)` para atuar só em novas transições |
+| 4 | `Order`: insert ou ativação? | **Os dois** — `ISNEW()` e transição para `Status = 'Activated'` |
+
+> **Refinamento técnico da decisão 3:** `ISCHANGED(Status)` é falso num **insert**, então uma cotação
+> criada já como `Accepted` (via API) passaria. A regra nasce com `OR(ISNEW(), ISCHANGED(Status))` —
+> continua sem grandfathering (registros existentes não são tocados, porque nenhum dos dois é verdade
+> neles) e fecha o insert direto. Ajuste a validar na execução da F7-02.
 
 ### Transversais (contínuas)
 
