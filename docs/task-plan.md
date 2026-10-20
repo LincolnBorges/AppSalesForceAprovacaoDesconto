@@ -65,10 +65,11 @@ do dia a dia: cada linha é uma ação verificável, com ID estável, predecesso
 | 4 | Console LWC | 7 | 7 | CONCLUÍDO |
 | 5 | Acesso, dados e demo | 11 | 9 | EM ANDAMENTO (F5-11 concluída em 2026-10-18) |
 | 6 | Camada Agentforce | 11 | 10 | CONCLUÍDO (2026-10-17) |
+| 7 | Enforcement do guardrail | 4 | 0 | PENDENTE (aberta em 2026-10-19) |
 | — | Transversais (contínuas) | 5 | 2 | EM ANDAMENTO |
-| **Total** | | **74** | **66** | |
+| **Total** | | **79** | **66** | |
 
-*Atualizado em 2026-10-18 (F5-09, F5-10 e **F5-11 concluídas**: o console chama os Flows por Apex e roda para usuário não-admin).*
+*Atualizado em 2026-10-19 (UI-004 a UI-008 e Q2O-001/Q2O-002; **Fase 7 aberta** com F7-01 a F7-04 — enforcement do guardrail na Quote e no Order, a pedido do humano).*
 
 ---
 
@@ -79,7 +80,8 @@ paradas no ponto indicado.
 
 | ID | Decisão | Bloqueia | Efeito se não houver resposta |
 |---|---|---|---|
-| — | Nenhuma pendente — Fases 0 e 1 fechadas em 2026-10-17 | — | — |
+| — | Nenhuma pendente até 2026-10-18 (Fases 0 e 1 fechadas em 2026-10-17) | — | — |
+| F7-01..F7-03 | **4 decisões de enforcement** (ver Fase 7): quais estados bloqueiam; o que conta como "aprovado"; tratamento das cotações já aceitas; bloqueio no `insert` vs na ativação do `Order` | F7-02, F7-03 | A Fase 7 para em **F7-01** (campo-gate), que não depende de decisão de negócio |
 
 > **Já decididas em 2026-10-17** (registradas em `MEMORY.md` §2): F0-02 → D16 · F0-03 → D17 ·
 > F0-04 → D12 · F3-01 → D13 · F4-01 → D14 · F6-02 → D15 · F6-10 → D30.
@@ -193,6 +195,34 @@ paradas no ponto indicado.
 | F5-11 | Console não roda para usuário não-admin | F5-10 | O `lightning-flow` recusa a execução para não-admin com `FLOW_ACCESS_RESTRICTED` (`currentFlowVersionId` nulo), mesmo com acesso ao Flow, FLS nos campos lidos, `ApiEnabled` e modo sistema. Sem isso a demo "vendedor pede desconto" **não funciona** — F5-03 validou só a tela, nunca o simulador. Resolver por arquitetura: o LWC chama os Flows por Apex | IA+H | **CONCLUÍDO (2026-10-18):** `DD_MarginConsoleController` (`with sharing`, `WITH USER_MODE`, DTOs com whitelist) chama `DD_CalculateQuoteMargin`/`DD_RouteDiscountApproval` por `Flow.Interview`; LWC republicado sem `lightning-flow`; `classAccesses` no `DD_DealDesk_User`. Dry-run e deploy `0Afas0000060FWgCAM`: **10/10 testes**, **73/77 linhas (≈95%)**. `System.runAs` de Standard User no teste prova o caminho não-admin. Nenhum Flow alterado. A causa raiz do gate do componente segue não identificada (A84) — o Apex a contorna. Ver APX-002, D31, A86/A87 |
 | F4-08 | Console em qualquer app — FlexiPage como Org Default | **F4-03** | A tela da cotação só aparecia dentro do app Deal Desk (o override vivia no `CustomApplication`). Tornar `DD_Quote_Record_Page` **org default do objeto `Quote`** (desktop + mobile) para valer em qualquer app, sem o vendedor trocar de app | IA | **CONCLUÍDO (2026-10-19):** `CustomObject:Quote` com `View` `Large`/`Small` → `Flexipage`. Dry-run 1 falhou com `null is not a supported form factor.` (**A94**); dry-run 2 + deploy `0Afas00000615NDCAY` passaram 6/6. O `actionOverrides` do `DD_DealDesk` foi mantido. Ver UI-004 |
 
+### Fase 7 — Enforcement do guardrail (aberta em 2026-10-19, a pedido do humano)
+
+> **Origem:** a cotação `0Q0as0000021vHdCAI` foi aceita com **75,73% de desconto** e um
+> `DD_DiscountRequest__c` **`Submitted`** (DR-00002) e mesmo assim gerou pedido — pela API e, na UI,
+> nada impediria. Verificado: **0** `ApprovalProcess` sobre `Quote` e **0** `ValidationRule` no objeto.
+> O guardrail hoje **aconselha e roteia, mas não impede**. O humano escolheu fechar esse gap pelas
+> opções 1 (Quote) e 3 (Order) de Q2O-003.
+>
+> **Restrição técnica que define a solução:** `Validation Rule` **não consulta registros filhos**. Não
+> existe fórmula que pergunte "há um `DD_DiscountRequest__c` aprovado para esta cotação?" — é preciso um
+> **campo-gate na `Quote`**, mantido por automação, e as validações leem esse campo. Além disso,
+> `Quote.Syncing` (`IsSyncing`) é **read-only de plataforma**: não há como validar transição nele; o
+> alvo de enforcement é o `Status`.
+
+| ID | Ação | Predecessores | O que faz | Quem decide | Status |
+|---|---|---|---|---|---|
+| F7-01 | Campo-gate de aprovação na `Quote` | — | Criar `Quote.DD_HasApprovedRequest__c` (Checkbox, default `false`) + Flow record-triggered no `DD_DiscountRequest__c` que o mantém: `true` quando existir request `Status__c = Approved` para a cotação, `false` caso contrário. Entregar na mesma operação: FLS no perfil (D20/S13) e no `DD_DealDesk_User`, e o campo no Page Layout | IA | PENDENTE |
+| F7-02 | `ValidationRule` `DD_Block_Unapproved_Quote` | **F7-01** | Bloquear a transição para `Status = 'Accepted'` quando `DD_GuardrailState__c` ∈ {`Requer Aprovação`, `Requer Justificativa`} **e** `DD_HasApprovedRequest__c = false`. Usar `PRIORVALUE(Status) <> 'Accepted'` para não travar updates alheios; mensagem em PT-BR nomeando a pendência e o aprovador | IA | PENDENTE |
+| F7-03 | `ValidationRule` `DD_Block_Unapproved_Order` | **F7-01** | Bloquear `insert` de `Order` com `QuoteId` preenchido quando `Quote.DD_GuardrailState__c` é de risco **e** `Quote.DD_HasApprovedRequest__c = false` (referência cruzada ao pai, permitida em fórmula de VR). Pedido **sem** cotação de origem não é bloqueado | IA | PENDENTE |
+| F7-04 | Varredura de dados + ativação controlada | **F7-02**, **F7-03** | Contar cotações já `Accepted` que violariam a regra (grandfathering), decidir tratamento, e ativar as duas VRs com `--dry-run` + teste em 1 registro de cada tipo | IA+H | PENDENTE |
+
+**Decisões de negócio ainda abertas (bloqueiam F7-02/F7-03):**
+
+1. `Requer Justificativa` (amarelo) **também** bloqueia aceitar, ou só `Requer Aprovação` (vermelho)?
+2. O que conta como "aprovado": só `Status__c = Approved`, ou também `AutoApproved`?
+3. Cotações **já** aceitas antes da regra: bloquear qualquer update futuro nelas ou liberar (grandfathering)?
+4. O bloqueio do `Order` vale só no `insert` ou também na ativação (`Status = Activated`)?
+
 ### Transversais (contínuas)
 
 | ID | Ação | Predecessores | O que faz | Quem decide | Status |
@@ -232,3 +262,9 @@ paradas no ponto indicado.
 | 2026-10-18 | **F5-11 aberta e BLOQUEADA:** o console não executa o Flow para usuário não-admin (`FLOW_ACCESS_RESTRICTED`); hipóteses de FLS, acesso ao Flow, `ApiEnabled` e `runInMode` foram descartadas com evidência (FLW-005). Novos aprendizados **A82/A83/A84**. Fase 5 volta a EM ANDAMENTO. Total: 73 → 74 ações |
 | 2026-10-18 | **F5-11 CONCLUÍDA (arquitetura Apex):** `DD_MarginConsoleController` + teste cobrem 73/77 linhas (≈95%); LWC migrado de `lightning-flow` para `@salesforce/apex`; `classAccesses` no `DD_DealDesk_User`; deploy `0Afas0000060FWgCAM` com 10/10 testes. Nenhum Flow tocado (`SystemModeWithSharing` vem do `with sharing` da classe — A86). A68 refutado (A87). Ver APX-002 |
 | 2026-10-18 | **F5-12 criada e concluída:** tela de aprovação do gerente. `ApprovalProcess DD_Manager_Approval` (aprovador = `Approver__c`, ações finais gravam `Status`/`DecidedAt`), submissão automática no `DD_MarginConsoleController`, `Status__c` opcional + `DD_Request_Status_Required` (A88), FLS de leitura no PS e `DD_ManagerApprovalTest`. Deploy `0Afas0000060Fr...` com 12/12 testes. Total: 74 → 75 ações |
+| 2026-10-19 | **UI-004:** `DD_Quote_Record_Page` vira **org default** da `Quote` (desktop `Large` + mobile `Small`) — o console passa a abrir em qualquer app. Aprendizado **A94** |
+| 2026-10-19 | **UI-005:** diagnosticado e removido o `AppUsageAssignment` de RLM de 16 cotações (não era efeito de MCP); delete estável, sem re-tag. Aprendizado **A95**, `MEMORY.md` §1.11 |
+| 2026-10-19 | **UI-006/UI-007:** related list de itens com coluna **Discount (Percentage)** (layout + `relatedListSingleContainer`/`ADVGRID`, A96) e campos do console iniciando com o desconto atual da cotação |
+| 2026-10-19 | **UI-008:** `CreateOrder` habilitado na `platformActionList` e removido de `excludeButtons` — botão não renderiza mesmo assim (Revenue Cloud híbrido) |
+| 2026-10-19 | **Q2O-001/Q2O-002:** pedido `00000637` criado via API a partir da cotação aceita (A98: `OrderItem.TotalPrice` não aplica `Discount`); `AppliedDiscount` grava, `AppliedDiscountAmount` não |
+| 2026-10-19 | **Fase 7 aberta (F7-01 a F7-04):** enforcement do guardrail — campo-gate na `Quote`, VR `DD_Block_Unapproved_Quote` e VR `DD_Block_Unapproved_Order`. Decisão do humano pelas opções 1 e 3 de Q2O-003. Total: 75 → **79** ações |
