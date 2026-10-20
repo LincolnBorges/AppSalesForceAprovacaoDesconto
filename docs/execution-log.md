@@ -1367,6 +1367,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 | Tokens (aprox.) | 22000 |
 | Observações | A UI do editor de layout não permitia arrastar o botão para "Salesforce Mobile and Lightning Experience Actions"; o caminho determinístico foi metadata. O botão `CreateOrder` estava **excluído** do layout — era por isso que não aparecia nem no Classic |
 
+---
+
+### [2026-10-19 21:40 -03:00] Q2O-001 — OK (pedido criado via API a partir da cotação aceita)
+
+| Campo | Valor |
+|---|---|
+| Operação | Criar 1 `Order` + 4 `OrderItem` espelhando a cotação `0Q0as0000021vHdCAI` (Titan, `Accepted`). Botão "Create Order" não renderiza nesta org (ver UI-008) |
+| Skill | query-salesforce · validate-metadata |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Order` `801as00000HH0OQAA1` (`00000637`) · `OrderItem` `802as000009JgBGAA0`, `802as000009JeNyAAK`, `802as000009Jg3CAAS`, `802as000009JgZRAA0` |
+| Ferramenta | `sf data create record` · `sf data update record` · `sf data query` |
+| Parâmetros-chave | Order: `AccountId=001as00000HCKx1AAH`, `Pricebook2Id=01sas000001nOBJAA2`, `QuoteId=0Q0as0000021vHdCAI`, `EffectiveDate=2026-10-19`, `Status=Draft`, `CurrencyIsoCode=USD` (explícito, A13); `TotalAmount` omitido (roll-up, A15). OrderItems com `PricebookEntryId`, `Product2Id`, `Quantity`, `UnitPrice`, `Discount` |
+| Confirmação humana | **sim** — payload apresentado e "confirmo" em 21:33 |
+| Resultado | `Order` criado (1º retorno `success`), 4/4 `OrderItem` criados. **Correção:** o `OrderItem.TotalPrice` veio **antes** do desconto (4.232,00), porque é `UnitPrice × Quantity` e não aplica `Discount` — `UnitPrice` foi ajustado para o **líquido** (2,24 / 11,20 / 24,00 / 16,00). Final: linhas 179,20 + 336,00 + 192,00 + 320,00 = **1.027,20**, `Order.TotalAmount = 1.027,20 USD`, todos `USD` |
+| Reversão | apagar o `Order` (`801as00000HH0OQAA1`) — cascata leva os 4 `OrderItem`. Exige autorização nominal (S5) |
+| Tokens (aprox.) | 14000 |
+| Observações | `Order.Name` é autonumber → prefixo `DEMO-` inaplicável (exceção A14). O `Order` é `Draft`; ativar é decisão de negócio (não feita). O caminho do botão nativo segue sem solução nesta org (flow de pacote inativo + RLM híbrido) |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
