@@ -336,6 +336,7 @@ sem devolver o botão legado — ver UI-008). Pedido criado direto por API:
 | `OrderItem` (4) | `802as000009JgBGAA0` · `802as000009JeNyAAK` · `802as000009Jg3CAAS` · `802as000009JgZRAA0` |
 | Regra aplicada | `UnitPrice` = **líquido** (preço unitário × (1 − desconto)), com `Discount` mantido apenas como informação — ver **A98** |
 | Rollback | apagar o `Order` (cascata nos itens) — exige autorização nominal (S5) |
+| Cabeçalho de desconto (Q2O-002) | `AppliedDiscount = 75,73%` **gravado**; `AppliedDiscountAmount` **não gravável** — validação `Adjustment Distribution Logic must be empty…` recusa mesmo com o campo nulo; `DiscountPercent` (read-only) fica 0 |
 
 ---
 

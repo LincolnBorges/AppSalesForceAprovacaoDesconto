@@ -1385,6 +1385,24 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 | Tokens (aprox.) | 14000 |
 | Observações | `Order.Name` é autonumber → prefixo `DEMO-` inaplicável (exceção A14). O `Order` é `Draft`; ativar é decisão de negócio (não feita). O caminho do botão nativo segue sem solução nesta org (flow de pacote inativo + RLM híbrido) |
 
+---
+
+### [2026-10-19 21:52 -03:00] Q2O-002 — PARCIAL (desconto no cabeçalho do pedido: percentual grava, valor em moeda não)
+
+| Campo | Valor |
+|---|---|
+| Operação | Preencher `Order.AppliedDiscount` (75,73%) e `Order.AppliedDiscountAmount` (3.204,80) no pedido `801as00000HH0OQAA1`, a pedido do humano |
+| Skill | — |
+| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Objeto / Metadado | `Order` `801as00000HH0OQAA1` (`00000637`) |
+| Ferramenta | `sf api request rest` (PATCH) · `sf data update record` · `sf data query` |
+| Parâmetros-chave | 4 combinações testadas: (a) percent + valor + `AdjustmentDistributionLogic=null`; (b) só o valor; (c) só o percent — **única que passou**; (d) valor com percent nulo |
+| Confirmação humana | **sim** — "preenche os dois campos do cabeçalho" |
+| Resultado | `AppliedDiscount = 75.73` **gravado**. `AppliedDiscountAmount` **recusado em todas as tentativas** com `FIELD_INTEGRITY_EXCEPTION: The field Adjustment Distribution Logic must be empty when field Applied Discount is set to a value.` — mesmo com `AdjustmentDistributionLogic` nulo (confirmado por SOQL antes e depois). `DiscountPercent` (read-only) segue **0** |
+| Reversão | `AppliedDiscount = null` (1 PATCH) |
+| Tokens (aprox.) | 9000 |
+| Observações | A mensagem cita um campo que já está vazio — comportamento incoerente da validação do Revenue Cloud nesta org, mesma família do `Order.DiscountPercent` read-only e do flow de Q2O inativo. Conclusão prática: o **percentual** é o único campo do cabeçalho gravável; o valor em moeda não. Nenhum total mudou (`TotalAmount = 1.027,20`) |
+
 ## Registro de Bloqueios
 
 Toda entrada `BLOQUEADO` deve informar qual guardrail atuou.
