@@ -19,8 +19,8 @@ Regras de uso:
 | Item | Valor | Verificado em / fonte |
 |---|---|---|
 | Org alias | `personal` | `sf org list` |
-| Org ID | `00Das00000GrzvPEAR` | `sf org display` |
-| Instance URL | `https://personalproject.my.salesforce.com` | `sf org display` |
+| Org ID | `<seu-org-id>` | `sf org display` |
+| Instance URL | `https://<sua-org>.my.salesforce.com` | `sf org display` |
 | Instância / edição | `BRA44` · Enterprise Edition **trial** | SOQL `Organization` |
 | `IsSandbox` | `false` (trial, não produção — atende S1) | SOQL `Organization` |
 | `TrialExpirationDate` | **`2026-11-15T20:12:37Z`** | SOQL `Organization` |

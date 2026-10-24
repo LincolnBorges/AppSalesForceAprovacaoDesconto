@@ -4,7 +4,7 @@ Catálogo dos aprendizados obtidos no projeto **`ProgramaRebateQ42026`** (progra
 Debit, Manufacturing Cloud), **contextualizados para o Deal Desk**.
 
 > **Proveniência.** Todos foram obtidos sobre a **mesma plataforma e a mesma org** (`personal`,
-> `00Das00000GrzvPEAR`) usada por este projeto. Nada aqui é teórico: cada linha nasceu de um erro
+> `<seu-org-id>`) usada por este projeto. Nada aqui é teórico: cada linha nasceu de um erro
 > real, de um teste controlado ou de uma premissa refutada. O texto integral do projeto de origem está
 > em `~/Documents/deepseek_salesforce_projeto/ProgramaRebateQ42026/MEMORY.md` §3.
 >

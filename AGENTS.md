@@ -56,7 +56,7 @@ são escopo.
 | IA | **Agentforce** — `GenAiFunction` + `GenAiPlugin` + planner | Camada de recomendação | **66.0** |
 | Projeto | Salesforce DX (`force-app`, `sourceApiVersion 68.0`) | Fonte versionada | — |
 
-**Org de trabalho:** `personal` — Org ID `00Das00000GrzvPEAR`, `https://personalproject.my.salesforce.com`,
+**Org de trabalho:** `personal` — Org ID `<seu-org-id>`, `https://<sua-org>.my.salesforce.com`,
 instância `BRA44`, **Enterprise Edition trial** (`IsSandbox = false`,
 `TrialExpirationDate = 2026-11-15`). Confirmado por `sf org display` e por SOQL em `Organization`.
 
@@ -125,7 +125,7 @@ instância `BRA44`, **Enterprise Edition trial** (`IsSandbox = false`,
 
 | # | Regra | Como é aplicada |
 |---|---|---|
-| S1 | **Nunca operar em produção.** | Alvo autorizado: org `personal` (`00Das00000GrzvPEAR`), Enterprise Edition **trial** (`IsSandbox = false`, `TrialExpirationDate = 2026-11-15`). Confirmar com `SELECT Id, IsSandbox, OrganizationType, TrialExpirationDate FROM Organization` antes de qualquer escrita. Org **sem** `TrialExpirationDate` e **sem** `IsSandbox` = produção: **parar** |
+| S1 | **Nunca operar em produção.** | Alvo autorizado: org `personal` (`<seu-org-id>`), Enterprise Edition **trial** (`IsSandbox = false`, `TrialExpirationDate = 2026-11-15`). Confirmar com `SELECT Id, IsSandbox, OrganizationType, TrialExpirationDate FROM Organization` antes de qualquer escrita. Org **sem** `TrialExpirationDate` e **sem** `IsSandbox` = produção: **parar** |
 | S2 | **`SF_PRODUCTION_GUARD=strict`** no servidor MCP. | Segunda barreira fora do prompt: o servidor recusa escritas em org de produção |
 | S3 | **Confirmação humana explícita para toda escrita.** | O agente apresenta o payload exato (objeto, campos, valores) e espera "confirmo". Silêncio não é confirmação |
 | S4 | **Um registro por vez.** | `max_records_per_batch: 1`. Sem bulk. Cada registro tem sua própria confirmação |

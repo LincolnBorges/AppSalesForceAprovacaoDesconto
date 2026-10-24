@@ -5,7 +5,7 @@ Registro auditável de toda operação executada pelo agente na org Salesforce.
 
 - **Projeto:** DealDeskGuardrail
 - **Objetivo:** app Salesforce de governança de desconto (margem, semáforo e roteamento de aprovação)
-- **Org alvo:** `personal` — Org ID `00Das00000GrzvPEAR` (Enterprise Edition **trial**, `IsSandbox = false`, expira `2026-11-15`; nunca produção)
+- **Org alvo:** `personal` — Org ID `<seu-org-id>` (Enterprise Edition **trial**, `IsSandbox = false`, expira `2026-11-15`; nunca produção)
 - **Fuso horário:** America/Sao_Paulo (`-03:00`)
 - **Responsável:** usuário humano que confirma cada escrita
 - **Regras:** ver [`AGENTS.md`](../AGENTS.md) §5 (guardrails) e §6 (custo)
@@ -97,7 +97,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 |---|---|
 | Operação | criação de estrutura de projeto (arquivos locais) — **nenhuma escrita na org** |
 | Skill | — (não aplicável) |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial expira `2026-11-15`) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false · trial expira `2026-11-15`) |
 | Objeto / Metadado | — (arquivos do repositório) |
 | Ferramenta | `sf project generate` + edição de arquivos |
 | Parâmetros-chave | Projeto DX `DealDeskGuardrail` em `~/Documents/deepseek_salesforce_projeto/DealDeskGuardrail/`; `sourceApiVersion` 68.0 |
@@ -115,7 +115,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 |---|---|
 | Operação | edição de arquivos locais — **nenhuma escrita na org** |
 | Skill | — (não aplicável) |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | — (`MEMORY.md`, `AGENTS.md`, `docs/execution-log.md`) |
 | Ferramenta | `git` + edição de arquivo |
 | Parâmetros-chave | decisão **D11** (`MEMORY.md` §2); convenção **11** e item de DoD (`AGENTS.md` §4, §11) |
@@ -131,7 +131,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 |---|---|
 | Operação | criação de arquivo local + referências cruzadas — **nenhuma escrita na org** |
 | Skill | — (não aplicável) |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | — (`docs/task-plan.md`, `AGENTS.md`, `docs/roadmap.md`, `.dsh/config.yaml`) |
 | Ferramenta | edição de arquivo + `git` |
 | Parâmetros-chave | 61 ações (F0 11 · F1 8 · F2 7 · F3 9 · F4 7 · F5 6 · F6 9 · X 4); 7 decisões humanas |
@@ -147,7 +147,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 |---|---|
 | Operação | leitura (SOQL) + edição de arquivos — **nenhuma escrita na org** |
 | Skill | query-salesforce |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | leitura: `Product2`, `PricebookEntry`, `Pricebook2`, `User`, `Quote` |
 | Ferramenta | `sf data query` + edição de arquivo |
 | Parâmetros-chave | 6 decisões (D12–D17); famílias `Parts`/`Medical Equipment`; alvo 30% / piso 20%; aprovador = `User.ManagerId` |
@@ -164,7 +164,7 @@ não se aplicar. Não inclua segredos, tokens ou dados pessoais desnecessários.
 |---|---|
 | Operação | leitura (SOQL, describe, Setup em browser) — **nenhuma escrita na org** |
 | Skill | query-salesforce · chrome |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `CurrencyType`, `DatedConversionRate`, `Pricebook2`, `PricebookEntry`, `Quote`, `Opportunity`, `User` |
 | Ferramenta | `sf data query`, `sf sobject describe`, Chrome (Setup `CompanyCurrency`) |
 | Parâmetros-chave | moeda corporativa `USD` (taxa 1) · `BRL` 3,6995 · ACM desligado · 9 price books todos `USD` · `PricebookEntry.CurrencyIsoCode` imutável |
@@ -184,7 +184,7 @@ moeda do pai. Registrado em `MEMORY.md` §3 (A13) e §1.1.
 |---|---|
 | Operação | 19 `update` sequenciais em `PricebookEntry` + validação |
 | Skill | validate-metadata · query-salesforce |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false · trial `2026-11-15`) |
 | Objeto / Metadado | `PricebookEntry` — campos `FixedCost__c` e `VariableCostPerUnit__c` |
 | Ferramenta | `sf data update record` (um registro por vez) |
 | Parâmetros-chave | valores da tabela aprovada em [`cost-proposal.md`](../docs/cost-proposal.md) §3; moeda **USD** verificada antes e depois de cada escrita (S12/D19) |
@@ -229,7 +229,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | verificação (SOQL, retrieve de metadata, formulário no browser) + edição de arquivos — **nenhuma escrita na org** |
 | Skill | validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `PricebookEntry.FixedCost__c`, `PricebookEntry.VariableCostPerUnit__c`, `Layout:PricebookEntry-Price Book Entry` |
 | Ferramenta | `sf data query` (`FieldPermissions`), `sf project retrieve start`, Chrome |
 | Parâmetros-chave | PS do perfil `0PSas000004GBdfGAG`; layout único `Price Book Entry`; 0 record types |
@@ -245,7 +245,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `sf project deploy start --dry-run` (mdapi) — **nenhuma escrita na org** |
 | Skill | validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `QuoteLineItem.DD_CostPerUnit__c` |
 | Ferramenta | `sf project deploy start --metadata-dir /tmp/dd-probes/f1-02 --dry-run` |
 | Parâmetros-chave | tipo `Formula (Currency)`; precisão 18, escala 2; API 68.0 |
@@ -262,7 +262,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 3 × `sf project deploy start --dry-run` (mdapi) — **nenhuma escrita na org** |
 | Skill | validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `Quote.DD_Cost__c` (Summary SUM) + `QuoteLineItem.DD_CostAmount__c` (fórmula) |
 | Ferramenta | `sf project deploy start --metadata-dir … --dry-run` |
 | Parâmetros-chave | `summaryForeignKey = QuoteLineItem.QuoteId` (Master-Detail confirmado); API 68.0 |
@@ -279,7 +279,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `sf project deploy start --source-dir force-app` (dry-run + real) |
 | Skill | validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | 4 campos `QuoteLineItem.DD_*__c` · 5 campos `Quote.DD_*__c` · `Layout:Quote-Quote Layout` · `Layout:QuoteLineItem-Quote Line Item Layout` · `Profile:Admin` (FLS) |
 | Ferramenta | `sf project deploy start` |
 | Parâmetros-chave | dry-run `0Afas00000607FlCAI` · real `0Afas00000606y2CAA` · API 68.0 |
@@ -296,7 +296,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `sf project deploy start --source-dir force-app` (dry-run ×3 + real) |
 | Skill | validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `Flow:DD_CalculateLineCost` (`AutoLaunchedFlow`, `RecordBeforeSave`, `Active`) |
 | Ferramenta | `sf project deploy start` |
 | Parâmetros-chave | dry-run final `0Afas00000606GUCAY` · real `0Afas00000604zTCAQ` |
@@ -313,7 +313,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `sf data create record` (4 registros, 1 por vez) + `sf data query` de verificação |
 | Skill | calculate-margin |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `Quote` `0Q0as0000021hOLCAY` (`DEMO-Quote-Margin-Bands`) + 3 `QuoteLineItem` |
 | Ferramenta | `sf data create record`, `sf data query` |
 | Parâmetros-chave | `Pricebook2Id=01sas000001nOBJAA2`; `CurrencyIsoCode=USD`; linhas `0QLas0000028wthGAA`, `0QLas0000028wiQGAQ`, `0QLas0000028wvJGAQ` |
@@ -330,7 +330,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `deploy_metadata` (objeto custom + campos + regras + layout + perfil) |
 | Skill | `validate-metadata` §2/§3/§4 |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`, trial até 2026-11-15) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: `false`, trial até 2026-11-15) |
 | Objeto / Metadado | `DD_DiscountPolicy__c` + 12 `CustomField` + 2 `ValidationRule` + 1 `Layout` + `Profile:Admin` |
 | Ferramenta | `sf project deploy start` (API 68.0, source format) |
 | Parâmetros-chave | `--dry-run` antes; `--metadata CustomObject:DD_DiscountPolicy__c`; `--metadata "Layout:DD_DiscountPolicy__c-DD Discount Policy Layout"`; `--metadata Profile:Admin`; `--test-level NoTestRun` |
@@ -347,7 +347,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `create_record` ×4 (uma por vez, S4) |
 | Skill | `create-discount-policy` §1 a §5 |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: `false`) |
 | Objeto / Metadado | `DD_DiscountPolicy__c` |
 | Ferramenta | `sf_create_record`, `sf_query_records` |
 | Parâmetros-chave | `CurrencyIsoCode=USD` em todas (D5/S12); piso 20 e alvo 30 (D12); teto 15 genérica / 10 específica; `EffectiveFrom__c=2026-10-17`; `EffectiveTo__c=null`; `EscalationRole__c=Gerente Comercial`; `SlaHours__c=24`; `RequiresJustification__c=true` |
@@ -366,7 +366,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `query` (nenhuma escrita) |
 | Skill | `create-discount-policy` §3 |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: `false`) |
 | Objeto / Metadado | `DD_DiscountPolicy__c` |
 | Ferramenta | `sf_query_records` |
 | Parâmetros-chave | `ORDER BY Specificity__c DESC, EffectiveFrom__c DESC` — **ordenação por campo de fórmula funciona em SOQL** |
@@ -385,7 +385,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `deploy_metadata` (objeto custom + campos + regras + layout + perfil) |
 | Skill | `validate-metadata` §2/§3/§4 |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: `false`, trial até 2026-11-15) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: `false`, trial até 2026-11-15) |
 | Objeto / Metadado | `DD_DiscountRequest__c` + 18 `CustomField` + 3 `ValidationRule` + 1 `Layout` + `Profile:Admin` |
 | Ferramenta | `sf project deploy start` (API 68.0, source format, `--source-dir` por componente) |
 | Parâmetros-chave | `--dry-run` antes; `--source-dir` restrito ao objeto novo, ao layout novo e a `Admin.profile-meta.xml`; `--test-level NoTestRun` |
@@ -404,7 +404,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | `deploy_metadata` de Flow + 9 invocações via `/services/data/v68.0/actions/custom/flow/...` |
 | Skill | `validate-metadata` §2/§3 · skill `calculate-margin` (conferência) |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, `Active`, 40 elementos, 37 variáveis, 12 fórmulas) |
 | Ferramenta | `sf project deploy start` + `sf api request rest` (POST actions/custom/flow) |
 | Parâmetros-chave | entrada `quoteId='0Q0as0000021hOLCAY'`, `requestedDiscountPct=0` (cotação de 29,5673%, PB Fleet) |
@@ -422,7 +422,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | reescrita + 12 deploys iterativos + 9 invocações via actions API |
 | Skill | `validate-metadata` §2/§3/§4 · `calculate-margin` (conferência manual) |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `DD_CalculateQuoteMargin` (`AutoLaunchedFlow`, `Active`, 29 elementos, 34 variáveis, 25 fórmulas) |
 | Ferramenta | `sf project deploy start` + `sf api request rest` (POST `/actions/custom/flow/...`) |
 | Parâmetros-chave | entrada `quoteId` + `requestedDiscountPct`; saída `marginBp`/`worstLineBp` em **pontos-base** |
@@ -452,7 +452,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | deploy de Flow + 4 invocações do roteamento + 1 pedido criado/atualizado |
 | Skill | `validate-metadata` §2/§3 · `route-approval` |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `DD_RouteDiscountApproval` (`AutoLaunchedFlow`, `Active`, 28 elementos) + `DD_DiscountRequest__c` |
 | Ferramenta | `sf project deploy start` + `sf api request rest` (POST `/actions/custom/flow/...`) |
 | Confirmação humana | sim — confirmação dupla S6 ("Confirmo o deploy do DD_RouteDiscountApproval") |
@@ -477,7 +477,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | remoção de versões antigas de Flow (24 versões: 22 do cálculo + 2 do roteamento) |
 | Skill | `validate-metadata` §5 |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `Flow` (`DD_CalculateQuoteMargin` v1–v22, `DD_RouteDiscountApproval` v1–v2) |
 | Ferramenta | `DELETE /tooling/sobjects/Flow/<id>` · `sf data delete record --use-tooling-api -s Flow` · deploy destrutivo |
 | Confirmação humana | sim — "autorizo a limpeza (S5)" |
@@ -494,7 +494,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | deploy de metadata: `LightningComponentBundle`, `FlexiPage`, `CustomTab`, `CustomApplication` + fragmento de `Profile` |
 | Skill | `validate-metadata` §2/§3/§4 · `sf-lwc` |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: **false**) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: **false**) |
 | Objeto / Metadado | `ddMarginConsole` · `DD_Quote_Record_Page` · `DD_Margin_Console` · `DD_DealDesk` · `Admin.profile` |
 | Ferramenta | `sf project deploy start` (com `--dry-run` antes em cada pacote) |
 | Parâmetros-chave | `apiVersion=68.0`; `--test-level NoTestRun`; `--source-dir` restrito a `lwc/`, `flexipages/`, `tabs/`, `applications/`, `profiles/` |
@@ -519,7 +519,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | tentativa de deploy de `ApexClass` invocadora (`Flow.Interview`) + classe de teste |
 | Skill | `validate-metadata` §3 |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `ApexClass:DD_FlowConsoleController` + `DD_FlowConsoleControllerTest` |
 | Ferramenta | `sf project deploy start --dry-run --test-level RunLocalTests` |
 | Confirmação humana | sim — escolha explícita do plano B por Apex |
@@ -536,7 +536,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | teste funcional no navegador (Chrome real, sessão do usuário) + 3 SOQL de controle |
 | Skill | `validate-metadata` §4 · `sf-lwc` |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `Quote` (3 registros) + `ddMarginConsole` + flows `DD_CalculateQuoteMargin`/`DD_RouteDiscountApproval` |
 | Ferramenta | `mcp__chrome__*` (navegação, snapshot, innerText) + `sf data query` |
 | Confirmação humana | sim — "faça o teste (F4-06) e me apresente o resultado" |
@@ -566,7 +566,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 8 consultas SOQL de diagnóstico (nenhuma escrita) |
 | Skill | `query-salesforce` |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `Quote` `00000041` · `QuoteLineItem` · `PricebookEntry` · `Pricebook2` |
 | Ferramenta | `sf data query` |
 | Confirmação humana | não aplicável (leitura) |
@@ -583,7 +583,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 1 `update` de campo de fórmula + 1 `update` de picklist + 2 `deploy` de Flow (3 deploys no total: o Flow de cálculo foi republicado) |
 | Skill | validate-metadata · calculate-margin |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false · trial `2026-11-15`) |
 | Objeto / Metadado | `Quote.DD_GuardrailState__c` (fórmula) · `DD_DiscountRequest__c.GuardrailState__c` (picklist) · `Flow:DD_CalculateQuoteMargin` · `Flow:DD_RouteDiscountApproval` |
 | Ferramenta | `sf project deploy start --metadata <componente>` com `--dry-run` antes de cada escrita |
 | Parâmetros-chave | `--test-level NoTestRun`; deploy restrito por componente (nunca `--source-dir force-app`) para não republicar `DD_CalculateLineCost` (A50) |
@@ -632,7 +632,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 1 `create` de `PermissionSet` + 1 `create` de `PermissionSetAssignment` |
 | Skill | validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `PermissionSet:DD_DealDesk_User` (`0PSas000004H6puGAC`) · `PermissionSetAssignment` `0Paas00000BpdrHCAR` |
 | Ferramenta | `sf project deploy start --metadata PermissionSet:DD_DealDesk_User` (`--dry-run` antes, 4 vezes) + `sf data create record` |
 | Confirmação humana | sim — payload + impacto apresentados; "Confirmo o payload" (S6) |
@@ -688,7 +688,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 1 `deploy` mdapi de `GenAiFunction` (com `--dry-run` antes) + 1 `retrieve` de integridade |
 | Skill | deploy-agentforce-action |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false · trial `2026-11-15`) |
 | Objeto / Metadado | `GenAiFunction:DD_CalculateMargin` (`172as000008FaHtAAK`) → `Flow:DD_CalculateQuoteMargin` (v25, `Active`) |
 | Ferramenta | `sf project deploy start --metadata-dir mdapi --dry-run` e sem dry-run · `sf project retrieve start --api-version 66.0` |
 | Parâmetros-chave | `<version>66.0</version>` no `package.xml`; `invocationTargetType = flow`; `isConfirmationRequired = false`; `--test-level NoTestRun` |
@@ -719,7 +719,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 1 `create` de `GenAiPlugin` (MCP) + 1 `deploy` mdapi de `Bot`+`BotVersion`+`GenAiPlannerBundle` (3 componentes, `--dry-run` antes) + 1 ativação pela UI do Builder |
 | Skill | deploy-agentforce-action · validate-metadata |
-| Ambiente | dev/trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false · trial `2026-11-15`) |
+| Ambiente | dev/trial — Org ID `<seu-org-id>` (IsSandbox: false · trial `2026-11-15`) |
 | Objeto / Metadado | `GenAiPlugin` `DD_DealDesk_Guardrail` (`179as000000E0rNAAS`) · `GenAiPlannerBundle` `DDDealDeskPlanner` (`16jas00000061avAAA`) · `Bot` `DDDealDeskAgent` (`0Xxas000000AJpNCAW`) · `BotVersion` v1 (`0X9as000000F9kXCAS`) |
 | Ferramenta | MCP `sf_create_agent_topic` · `sf project deploy start --metadata-dir mdapi-f6bot` · botão *Activate* no Agentforce Builder |
 | Parâmetros-chave | `agentType = AgentforceEmployeeAgent`, **sem** `agentTemplate` (molde: `Copilot_for_Salesforce`); planner `AiCopilot__ReAct`; tópico com `actions = ["DD_CalculateMargin"]` e **11 instruções**; `<version>66.0</version>` |
@@ -758,7 +758,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 5 `create_record` de `Opportunity` + 5 de `Quote` + 17 de `QuoteLineItem` + 1 `update_record` (`Discount=0` em 1 linha) |
 | Skill | query-salesforce (regras de ouro e consultas prontas) |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`, `TrialExpirationDate: 2026-11-15`) — S1 atendida |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (`IsSandbox: false`, `TrialExpirationDate: 2026-11-15`) — S1 atendida |
 | Objeto / Metadado | `Opportunity` · `Quote` · `QuoteLineItem` (nenhum metadado alterado) |
 | Ferramenta | `sf_create_record` · `sf_update_record` · `sf_query_records` (MCP) |
 | Parâmetros-chave | `CurrencyIsoCode=USD` em opp/quote; `Pricebook2Id=01sas000001nOBJAA2` (Fleet & Corporate) em opp e quote; `Status=Draft`; `ExpirationDate` datas futuras |
@@ -827,7 +827,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | 2 `sf_create_user` + 2 `sf_update_user` + 2 `create_record` (`PermissionSetAssignment`) + 3 `Opportunity` + 3 `Quote` + 7 `QuoteLineItem` + 2 `sf_execute_anonymous_apex` (`Flow.Interview` no `DD_RouteDiscountApproval`) |
 | Skill | query-salesforce · route-approval (critério do aprovador) |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`, expira `2026-11-15`) — S1 atendida |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (`IsSandbox: false`, expira `2026-11-15`) — S1 atendida |
 | Objeto / Metadado | `User` · `PermissionSetAssignment` · `Opportunity` · `Quote` · `QuoteLineItem` · `DD_DiscountRequest__c` (nenhum metadado alterado) |
 | Ferramenta | `sf_create_user` · `sf_update_user` · `sf_create_record` · `sf_execute_anonymous_apex` (MCP) |
 | Parâmetros-chave | vendedor `OwnerId = 005as000003piV7AAI` na Opportunity **e** na Quote; gerente `ManagerId` no vendedor; `CurrencyIsoCode=USD`; `Pricebook2Id=01sas000001nOBJAA2`; `requestedDiscountPct=0` no roteamento (usa a margem real da cotação) |
@@ -902,7 +902,7 @@ Battery `(32−14−5,85)/32 = 37,97%` · Imager `(90000−41600−17800)/90000 
 |---|---|
 | Operação | Reprodução do defeito em navegador (login como Bruno Tavares e como Renata Almeida); captura do corpo/erro de `aura.FlowRuntimeConnect.startFlow`; 6 permission sets de sonda; deploy de `runInMode = SystemModeWithSharing` nos 2 Flows e **reversão**; exclusão das 6 sondas |
 | Skill | query-salesforce · validate-metadata |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (`IsSandbox: false`) |
 | Objeto / Metadado | `Quote` `0Q0as0000021vJFCAY` · Flows `DD_CalculateQuoteMargin` / `DD_RouteDiscountApproval` · `PermissionSet` (6 sondas, todas removidas) |
 | Ferramenta | Chrome (sessão do humano, com *login as* e retorno ao admin) · `sf_execute_anonymous_apex` · `sf project deploy start` · `sf_create_permission_set` · `sf_delete_metadata` |
 | Confirmação humana | sim — o humano autorizou aplicar `runInMode`; a reversão foi decidida por mim porque a mudança **não** corrigiu o defeito e ampliava o contexto de execução dos Flows |
@@ -971,7 +971,7 @@ e a remontagem de `lightning-flow`.
 |---|---|
 | Operação | Retrieve do Perfil **`Standard`** (= "Standard User"), inserção de 2 `<flowAccesses>`, `--dry-run` e deploy real; 7ª sonda de FLS; teste em navegador logado como Bruno; limpeza |
 | Skill | validate-metadata · query-salesforce |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` |
 | Objeto / Metadado | `Profile:Standard` · `PermissionSet` `DD_Probe_FLS2` (criada e **excluída**) |
 | Ferramenta | `sf project retrieve start` · `sf project deploy start --dry-run` · `sf project deploy start` · `sf_create_permission_set` · `sf_delete_metadata` · Chrome |
 | Confirmação humana | **sim** — o humano autorizou o teste no Perfil e viu o payload antes do deploy |
@@ -1013,7 +1013,7 @@ Admin** (que executa normalmente) e tratar o caminho do vendedor como pendência
 |---|---|
 | Operação | Criação de `ApexClass` controller + teste, migração do LWC de `lightning-flow` para `@salesforce/apex`, `classAccesses` no permission set, `--dry-run` e deploy real |
 | Skill | validate-metadata · sf-apex · sf-test · sf-security |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false; trial até 2026-11-15) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: false; trial até 2026-11-15) |
 | Objeto / Metadado | `ApexClass DD_MarginConsoleController` `01pas000002BogHAAS` · `ApexClass DD_MarginConsoleControllerTest` `01pas000002BogIAAS` · `LightningComponentBundle ddMarginConsole` · `PermissionSet DD_DealDesk_User` `0PSas000004H6puGAC` |
 | Ferramenta | `sf project deploy start` (dry-run + real) · `sf apex run` · `sf project retrieve start` |
 | Parâmetros-chave | `--test-level RunSpecifiedTests --tests DD_MarginConsoleControllerTest`; classe `public with sharing`; cotação validada com `WITH USER_MODE`; DTO com whitelist D14 |
@@ -1059,7 +1059,7 @@ teste que prova o caminho não-admin sem depender da massa `DEMO-`.
 |---|---|
 | Operação | Criação de `ApprovalProcess` + 3 `WorkflowFieldUpdate`, submissão no `DD_MarginConsoleController`, `Status__c` de required para opcional + `ValidationRule`, FLS de leitura no PS, novo teste; `--dry-run` e deploy real |
 | Skill | validate-metadata · route-approval · sf-apex · sf-test |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false; trial até 2026-11-15) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: false; trial até 2026-11-15) |
 | Objeto / Metadado | `ApprovalProcess DD_DiscountRequest__c.DD_Manager_Approval` · `Workflow DD_DiscountRequest__c` (3 field updates) · `CustomField Status__c` · `ValidationRule DD_Request_Status_Required` · `PermissionSet DD_DealDesk_User` · `ApexClass DD_MarginConsoleController` + teste · `ApexClass DD_ManagerApprovalTest` |
 | Ferramenta | `sf project deploy start` (dry-run + real) · `sf sobject describe` · `sf_query_records` |
 | Parâmetros-chave | 1 etapa `Gerente_Comercial`; aprovador `relatedUserField` = `Approver__c`; entrada `DD_DiscountRequest__c.Status__c = Submitted`; ações finais `DD_Request_Status_Approved`/`Rejected` + `DD_Request_Decided_At` (`NOW()`); `recordEditability = AdminOnly` |
@@ -1111,7 +1111,7 @@ roteava para um registro `DD_DiscountRequest__c` e mandava e-mail — não havia
 |---|---|
 | Operação | `Approval.process` nos pedidos DR-00001, DR-00002 e DR-00003 (criados antes do processo existir) |
 | Skill | route-approval · validate-metadata |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `DD_DiscountRequest__c` `a0Nas00000TiGJhEAN` · `a0Nas00000TiGLJEA3` · `a0Nas00000TiGQ9EAN` |
 | Ferramenta | `sf apex run` (`Approval.ProcessSubmitRequest` + `Approval.process`) |
 | Parâmetros-chave | `processDefinitionNameOrId = DD_Manager_Approval`; comentário "Pedido encaminhado a partir da fila do Deal Desk." |
@@ -1128,7 +1128,7 @@ roteava para um registro `DD_DiscountRequest__c` e mandava e-mail — não havia
 |---|---|
 | Operação | Reescrita do Page Layout `DD_DiscountRequest__c-DD Discount Request Layout` em 4 seções; `--dry-run` e deploy |
 | Skill | validate-metadata · sf-schema |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `Layout DD_DiscountRequest__c-DD Discount Request Layout` (`09Sas000000QZuzEAG`) |
 | Ferramenta | `sf project deploy start` (dry-run + real) · `sf_retrieve_metadata` |
 | Parâmetros-chave | 1 componente / 1 arquivo; `--test-level NoTestRun` |
@@ -1165,7 +1165,7 @@ datas no cabeçalho do item.
 |---|---|
 | Operação | Inclusão de `<approvalPageFields>` no `DD_Manager_Approval`; dry-run e deploy |
 | Skill | validate-metadata |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `ApprovalProcess DD_DiscountRequest__c.DD_Manager_Approval` (`04aas000000atijAAA`) |
 | Ferramenta | `sf project deploy start` (dry-run + real) · `sf_retrieve_metadata` · `sf api request rest .../describe/approvalLayouts` |
 | Parâmetros-chave | `Name`, `Quote__c`, `RequestedDiscountPct__c`, `GuardrailState__c`, `PolicyName__c`, `PolicyFloorMarginPct__c`, `PolicyTargetMarginPct__c`, `Justification__c`, `Owner` |
@@ -1199,7 +1199,7 @@ O nome sugerido `<approvalLayout>` não existe no tipo; `approvalPageFields` é 
 |---|---|
 | Operação | 3 campos `Currency(18,2)` + gravação no `DD_RouteDiscountApproval` + FLS + layout + `approvalPageFields`; dry-run, deploy e backfill dos 3 pendentes |
 | Skill | validate-metadata · sf-flow · sf-schema |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (IsSandbox: false) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (IsSandbox: false) |
 | Objeto / Metadado | `DD_DiscountRequest__c.OriginalAmount__c` / `DiscountAmount__c` / `FinalAmount__c` · `Flow DD_RouteDiscountApproval` (**v9 ativa**) · `PermissionSet DD_DealDesk_User` · `Profile Admin` · `Layout` · `ApprovalProcess` |
 | Ferramenta | `sf project deploy start` (dry-run + real) · `sf apex run` · `sf sobject describe` · `sf api request rest` |
 | Parâmetros-chave | `OriginalAmount__c = quoteRecord.TotalPrice`; `DiscountAmount__c = TotalPrice * pct / 100` (fórmula `Currency`); `FinalAmount__c = TotalPrice - F_DiscountAmount`; novo lookup `Get_Quote` (`Id`, `TotalPrice`) entre `Get_OpenRequest` e `Decision_Open` |
@@ -1242,7 +1242,7 @@ travados por aprovação; `recordEditability = AdminOnly` permite ao admin).
 |---|---|
 | Operação | Tornar `DD_Quote_Record_Page` a página **Org Default** do objeto `Quote` (desktop + mobile) via `CustomObject:Quote`; 2 dry-runs (o 1º falhou), deploy e verificação por retrieve |
 | Skill | validate-metadata · chrome (leitura exploratória) |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`, `TrialExpirationDate: 2026-11-15`) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (`IsSandbox: false`, `TrialExpirationDate: 2026-11-15`) |
 | Objeto / Metadado | `CustomObject:Quote` (`actionOverrides` da ação `View`) · `FlexiPage DD_Quote_Record_Page` (**não alterada**) · `CustomApplication DD_DealDesk` (**mantido**) |
 | Ferramenta | `sf project deploy start` (dry-run + real) · `sf project retrieve start` · `sf org list metadata` · `sf data query` |
 | Parâmetros-chave | `--metadata CustomObject:Quote --test-level NoTestRun`; 39 `actionOverrides` do objeto preservados; das 3 de `View`, a genérica fica `Default`, `Large` e `Small` viram `Flexipage` + `DD_Quote_Record_Page` |
@@ -1278,7 +1278,7 @@ conteúdo não. A prova usada foi o retrieve do `CustomObject:Quote` + o merge a
 |---|---|
 | Operação | **Delete** dos registros de `AppUsageAssignment` (`RevenueLifecycleManagement`) das cotações do projeto: 1 probe (`0Q0as0000021vHdCAI`) + 15 em lote autorizado. Diagnóstico do erro `You can't edit quotes with the Revenue Lifecycle Management or Subscription Management application usage assignment` |
 | Skill | — (diagnóstico de org) |
-| Ambiente | dev-trial — Org ID `00Das00000GrzvPEAR` (`IsSandbox: false`) |
+| Ambiente | dev-trial — Org ID `<seu-org-id>` (`IsSandbox: false`) |
 | Objeto / Metadado | `AppUsageAssignment` (16 registros, todos `Name = Revenue Lifecycle Management`, `AppUsageType = RevenueLifecycleManagement`) |
 | Ferramenta | `sf data query` · `sf api request rest` (describe) · `sf data delete record` |
 | Parâmetros-chave | probe `-i 0j8as000003rCVzAAM`; lote = 15 registros das cotações com `CreatedDate >= 2026-10-17` (as 9 do seed de 2026-10-15 ficaram) |
@@ -1321,7 +1321,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | `Quote-Quote Layout`: related list `RelatedQuoteLineItemList` reduzida de **17** para **5** campos (Product, Sales Price, Quantity, Subtotal, **Discount** ao final). `DD_Quote_Record_Page`: troca do `force:relatedListContainer` (compacto) por **3 `force:relatedListSingleContainer`** com `relatedListComponentOverride = ADVGRID` — `QuoteLineItems`, `QuoteDocuments`, `CombinedAttachments`, `parentFieldApiName = Quote.Id` |
 | Skill | validate-metadata |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Ferramenta | `sf project deploy start` (dry-run + real) · retrieve da `FlexiPage`/`Layout` · Chrome (verificação do DOM) |
 | Confirmação humana | **sim** — pedido direto: "deixa apenas o que era padrão e mais o campo de desconto ao final" |
 | Resultado | dry-run `Succeeded` (2/2) → deploy `Succeeded` `0Afas00000618g1CAA` (2/2). DOM da página confirma a tabela com **Product · Sales Price · Quantity · Subtotal · Discount (Percentage)** e os 3 cards (QLI, Quote PDFs, Notes & Attachments) de volta |
@@ -1340,7 +1340,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | `ddMarginConsole`: os inputs "Desconto a simular (%)" e "Desconto solicitado (%)" passam a iniciar com **`Quote.Discount`** (média ponderada nativa) formatado em 2 casas, em vez do valor fixo `10` |
 | Skill | sf-lwc · validate-metadata |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `LightningComponentBundle:ddMarginConsole` (js) — **Apex não foi alterado** |
 | Ferramenta | `sf project deploy start` (dry-run + real) · retrieve de verificação · Chrome (DOM) |
 | Parâmetros-chave | `QUOTE_FIELDS = [DD_GuardrailState__c, Quote.Discount]` no `getRecord` (sem Apex: o campo já está no layout da cotação e o usuário o vê); `initializeDiscounts()` formata `toFixed(2)` e roda **uma vez** (`discountInitialized`), para `refreshApex` não apagar o que o usuário digitou |
@@ -1358,7 +1358,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | `Layout:Quote-Quote Layout`: remover `CreateOrder` de `<excludeButtons>` e incluir `CreateOrder` (`StandardButton`) na `<platformActionList>` (ações Lightning), `sortOrder = 29`. Base = layout retornado da org (que já tinha as mudanças feitas pelo humano na UI), não o arquivo local |
 | Skill | validate-metadata |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Ferramenta | `sf project deploy start` (dry-run + real) · retrieve de layout · `SetupAuditTrail` · Chrome |
 | Parâmetros-chave | desligar "Advanced Order Creation From Quote" + limpar o campo do flow (feito pelo humano: audit trail `advCreateOrdersFromQuoteOnOff` e `value_ADV_Q2_O_SCREEN_FLOW` 00:11–00:17). O flow `revenue_adv_q2o__CreateOrdersFromQuote` é de **pacote gerenciado** e **não pode ser ativado** ("No actions available") — o campo do Revenue Settings espera um flow **do cliente** |
 | Confirmação humana | **sim** — caminho **A** escolhido pelo humano ("desligar o modo avançado") |
@@ -1375,7 +1375,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Criar 1 `Order` + 4 `OrderItem` espelhando a cotação `0Q0as0000021vHdCAI` (Titan, `Accepted`). Botão "Create Order" não renderiza nesta org (ver UI-008) |
 | Skill | query-salesforce · validate-metadata |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Order` `801as00000HH0OQAA1` (`00000637`) · `OrderItem` `802as000009JgBGAA0`, `802as000009JeNyAAK`, `802as000009Jg3CAAS`, `802as000009JgZRAA0` |
 | Ferramenta | `sf data create record` · `sf data update record` · `sf data query` |
 | Parâmetros-chave | Order: `AccountId=001as00000HCKx1AAH`, `Pricebook2Id=01sas000001nOBJAA2`, `QuoteId=0Q0as0000021vHdCAI`, `EffectiveDate=2026-10-19`, `Status=Draft`, `CurrencyIsoCode=USD` (explícito, A13); `TotalAmount` omitido (roll-up, A15). OrderItems com `PricebookEntryId`, `Product2Id`, `Quantity`, `UnitPrice`, `Discount` |
@@ -1393,7 +1393,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Preencher `Order.AppliedDiscount` (75,73%) e `Order.AppliedDiscountAmount` (3.204,80) no pedido `801as00000HH0OQAA1`, a pedido do humano |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Order` `801as00000HH0OQAA1` (`00000637`) |
 | Ferramenta | `sf api request rest` (PATCH) · `sf data update record` · `sf data query` |
 | Parâmetros-chave | 4 combinações testadas: (a) percent + valor + `AdjustmentDistributionLogic=null`; (b) só o valor; (c) só o percent — **única que passou**; (d) valor com percent nulo |
@@ -1409,7 +1409,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Criar `Quote.DD_HasApprovedRequest__c` + Flow `DD_SyncQuoteGate` + `ValidationRule` `Quote.DD_Block_Unapproved_Quote` e `Order.DD_Block_Unapproved_Order` + layout + FLS (F7-01/F7-02/F7-03) |
 | Skill | validate-metadata |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` (`IsSandbox=false`, `TrialExpirationDate=2026-11-15`) |
+| Ambiente | dev-trial — `<seu-org-id>` (`IsSandbox=false`, `TrialExpirationDate=2026-11-15`) |
 | Objeto / Metadado | Campo `Quote.DD_HasApprovedRequest__c` (Checkbox) · Flow `DD_SyncQuoteGate` (RecordAfterSave) · 2 `ValidationRule` · `Layout:Quote-Quote Layout` · `Profile:Admin` · `PermissionSet:DD_DealDesk_User` |
 | Ferramenta | `sf project deploy start --dry-run` e `--metadata` (2 etapas) |
 | Parâmetros-chave | **Dry-run 1** (campo): `Succeeded` 1/1. **Deploy 1** `0Afas0000061TfkCAE`. **Dry-run 2**: **falhou** nas 2 VRs com `Validation rule description cannot be longer than 255 characters long.` (A101) → descrições encurtadas → **dry-run 2 `Succeeded` 6/6** → **deploy 2 `0Afas0000061VhRCAU` `Succeeded` 6/6** |
@@ -1427,7 +1427,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | 3 tentativas de burlar o gate por DML/REST: (1) insert de `Quote` já `Accepted`; (2) `Draft` vermelha → `Accepted`; (3) insert de `Order` a partir de cotação vermelha sem aprovação |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Quote` · `Order` · campo-gate `DD_HasApprovedRequest__c` |
 | Ferramenta | `sf data create record` · `sf data update record` · `sf apex run` |
 | Parâmetros-chave | (1) `Name=DEMO-F7-Q-InsertAccepted`, `Status=Accepted`, `OpportunityId=006as0000094kK2AAI`, `Pricebook2Id=01sas000001nOBJAA2`, `CurrencyIsoCode=USD`; (2) `0Q0as0000021vG1CAI` (12,5%, `Requer Aprovação`) → `Status=Accepted`; (3) `Order` `QuoteId=0Q0as0000021vG1CAI`, `Status=Draft` |
@@ -1445,7 +1445,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Provar o Flow `DD_SyncQuoteGate` ponta a ponta e a regra de faixa em cotação já aceita, com dados `DEMO-` |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Quote` `0Q0as0000022fnVCAQ` e `0Q0as0000022fp7CAA` · `QuoteLineItem` `0QLas0000029vvbGAA` · `DD_DiscountRequest__c` `a0Nas00000UVFpWEAX` |
 | Ferramenta | `sf apex run` (DML em Apex para gravar a linha; `QuoteLineItem.CurrencyIsoCode` é derivado da cotação — A81) |
 | Parâmetros-chave | Q1: linha 20 × 96 com 75% → margem -229,17%; pedido `Submitted` → gate `false`; pedido `Approved` + `DecidedAt` → **gate `true`**; aceitar → **OK**; reverter pedido para `Submitted` → gate `false`; aceitar → **bloqueado**. Q2: linha saudável 33,02% → aceitar **OK**; linha para 75% → **bloqueado**, estado permaneceu `Saudável` e `Discount=0.00` |
@@ -1463,7 +1463,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Submeter e aprovar o pedido `a0Nas00000UVFpWEAX` pelo `ApprovalProcess` `DD_Manager_Approval` via `Approval.process` e conferir o gate da cotação |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `DD_DiscountRequest__c` `a0Nas00000UVFpWEAX` · `Quote` `0Q0as0000022fnVCAQ` · `ApprovalProcess` `DD_Manager_Approval` |
 | Ferramenta | `sf apex run` (`Approval.process` + `ProcessWorkitemRequest`) |
 | Parâmetros-chave | `ProcessSubmitRequest` no pedido → 1 `ProcessInstanceWorkitem` → `ProcessWorkitemRequest` ação `Approve` |
@@ -1481,7 +1481,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Criar massa de teste para o usuário Bruno Tavares: 6 `Opportunity` + 12 `Quote` + 27 `QuoteLineItem`, 2 oportunidades em cada faixa de margem |
 | Skill | query-salesforce · validate-metadata |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Opportunity` `006as0000096MrtAAE`…`MryAAE` (6) · `Quote` `0Q0as0000022g21CAA`…`g2CCAQ` (12) · 27 `QuoteLineItem` |
 | Ferramenta | `sf apex run` (DML em lote, autorizado pelo pedido explícito do humano) |
 | Parâmetros-chave | `OwnerId=005as000003piV7AAI` (Bruno); `Pricebook2Id=01sas000001nOBJAA2`; `CurrencyIsoCode=USD`; `Status=Draft`; contas existentes com acesso do Bruno; descontos por linha para atingir as faixas |
@@ -1499,7 +1499,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Renomear 6 `Opportunity` e 12 `Quote` da MASSA-003, removendo o prefixo `DEMO-` e adotando nomes que um vendedor usaria |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | 6 `Opportunity` `006as0000096MrtAAE`…`MryAAE` · 12 `Quote` `0Q0as0000022g21CAA`…`g2CCAQ` |
 | Ferramenta | `sf apex run` (update em lote) |
 | Parâmetros-chave | Ex.: `Renovação do Contrato de Manutenção - Titan Fastener Products`, `Expansão da Frota Comercial - Trane Company`, `Retenção de Cliente - Integrity Systems`; cotações como `Renovação 2026 - Escopo Atual`, `Piloto de Peças - Volume Anual 30%` |
@@ -1517,7 +1517,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | **Delete** dos 12 registros de `AppUsageAssignment` (`RevenueLifecycleManagement`) das cotações da MASSA-003, para liberar a edição pela UI clássica |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `AppUsageAssignment` `0j8as000003sirxAAA`…`0j8as000003sis8AAA` (12) · `Quote` `0Q0as0000022g21CAA`…`g2CCAQ` |
 | Ferramenta | `sf data delete record` (um a um) |
 | Parâmetros-chave | 12 deletes individuais; IDs mapeados em [`MEMORY.md`](../MEMORY.md) §1.11/§1.13 |
@@ -1535,7 +1535,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Criar 1 `Quote` + 2 `QuoteLineItem` na oportunidade `Upgrade do Kit de Diagnóstico - Metro Medical Distributors`, com desconto comercial de 10% no scanner e a interface de frenagem na tabela; remover o `AppUsageAssignment` de RLM da cotação nova |
 | Skill | — |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Quote` `0Q0as0000022gbVCAQ` · 2 `QuoteLineItem` · `AppUsageAssignment` `0j8as000003sibqAAA` (removido) |
 | Ferramenta | `sf apex run` (insert) · `sf data delete record` |
 | Parâmetros-chave | `OwnerId=005as000003piV7AAI` (Bruno); `Pricebook2Id=01sas000001nOBJAA2`; `USD`; `Status=Draft`; scanner `01uas000000RovFAAS` 4 × 200 com 10% (net 720, custo 576); interface `01uas000000RovjAAC` 2 × 160 sem desconto (net 320, custo 248) |
@@ -1553,7 +1553,7 @@ O print do humano mostra a cotação aberta no app **Manufacturing** já com o c
 |---|---|
 | Operação | Criar 1 `Order` + 2 `OrderItem` espelhando a cotação `0Q0as0000022g2BCAQ` (`Piloto de Peças - Entrada 25%`), já `Accepted` com pedido de desconto aprovado |
 | Skill | query-salesforce |
-| Ambiente | dev-trial — `00Das00000GrzvPEAR` |
+| Ambiente | dev-trial — `<seu-org-id>` |
 | Objeto / Metadado | `Order` `801as00000HIYj0AAH` (`00000638`) · 2 `OrderItem` (Battery Compartment Dust Seal 30 × 24,00; Windshield Wiper Pack 20 × 21,00) |
 | Ferramenta | `sf apex run` (insert do pedido + itens) |
 | Parâmetros-chave | `AccountId=001as00000HCKvnAAH`; `Pricebook2Id=01sas000001nOBJAA2`; `QuoteId=0Q0as0000022g2BCAQ`; `EffectiveDate=2026-10-20`; `Status=Draft`; `CurrencyIsoCode=USD`; `OwnerId=005as000003piV7AAI`; `UnitPrice` **líquido** (24,00 e 21,00) e `Discount=25%` informativo (A98) |

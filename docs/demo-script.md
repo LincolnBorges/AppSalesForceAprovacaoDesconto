@@ -2,7 +2,7 @@
 
 Roteiro de execução da demo do app, com cliques, falas e evidências. Escrito para ser seguido por
 quem já conhece o produto (não é material de treinamento). Ambiente: org `personal`
-(`00Das00000GrzvPEAR`), app **Deal Desk**.
+(`<seu-org-id>`), app **Deal Desk**.
 
 **Objetivo da demo:** mostrar que o vendedor deixa de conceder desconto no escuro — o app dá o estado
 do guardrail antes do pedido, sobe o caso ruim com contexto para a alçada e **nunca decide sozinho**.
@@ -26,7 +26,7 @@ do guardrail antes do pedido, sobe o caso ruim com contexto para a alçada e **n
 | # | Item | Como conferir |
 |---|---|---|
 | 1 | Login como administrador (`Lincoln Borges`) | avatar no canto superior direito |
-| 2 | App **Deal Desk** abre | [abrir o app](https://personalproject.my.salesforce.com/lightning/app/c__DD_DealDesk) — não use o atalho de "Sales" |
+| 2 | App **Deal Desk** abre | `https://<sua-org>.my.salesforce.com/lightning/app/c__DD_DealDesk` — não use o atalho de "Sales" |
 | 3 | Console renderiza nas 4 cotações | abrir cada link da §1.3 e ver o card "Guardrail de desconto" |
 | 4 | Aba **Console de Margem** visível | item na barra de navegação do app |
 | 5 | Zoom do navegador em 100% | o card tem duas colunas no simulador |
@@ -246,14 +246,18 @@ estado e **sem** os campos de custo/margem no painel de detalhes.
 
 ## 10. Anexo B — Links
 
+> Substitua `<sua-org>` pelo domínio da sua org (ex.: `minhaorg.my.salesforce.com`). Os `Id` de
+> registro abaixo são da org original da demo; em outra org eles não existem — use as cotações que você
+> criar na sua massa.
+
 | O quê | URL |
 |---|---|
-| App Deal Desk | https://personalproject.my.salesforce.com/lightning/app/c__DD_DealDesk |
-| Aba Console de Margem | https://personalproject.my.salesforce.com/lightning/n/DD_Margin_Console |
-| Cotação A (saudável) | https://personalproject.my.salesforce.com/lightning/r/Quote/0Q0as0000021mHZCAY/view |
-| Cotação B (limite) | https://personalproject.my.salesforce.com/lightning/r/Quote/0Q0as0000021mFyCAI/view |
-| Cotação C (abaixo do piso) | https://personalproject.my.salesforce.com/lightning/r/Quote/0Q0as0000021mJBCAY/view |
-| Cotação D (sem custo) | https://personalproject.my.salesforce.com/lightning/r/Quote/0Q0as0000021jtBCAQ/view |
+| App Deal Desk | `https://<sua-org>.my.salesforce.com/lightning/app/c__DD_DealDesk` |
+| Aba Console de Margem | `https://<sua-org>.my.salesforce.com/lightning/n/DD_Margin_Console` |
+| Cotação A (saudável) | `https://<sua-org>.my.salesforce.com/lightning/r/Quote/<id-cotacao-a>/view` |
+| Cotação B (limite) | `https://<sua-org>.my.salesforce.com/lightning/r/Quote/<id-cotacao-b>/view` |
+| Cotação C (abaixo do piso) | `https://<sua-org>.my.salesforce.com/lightning/r/Quote/<id-cotacao-c>/view` |
+| Cotação D (sem custo) | `https://<sua-org>.my.salesforce.com/lightning/r/Quote/<id-cotacao-d>/view` |
 
 ---
 

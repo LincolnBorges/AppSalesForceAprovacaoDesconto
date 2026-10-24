@@ -17,7 +17,7 @@ project:
   objective: "App Salesforce de governança de desconto: cálculo de margem por linha de cotação, semáforo contra o piso da política e roteamento condicional de aprovação (LWC + Flow + Agentforce)"
   api_version: "68.0"           # sfdx-project.json (sourceApiVersion)
   agentforce_api_version: "66.0" # metadata de Agentforce: usar SEMPRE esta versão (ver AGENTS.md §3)
-  default_org_alias: personal   # org alvo (Org ID 00Das00000GrzvPEAR), trial — NUNCA production
+  default_org_alias: personal   # org alvo (Org ID <seu-org-id>), trial — NUNCA production
   target_environment: dev-trial # dev-trial | sandbox | dev  (NUNCA production)
   uses_scratch_orgs: false      # a org alvo já tem tudo provisionado (A7/A8/A9)
 
@@ -164,7 +164,7 @@ mcp:
 #         command: npx
 #         args: ['-y', 'salesforce-metadata-mcp']
 #         env:
-#           SF_INSTANCE_URL: 'https://personalproject.my.salesforce.com'
+#           SF_INSTANCE_URL: 'https://<sua-org>.my.salesforce.com'
 #           SF_ALIAS: 'personal'              # apenas letras, numeros, hifen e underscore
 #           SF_TOOLSETS: 'core,metadata,data'
 #           SF_PRODUCTION_GUARD: 'strict'
